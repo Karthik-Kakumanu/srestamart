@@ -27,10 +27,7 @@ export default function App() {
   const [orders, setOrders] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
-  
-  // State to determine if this is the user's first order
   const [isFirstOrder, setIsFirstOrder] = useState(false);
-  
   const [checkoutDetails, setCheckoutDetails] = useState({
     shippingAddress: null,
     totalAmount: 0,
@@ -46,15 +43,12 @@ export default function App() {
         try {
           setOrdersLoading(true);
           const [ordersRes, addressesRes] = await Promise.all([
-            axios.get('http://localhost:4000/api/orders', config),
-            axios.get('http://localhost:4000/api/addresses', config)
+            axios.get(`${import.meta.env.VITE_API_URL}/api/orders`, config),
+            axios.get(`${import.meta.env.VITE_API_URL}/api/addresses`, config)
           ]);
           setOrders(ordersRes.data);
           setAddresses(addressesRes.data);
-          
-          // Check if the fetched orders array is empty
           setIsFirstOrder(ordersRes.data.length === 0);
-
         } catch (error) {
           console.error("Failed to fetch user data:", error);
           if (error.response && error.response.status === 401) handleLogout();
@@ -120,17 +114,14 @@ export default function App() {
           <Route path="/" element={<Layout loggedInUser={loggedInUser} handleLogout={handleLogout} cartItems={cartItems} />}>
             <Route index element={<HomePage handleAddToCart={handleAddToCart} />} />
             <Route path="cart" element={<CartPage cartItems={cartItems} handleQuantityChange={handleQuantityChange} handleRemoveFromCart={handleRemoveFromCart} setCheckoutDetails={setCheckoutDetails} />} />
-            
             <Route path="coupons" element={<CouponsPage isFirstOrder={isFirstOrder} />} />
             <Route path="account" element={<AccountPage loggedInUser={loggedInUser} orders={orders} ordersLoading={ordersLoading} handleLogout={handleLogout} />} />
             <Route path="/account/addresses" element={<ManageAddressPage addresses={addresses} setAddresses={setAddresses} />} />
             <Route path="/help" element={<HelpCenterPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            
             <Route path="/checkout" element={<CheckoutPage user={loggedInUser} addresses={addresses} setAddresses={setAddresses} setCheckoutDetails={setCheckoutDetails} cartItems={cartItems} />} />
             <Route path="/payment" element={<PaymentPage user={loggedInUser} checkoutDetails={checkoutDetails} handleClearCart={handleClearCart} isFirstOrder={isFirstOrder} />} />
             <Route path="/order-success" element={<OrderSuccessPage />} />
-
             <Route path="*" element={<Navigate to="/" />} />
           </Route>
         ) : (

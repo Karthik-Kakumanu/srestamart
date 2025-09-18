@@ -34,7 +34,6 @@ export default function AdminPage() {
 
         try {
             const [productsRes, usersRes, ordersRes] = await Promise.all([
-                axios.get('http://localhost:4000/api/products'),
                 axios.get('http://localhost:4000/api/admin/users', config),
                 axios.get('http://localhost:4000/api/admin/orders', config)
             ]);

@@ -265,7 +265,7 @@ export default function HomePage({ handleAddToCart }) {
     const fetchProducts = async () => {
       setProductsLoading(true);
       try {
-        const res = await axios.get('http://localhost:4000/api/products');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`);
         const products = res.data.map(p => ({ ...p, category: p.category.toLowerCase().replace(/\s+/g, '') }));
         setAllProducts(products);
         
