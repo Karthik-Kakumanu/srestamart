@@ -303,12 +303,12 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
 
 // --- SERVE REACT FRONTEND ---
 // This line must come AFTER all your API routes
-app.use(express.static(path.join(__dirname, 'frontend/dist')));
+app.use(express.static(path.join('frontend', 'dist')));
 
 // This is the catch-all route that sends the React app's index.html
 // for any request that doesn't match an API route
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'frontend/dist', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'frontenddist', 'index.html'));
 });
 
 
