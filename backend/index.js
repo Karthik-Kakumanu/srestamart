@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path'); // Required for serving static files
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000; // Use Render's port or 4000 locally
 const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 
 app.use(cors());
@@ -15,7 +15,10 @@ app.use(bodyParser.json());
 
 const { Pool } = require('pg');
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || "postgresql://postgres:YBBAgHVEtZnLKHujeCnGRcKZwUXZBszo@yamanote.proxy.rlwy.net:23771/railway",
+  connectionString: process.env.DATABASE_URL, // IMPORTANT: Use environment variable
+  ssl: {
+    rejectUnauthorized: false // Required for connecting to cloud databases like Render/Railway
+  }
 });
 
 // --- MIDDLEWARE ---
