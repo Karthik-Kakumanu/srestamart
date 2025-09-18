@@ -4,6 +4,7 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
+const path = require('path'); // Required for serving static files
 
 const app = express();
 const PORT = 4000;
@@ -14,7 +15,7 @@ app.use(bodyParser.json());
 
 const { Pool } = require('pg');
 const pool = new Pool({
-  connectionString: "postgresql://postgres:YBBAgHVEtZnLKHujeCnGRcKZwUXZBszo@yamanote.proxy.rlwy.net:23771/railway",
+  connectionString: process.env.DATABASE_URL || "postgresql://postgres:YBBAgHVEtZnLKHujeCnGRcKZwUXZBszo@yamanote.proxy.rlwy.net:23771/railway",
 });
 
 // --- MIDDLEWARE ---
@@ -43,6 +44,8 @@ const checkUserToken = (req, res, next) => {
         res.status(401).json({ msg: 'Token is not valid' });
     }
 };
+
+// --- API ROUTES ---
 
 // --- ADMIN ROUTES ---
 app.post('/api/admin/login', (req, res) => {
@@ -293,6 +296,18 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
         res.status(500).send('Server error fetching orders');
     }
 });
+
+
+// --- SERVE REACT FRONTEND ---
+// This line must come AFTER all your API routes
+app.use(express.static(path.join(__dirname, 'frontend/dist')));
+
+// This is the catch-all route that sends the React app's index.html
+// for any request that doesn't match an API route
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/dist', 'index.html'));
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} at Sresta Mart, Ponnur.`);
