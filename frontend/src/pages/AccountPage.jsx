@@ -152,7 +152,7 @@ const OrderCard = ({ order }) => {
               <h4 className="font-semibold mb-2 text-gray-700">Items Ordered:</h4>
               <ul className="text-sm text-gray-600 list-disc list-inside mb-4">
                 {order.items?.map((item, index) => (
-                  <li key={index}>{item.name} (x{item.quantity})</li>
+                  <li key={index}>{item.name} ({item.variantLabel}) (x{item.quantity})</li>
                 ))}
               </ul>
               

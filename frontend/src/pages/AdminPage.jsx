@@ -65,6 +65,10 @@ export default function AdminPage() {
     };
 
     const handleAssignOrder = async (orderId, partnerId) => {
+        if (!partnerId) {
+            alert("Please select a delivery partner.");
+            return;
+        }
         try {
             const token = getAuthToken();
             await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/orders/${orderId}/assign`, 
@@ -82,7 +86,7 @@ export default function AdminPage() {
         setEditingProduct(product);
         setIsEditModalOpen(true);
     };
-
+    
     const handleDeleteProduct = async (productId, productName) => {
         if (window.confirm(`Are you sure you want to delete "${productName}"?`)) {
             try {
@@ -159,14 +163,16 @@ export default function AdminPage() {
             {isEditModalOpen && <EditProductModal product={editingProduct} onClose={() => setIsEditModalOpen(false)} onSave={handleSave} />}
             {isAddModalOpen && <AddProductModal onClose={() => setIsAddModalOpen(false)} onSave={handleSave} />}
             
-            {isAssignModalOpen && (
-                <AssignOrderModal 
-                    order={assigningOrder}
-                    partners={deliveryPartners}
-                    onClose={() => setIsAssignModalOpen(false)}
-                    onAssign={handleAssignOrder}
-                />
-            )}
+            <AnimatePresence>
+                {isAssignModalOpen && (
+                    <AssignOrderModal 
+                        order={assigningOrder}
+                        partners={deliveryPartners}
+                        onClose={() => setIsAssignModalOpen(false)}
+                        onAssign={handleAssignOrder}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }
@@ -346,7 +352,7 @@ const OrderRow = ({ order, onAssign }) => {
         <>
             <tr className="hover:bg-slate-50">
                 <td className="px-6 py-4" onClick={() => setIsExpanded(!isExpanded)}>
-                    <div className="font-medium text-gray-800 cursor-pointer">Order #{order.id}</div>
+                    <div className="font-medium text-gray-800 cursor-pointer hover:text-red-600">{`Order #${order.id}`}</div>
                     <div className="text-xs text-gray-500">{order.customer_name}</div>
                 </td>
                 <td className="px-6 py-4">
@@ -359,7 +365,7 @@ const OrderRow = ({ order, onAssign }) => {
                 </td>
                 <td className="px-6 py-4 text-center">
                     {order.delivery_status === 'Pending' && (
-                        <button onClick={() => onAssign(order)} className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600">
+                        <button onClick={() => onAssign(order)} className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600 transition-colors">
                             Assign
                         </button>
                     )}
@@ -401,6 +407,7 @@ const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
             <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
                 className="bg-white rounded-xl shadow-lg w-full max-w-md"
             >
                 <div className="p-6 border-b">
@@ -415,7 +422,7 @@ const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
                         className="mt-1 block w-full border border-gray-300 rounded-md p-2"
                     >
                         <option value="">-- Select a Partner --</option>
-                        {partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        {partners.map(p => <option key={p.id} value={p.id}>{p.name} (ID: {p.id})</option>)}
                     </select>
                 </div>
                 <div className="p-4 bg-slate-50 flex justify-end gap-3 rounded-b-xl">
