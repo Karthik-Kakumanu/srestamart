@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Users, Package, RefreshCw, PlusCircle, ShoppingCart, ChevronDown, DollarSign, BarChart2 } from 'lucide-react';
+import { Users, Package, RefreshCw, PlusCircle, ShoppingCart, ChevronDown, DollarSign, BarChart2, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import EditProductModal from '../components/admin/EditProductModal.jsx';
@@ -13,19 +13,23 @@ export default function AdminPage() {
     const [products, setProducts] = useState([]);
     const [users, setUsers] = useState([]);
     const [orders, setOrders] = useState([]);
+    const [deliveryPartners, setDeliveryPartners] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [assigningOrder, setAssigningOrder] = useState(null);
 
     const fetchData = async () => {
         setIsLoading(true);
         setError('');
         const token = getAuthToken();
         if (!token) {
-            setError("Admin authorization token not found. Please log in again.");
+            setError("Admin authorization token not found.");
             setIsLoading(false);
             return;
         }
@@ -33,16 +37,17 @@ export default function AdminPage() {
         const config = { headers: { 'x-admin-token': token } };
 
         try {
-            // --- API URLS CORRECTED HERE ---
-            const [productsRes, usersRes, ordersRes] = await Promise.all([
+            const [productsRes, usersRes, ordersRes, partnersRes] = await Promise.all([
                 axios.get(`${import.meta.env.VITE_API_URL}/api/products`),
                 axios.get(`${import.meta.env.VITE_API_URL}/api/admin/users`, config),
-                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/orders`, config)
+                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/orders`, config),
+                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/delivery-partners`, config)
             ]);
             
             setProducts(productsRes.data);
             setUsers(usersRes.data);
             setOrders(ordersRes.data);
+            setDeliveryPartners(partnersRes.data);
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to fetch admin data.');
         } finally {
@@ -53,6 +58,25 @@ export default function AdminPage() {
     useEffect(() => {
         fetchData();
     }, []);
+    
+    const handleAssignClick = (order) => {
+        setAssigningOrder(order);
+        setIsAssignModalOpen(true);
+    };
+
+    const handleAssignOrder = async (orderId, partnerId) => {
+        try {
+            const token = getAuthToken();
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/orders/${orderId}/assign`, 
+                { partnerId }, 
+                { headers: { 'x-admin-token': token } }
+            );
+            setIsAssignModalOpen(false);
+            fetchData();
+        } catch (err) {
+            alert("Failed to assign order. Please try again.");
+        }
+    };
 
     const handleEditProduct = (product) => {
         setEditingProduct(product);
@@ -64,7 +88,6 @@ export default function AdminPage() {
             try {
                 const token = getAuthToken();
                 const config = { headers: { 'x-admin-token': token } };
-                // --- API URL CORRECTED HERE ---
                 await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/products/${productId}`, config);
                 fetchData();
             } catch (err) {
@@ -82,7 +105,6 @@ export default function AdminPage() {
     const totalRevenue = useMemo(() => orders.reduce((acc, order) => acc + Number(order.total_amount), 0), [orders]);
 
     return (
-        // ... The rest of the beautiful design is correct and remains the same.
         <div className="p-4 sm:p-8 bg-slate-100 min-h-screen">
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 <header className="mb-8 flex flex-col sm:flex-row justify-between sm:items-center">
@@ -127,7 +149,7 @@ export default function AdminPage() {
                                 view === 'overview' ? <OverviewCharts orders={orders} products={products} /> :
                                 view === 'products' ? <ProductTable products={products} onEdit={handleEditProduct} onDelete={handleDeleteProduct} /> :
                                 view === 'users' ? <UserTable users={users} /> :
-                                <OrdersTable orders={orders} />
+                                <OrdersTable orders={orders} onAssign={handleAssignClick} />
                             }
                         </motion.div>
                     </AnimatePresence>
@@ -136,11 +158,18 @@ export default function AdminPage() {
 
             {isEditModalOpen && <EditProductModal product={editingProduct} onClose={() => setIsEditModalOpen(false)} onSave={handleSave} />}
             {isAddModalOpen && <AddProductModal onClose={() => setIsAddModalOpen(false)} onSave={handleSave} />}
+            
+            {isAssignModalOpen && (
+                <AssignOrderModal 
+                    order={assigningOrder}
+                    partners={deliveryPartners}
+                    onClose={() => setIsAssignModalOpen(false)}
+                    onAssign={handleAssignOrder}
+                />
+            )}
         </div>
     );
 }
-
-// ... All the sub-components (StatCard, TabButton, Charts, Tables) remain the same.
 
 const StatCard = ({ icon, title, value, color }) => {
     const colors = {
@@ -292,42 +321,48 @@ const UserTable = ({ users }) => {
     );
 };
 
-const OrdersTable = ({ orders }) => (
+const OrdersTable = ({ orders, onAssign }) => (
     <div className="overflow-x-auto">
         <table className="min-w-full">
             <thead className="bg-slate-50">
                 <tr>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order & Customer</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Items</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Shipping Address</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Delivery</th>
                     <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount & Date</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
-                {orders.map(order => <OrderRow key={order.id} order={order} />)}
+                {orders.map(order => <OrderRow key={order.id} order={order} onAssign={onAssign} />)}
             </tbody>
         </table>
     </div>
 );
 
-const OrderRow = ({ order }) => {
+const OrderRow = ({ order, onAssign }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const itemSummary = order.items.length > 1 ? `${order.items[0].name}... (+${order.items.length - 1})` : order.items[0].name;
 
     return (
         <>
-            <tr className="hover:bg-slate-50 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-800">Order #{order.id}</div>
+            <tr className="hover:bg-slate-50">
+                <td className="px-6 py-4" onClick={() => setIsExpanded(!isExpanded)}>
+                    <div className="font-medium text-gray-800 cursor-pointer">Order #{order.id}</div>
                     <div className="text-xs text-gray-500">{order.customer_name}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 max-w-xs truncate">{itemSummary}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 max-w-xs truncate">
-                    {order.shipping_address?.value || 'N/A'}
+                <td className="px-6 py-4">
+                    <div className="text-sm text-gray-700">{order.delivery_status}</div>
+                    <div className="text-xs text-gray-500">{order.partner_name ? `by ${order.partner_name}` : 'Unassigned'}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="font-semibold text-gray-800">₹{Number(order.total_amount).toFixed(2)}</div>
                     <div className="text-xs text-gray-500">{new Date(order.created_at).toLocaleDateString()}</div>
+                </td>
+                <td className="px-6 py-4 text-center">
+                    {order.delivery_status === 'Pending' && (
+                        <button onClick={() => onAssign(order)} className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600">
+                            Assign
+                        </button>
+                    )}
                 </td>
             </tr>
             {isExpanded && (
@@ -355,5 +390,41 @@ const OrderRow = ({ order }) => {
                 </tr>
             )}
         </>
+    );
+};
+
+const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
+    const [selectedPartnerId, setSelectedPartnerId] = useState('');
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-xl shadow-lg w-full max-w-md"
+            >
+                <div className="p-6 border-b">
+                    <h2 className="text-xl font-bold text-gray-800">Assign Order #{order.id}</h2>
+                    <p className="text-sm text-gray-500">Select a delivery partner for this order.</p>
+                </div>
+                <div className="p-6">
+                    <label className="text-sm font-medium text-gray-700">Available Partners</label>
+                    <select
+                        value={selectedPartnerId}
+                        onChange={(e) => setSelectedPartnerId(e.target.value)}
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                    >
+                        <option value="">-- Select a Partner --</option>
+                        {partners.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                </div>
+                <div className="p-4 bg-slate-50 flex justify-end gap-3 rounded-b-xl">
+                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">Cancel</button>
+                    <button onClick={() => onAssign(order.id, selectedPartnerId)} disabled={!selectedPartnerId} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:bg-gray-400">
+                        Confirm Assignment
+                    </button>
+                </div>
+            </motion.div>
+        </div>
     );
 };

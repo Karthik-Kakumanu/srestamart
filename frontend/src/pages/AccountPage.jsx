@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, XCircle } from 'lucide-react';
+import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, XCircle, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AccountPage({ loggedInUser, orders, ordersLoading, handleLogout }) {
@@ -118,6 +118,7 @@ const OrderCard = ({ order }) => {
     'Out for Delivery': { color: "bg-cyan-100 text-cyan-700" },
     Delivered: { color: "bg-green-100 text-green-700" },
     Cancelled: { color: "bg-red-100 text-red-700" },
+    Pending: { color: "bg-gray-100 text-gray-700" }
   };
 
   const currentStatus = statusInfo[order.status] || statusInfo.Processing;
@@ -159,6 +160,16 @@ const OrderCard = ({ order }) => {
               <p className="text-sm text-gray-600 mb-4">
                 {order.shipping_address ? `${order.shipping_address.label}: ${order.shipping_address.value}` : 'No address provided.'}
               </p>
+
+              {order.partner_name && (
+                <div className="mt-4 pt-4 border-t text-sm">
+                    <p className="font-semibold text-gray-700">Delivery Partner:</p>
+                    <div className="flex items-center gap-2 mt-1 text-gray-600">
+                        <UserCheck size={16} />
+                        <span>{order.partner_name}</span>
+                    </div>
+                </div>
+              )}
 
               {order.delivery_status === 'Out for Delivery' && (
                 <div className="mt-4 pt-4 border-t">
