@@ -26,7 +26,7 @@ export default function AuthPage({ setLoggedInUser }) {
 
     try {
       if (isLoginView) {
-        // --- FIX WAS HERE ---
+        // --- CORRECTED API URL ---
         const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/login`, {
           phone,
           password,
@@ -35,7 +35,7 @@ export default function AuthPage({ setLoggedInUser }) {
         localStorage.setItem("token", res.data.token);
         setLoggedInUser(res.data.user);
       } else {
-        // --- FIX WAS HERE ---
+        // --- CORRECTED API URL ---
         const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/register`, {
           name,
           phone,
@@ -54,7 +54,7 @@ export default function AuthPage({ setLoggedInUser }) {
   };
 
   return (
-    // ... The rest of the page's beautiful design is correct and remains the same.
+    // ... The rest of the beautiful design remains the same
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-100">
         <div 
             className="w-full md:w-1/2 lg:w-3/5 min-h-[50vh] md:min-h-screen flex flex-col justify-between p-8 sm:p-12 text-white relative bg-cover bg-center"
@@ -80,7 +80,6 @@ export default function AuthPage({ setLoggedInUser }) {
                 </p>
             </motion.div>
         </div>
-
         <div className="w-full md:w-1/2 lg:w-2/5 flex items-center justify-center p-6 sm:p-12">
              <div className="max-w-md w-full">
                 <motion.div
@@ -97,7 +96,6 @@ export default function AuthPage({ setLoggedInUser }) {
                         {isLoginView ? "Sign in to continue to Sresta Mart." : "Join our family to get started."}
                         </p>
                     </div>
-
                     <AnimatePresence mode="wait">
                     {isLoginView ? (
                         <motion.form key="login" onSubmit={handleSubmit} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} transition={{ duration: 0.4 }} className="space-y-5" >
@@ -127,7 +125,7 @@ export default function AuthPage({ setLoggedInUser }) {
                         </motion.form>
                     ) : (
                         <motion.form key="signup" onSubmit={handleSubmit} initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }} transition={{ duration: 0.4 }} className="space-y-5" >
-                            <div className="relative">
+                           <div className="relative">
                                 <label className="text-sm font-medium text-gray-700">Full Name</label>
                                 <User className="absolute left-3.5 top-11 text-gray-400" size={18} />
                                 <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
@@ -159,12 +157,10 @@ export default function AuthPage({ setLoggedInUser }) {
                         </motion.form>
                     )}
                     </AnimatePresence>
-
                     <div className="text-center text-sm pt-4">
                         <button
                             onClick={() => { setIsLoginView(!isLoginView); setError(""); setSuccess(""); }}
-                            className="font-medium text-red-600 hover:text-red-700 transition-all"
-                        >
+                            className="font-medium text-red-600 hover:text-red-700 transition-all" >
                             {isLoginView ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
                         </button>
                     </div>

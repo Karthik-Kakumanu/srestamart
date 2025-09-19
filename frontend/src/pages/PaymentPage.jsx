@@ -1,3 +1,5 @@
+// src/pages/PaymentPage.jsx
+
 import React, { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -12,7 +14,6 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
     const finalTotal = total - discount;
     return { discount, finalTotal };
   }, [isFirstOrder, checkoutDetails]);
-
 
   if (!checkoutDetails || checkoutDetails.items.length === 0) {
        return (
@@ -34,7 +35,8 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
             shippingAddress: checkoutDetails.shippingAddress,
             totalAmount: finalTotal, 
         };
-        await axios.post('http://localhost:4000/api/orders', orderData, {
+        // --- CORRECTED API URL ---
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/orders`, orderData, {
             headers: { 'x-auth-token': token }
         });
         handleClearCart();
@@ -48,6 +50,7 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
   };
 
   return (
+    // ... The design of this page is correct and remains the same.
     <div className="flex-grow bg-gray-50 p-4 sm:p-8">
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 bg-white p-8 rounded-xl shadow-md">
@@ -70,7 +73,6 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
                 </div>
             </div>
         </div>
-
         <div className="md:col-span-1">
             <div className="bg-white p-6 rounded-xl shadow-md sticky top-28">
                 <h3 className="text-xl font-bold text-gray-800 border-b pb-3">Final Summary</h3>
