@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// --- MAIN ACCOUNT PAGE COMPONENT ---
 export default function AccountPage({ loggedInUser, orders, ordersLoading, handleLogout }) {
   const [activeTab, setActiveTab] = useState('orders');
 
@@ -50,8 +49,6 @@ export default function AccountPage({ loggedInUser, orders, ordersLoading, handl
     </div>
   );
 }
-
-// --- SUB-COMPONENTS ---
 
 const TabButton = ({ name, activeTab, setActiveTab, tabId }) => (
   <button
@@ -118,9 +115,11 @@ const OrderCard = ({ order }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const statusInfo = {
-    Processing: { icon: <Truck className="text-orange-500" />, color: "bg-orange-100 text-orange-700" },
-    Delivered: { icon: <CheckCircle2 className="text-green-500" />, color: "bg-green-100 text-green-700" },
-    Cancelled: { icon: <XCircle className="text-red-500" />, color: "bg-red-100 text-red-700" },
+    Processing: { color: "bg-yellow-100 text-yellow-700" },
+    Assigned: { color: "bg-blue-100 text-blue-700" },
+    'Out for Delivery': { color: "bg-cyan-100 text-cyan-700" },
+    Delivered: { color: "bg-green-100 text-green-700" },
+    Cancelled: { color: "bg-red-100 text-red-700" },
   };
 
   const currentStatus = statusInfo[order.status] || statusInfo.Processing;
@@ -154,17 +153,25 @@ const OrderCard = ({ order }) => {
             <div className="border-t border-gray-100 p-4 sm:p-5 bg-slate-50">
               <h4 className="font-semibold mb-2 text-gray-700">Items Ordered:</h4>
               <ul className="text-sm text-gray-600 list-disc list-inside mb-4">
-                {/* --- FIX APPLIED HERE --- */}
                 {order.items?.map((item, index) => (
                   <li key={index}>{item.name} (x{item.quantity})</li>
                 ))}
               </ul>
               
               <h4 className="font-semibold mb-2 text-gray-700">Shipping Address:</h4>
-              {/* --- FIX APPLIED HERE --- */}
               <p className="text-sm text-gray-600 mb-4">
                 {order.shipping_address ? `${order.shipping_address.label}: ${order.shipping_address.value}` : 'No address provided.'}
               </p>
+
+              {/* --- NEW: LIVE TRACKING PLACEHOLDER --- */}
+              {order.delivery_status === 'Out for Delivery' && (
+                <div className="mt-4 pt-4 border-t">
+                    <h4 className="font-semibold text-gray-700">Live Tracking</h4>
+                    <div className="mt-2 p-4 bg-blue-50 text-blue-800 rounded-lg">
+                        <p>Your order is on the way! Live map tracking will be available here soon.</p>
+                    </div>
+                </div>
+              )}
 
               <div className="text-right font-bold text-gray-800 text-lg border-t pt-3 mt-3">
                 Total: ₹{Number(order.total_amount).toFixed(2)}

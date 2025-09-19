@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function CartPage({ cartItems, handleQuantityChange, handleRemoveFromCart, setCheckoutDetails }) {
   const navigate = useNavigate();
@@ -18,24 +18,12 @@ export default function CartPage({ cartItems, handleQuantityChange, handleRemove
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.4,
-        ease: "easeOut",
-      },
-    },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.4, ease: "easeOut" } },
   };
 
   if (cartItems.length === 0) {
@@ -104,9 +92,10 @@ export default function CartPage({ cartItems, handleQuantityChange, handleRemove
                         <h3 className="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-4">Order Summary</h3>
                         <div className="space-y-4 my-6 text-lg">
                             <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-medium text-gray-900">₹{cartSubtotal.toFixed(2)}</span></div>
-                            <div className="flex justify-between text-gray-600"><span>Shipping</span><span className="font-semibold text-green-600">FREE</span></div>
+                            {/* Shipping line removed from here */}
                             <div className="flex justify-between font-bold text-2xl text-gray-800 pt-4 border-t border-gray-200"><span>Total</span><span>₹{cartSubtotal.toFixed(2)}</span></div>
                         </div>
+                        <p className="text-xs text-center text-gray-400 mb-4">Shipping and discounts will be calculated at checkout.</p>
                         <motion.button 
                             whileHover={{ scale: 1.05 }} 
                             whileTap={{ scale: 0.95 }}

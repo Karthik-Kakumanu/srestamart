@@ -21,6 +21,11 @@ import AdminLoginPage from './pages/AdminLoginPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import AdminProtectedRoute from './components/AdminProtectedRoute.jsx';
 
+// --- Delivery Partner Imports ---
+import DeliveryLoginPage from './pages/DeliveryLoginPage.jsx';
+import DeliveryDashboardPage from './pages/DeliveryDashboardPage.jsx';
+import DeliveryProtectedRoute from './components/DeliveryProtectedRoute.jsx';
+
 export default function App() {
   const [loggedInUser, setLoggedInUser] = useState(() => JSON.parse(localStorage.getItem('user')) || null);
   const [cartItems, setCartItems] = useState([]);
@@ -61,37 +66,37 @@ export default function App() {
   }, [loggedInUser]);
 
   const handleAddToCart = (product, event) => {
-      setCartItems(prevItems => {
-          const itemExists = prevItems.find(item => item.id === product.selectedVariant.id);
-          if (itemExists) {
-              return prevItems.map(item =>
-                  item.id === product.selectedVariant.id ? { ...item, quantity: item.quantity + 1 } : item
-              );
-          } else {
-              return [...prevItems, { 
-                  id: product.selectedVariant.id,
-                  name: product.name,
-                  variantLabel: product.selectedVariant.label,
-                  price: product.selectedVariant.price,
-                  image_url: product.image_url,
-                  quantity: 1 
-              }];
-          }
-      });
-      setCartMessage(`${product.name} added to cart!`);
-      setTimeout(() => setCartMessage(''), 2000);
+    setCartItems(prevItems => {
+      const itemExists = prevItems.find(item => item.id === product.selectedVariant.id);
+      if (itemExists) {
+        return prevItems.map(item =>
+          item.id === product.selectedVariant.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      } else {
+        return [...prevItems, { 
+          id: product.selectedVariant.id,
+          name: product.name,
+          variantLabel: product.selectedVariant.label,
+          price: product.selectedVariant.price,
+          image_url: product.image_url,
+          quantity: 1 
+        }];
+      }
+    });
+    setCartMessage(`${product.name} added to cart!`);
+    setTimeout(() => setCartMessage(''), 2000);
   };
 
   const handleQuantityChange = (itemId, amount) => {
-      setCartItems(prevItems =>
-          prevItems.map(item =>
-              item.id === itemId ? { ...item, quantity: Math.max(1, item.quantity + amount) } : item
-          )
-      );
+    setCartItems(prevItems =>
+      prevItems.map(item =>
+        item.id === itemId ? { ...item, quantity: Math.max(1, item.quantity + amount) } : item
+      )
+    );
   };
   
   const handleRemoveFromCart = (itemId) => {
-      setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
+    setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
   };
 
   const handleClearCart = () => setCartItems([]);
@@ -106,21 +111,92 @@ export default function App() {
 
   return (
     <>
-      {cartMessage && <div className="fixed top-24 right-8 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-[60]">{cartMessage}</div>}
+      {cartMessage && (
+        <div className="fixed top-24 right-8 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-[60]">
+          {cartMessage}
+        </div>
+      )}
       <Routes>
+        {/* --- Delivery Partner Routes --- */}
+        <Route path="/delivery/login" element={<DeliveryLoginPage />} />
+        <Route 
+          path="/delivery/dashboard" 
+          element={
+            <DeliveryProtectedRoute>
+              <DeliveryDashboardPage />
+            </DeliveryProtectedRoute>
+          } 
+        />
+
+        {/* --- Admin Routes --- */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminProtectedRoute><AdminPage /></AdminProtectedRoute>} />
+
+        {/* --- User Routes --- */}
         {loggedInUser ? (
-          <Route path="/" element={<Layout loggedInUser={loggedInUser} handleLogout={handleLogout} cartItems={cartItems} />}>
+          <Route 
+            path="/" 
+            element={
+              <Layout 
+                loggedInUser={loggedInUser} 
+                handleLogout={handleLogout} 
+                cartItems={cartItems} 
+              />
+            }
+          >
             <Route index element={<HomePage handleAddToCart={handleAddToCart} />} />
-            <Route path="cart" element={<CartPage cartItems={cartItems} handleQuantityChange={handleQuantityChange} handleRemoveFromCart={handleRemoveFromCart} setCheckoutDetails={setCheckoutDetails} />} />
+            <Route 
+              path="cart" 
+              element={
+                <CartPage 
+                  cartItems={cartItems} 
+                  handleQuantityChange={handleQuantityChange} 
+                  handleRemoveFromCart={handleRemoveFromCart} 
+                  setCheckoutDetails={setCheckoutDetails} 
+                />
+              } 
+            />
             <Route path="coupons" element={<CouponsPage isFirstOrder={isFirstOrder} />} />
-            <Route path="account" element={<AccountPage loggedInUser={loggedInUser} orders={orders} ordersLoading={ordersLoading} handleLogout={handleLogout} />} />
-            <Route path="/account/addresses" element={<ManageAddressPage addresses={addresses} setAddresses={setAddresses} />} />
+            <Route 
+              path="account" 
+              element={
+                <AccountPage 
+                  loggedInUser={loggedInUser} 
+                  orders={orders} 
+                  ordersLoading={ordersLoading} 
+                  handleLogout={handleLogout} 
+                />
+              } 
+            />
+            <Route 
+              path="/account/addresses" 
+              element={<ManageAddressPage addresses={addresses} setAddresses={setAddresses} />} 
+            />
             <Route path="/help" element={<HelpCenterPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/checkout" element={<CheckoutPage user={loggedInUser} addresses={addresses} setAddresses={setAddresses} setCheckoutDetails={setCheckoutDetails} cartItems={cartItems} />} />
-            <Route path="/payment" element={<PaymentPage user={loggedInUser} checkoutDetails={checkoutDetails} handleClearCart={handleClearCart} isFirstOrder={isFirstOrder} />} />
+            <Route 
+              path="/checkout" 
+              element={
+                <CheckoutPage 
+                  user={loggedInUser} 
+                  addresses={addresses} 
+                  setAddresses={setAddresses} 
+                  setCheckoutDetails={setCheckoutDetails} 
+                  cartItems={cartItems} 
+                />
+              } 
+            />
+            <Route 
+              path="/payment" 
+              element={
+                <PaymentPage 
+                  user={loggedInUser} 
+                  checkoutDetails={checkoutDetails} 
+                  handleClearCart={handleClearCart} 
+                  isFirstOrder={isFirstOrder} 
+                />
+              } 
+            />
             <Route path="/order-success" element={<OrderSuccessPage />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Route>

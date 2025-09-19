@@ -57,7 +57,6 @@ export default function CheckoutPage({ user, addresses, setAddresses, setCheckou
     <div className="flex-grow bg-slate-50 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         
-        {/* --- SHIPPING DETAILS (Left Column) --- */}
         <motion.div 
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -104,7 +103,6 @@ export default function CheckoutPage({ user, addresses, setAddresses, setCheckou
           </AnimatePresence>
         </motion.div>
 
-        {/* --- ORDER SUMMARY (Right Column) --- */}
         <motion.div 
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -123,9 +121,10 @@ export default function CheckoutPage({ user, addresses, setAddresses, setCheckou
                 </div>
                 <div className="space-y-4 pt-4 border-t border-gray-200">
                     <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-medium text-gray-900">₹{cartSubtotal.toFixed(2)}</span></div>
-                    <div className="flex justify-between text-gray-600"><span>Shipping</span><span className="font-semibold text-green-600">FREE</span></div>
+                    {/* Shipping line removed from here */}
                     <div className="flex justify-between font-bold text-xl text-gray-800 pt-4 border-t border-gray-200"><span>Total</span><span>₹{cartSubtotal.toFixed(2)}</span></div>
                 </div>
+                 <p className="text-xs text-center text-gray-400 my-4">Final shipping cost will be calculated on the next page.</p>
                 <motion.button 
                     whileHover={{ scale: 1.05 }} 
                     whileTap={{ scale: 0.95 }}
@@ -172,7 +171,7 @@ function NewAddressForm({ setAddresses, setSelectedAddress, setShowNewAddressFor
         try {
             const token = localStorage.getItem('token');
             const newAddress = { label: "Home", value: addressValue };
-            const res = await axios.post('http://localhost:4000/api/addresses', { newAddress }, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/addresses`, { newAddress }, {
                 headers: { 'x-auth-token': token }
             });
             setAddresses(res.data);
