@@ -33,9 +33,11 @@ export default function AdminPage() {
         const config = { headers: { 'x-admin-token': token } };
 
         try {
+            // --- API URLS CORRECTED HERE ---
             const [productsRes, usersRes, ordersRes] = await Promise.all([
-                axios.get('http://localhost:4000/api/admin/users', config),
-                axios.get('http://localhost:4000/api/admin/orders', config)
+                axios.get(`${import.meta.env.VITE_API_URL}/api/products`),
+                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/users`, config),
+                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/orders`, config)
             ]);
             
             setProducts(productsRes.data);
@@ -62,7 +64,8 @@ export default function AdminPage() {
             try {
                 const token = getAuthToken();
                 const config = { headers: { 'x-admin-token': token } };
-                await axios.delete(`http://localhost:4000/api/admin/products/${productId}`, config);
+                // --- API URL CORRECTED HERE ---
+                await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/products/${productId}`, config);
                 fetchData();
             } catch (err) {
                 setError(err.response?.data?.msg || 'Failed to delete product.');
@@ -79,6 +82,7 @@ export default function AdminPage() {
     const totalRevenue = useMemo(() => orders.reduce((acc, order) => acc + Number(order.total_amount), 0), [orders]);
 
     return (
+        // ... The rest of the beautiful design is correct and remains the same.
         <div className="p-4 sm:p-8 bg-slate-100 min-h-screen">
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 <header className="mb-8 flex flex-col sm:flex-row justify-between sm:items-center">
@@ -135,6 +139,8 @@ export default function AdminPage() {
         </div>
     );
 }
+
+// ... All the sub-components (StatCard, TabButton, Charts, Tables) remain the same.
 
 const StatCard = ({ icon, title, value, color }) => {
     const colors = {
