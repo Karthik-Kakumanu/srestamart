@@ -1,10 +1,11 @@
+// src/pages/AuthPage.jsx
+
 import React, { useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, User, Phone, Lock } from "lucide-react";
 import logoUrl from "../../images/icon.png";
 
-// A beautiful, relevant background image for the branding panel
 const brandingImageUrl = "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2";
 
 export default function AuthPage({ setLoggedInUser }) {
@@ -25,7 +26,8 @@ export default function AuthPage({ setLoggedInUser }) {
 
     try {
       if (isLoginView) {
-        const res = await axios.post("http://localhost:4000/api/login", {
+        // --- FIX WAS HERE ---
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/login`, {
           phone,
           password,
         });
@@ -33,7 +35,8 @@ export default function AuthPage({ setLoggedInUser }) {
         localStorage.setItem("token", res.data.token);
         setLoggedInUser(res.data.user);
       } else {
-        const res = await axios.post("http://localhost:4000/api/register", {
+        // --- FIX WAS HERE ---
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/register`, {
           name,
           phone,
           password,
@@ -51,8 +54,8 @@ export default function AuthPage({ setLoggedInUser }) {
   };
 
   return (
+    // ... The rest of the page's beautiful design is correct and remains the same.
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-100">
-        {/* --- BRANDING PANEL --- */}
         <div 
             className="w-full md:w-1/2 lg:w-3/5 min-h-[50vh] md:min-h-screen flex flex-col justify-between p-8 sm:p-12 text-white relative bg-cover bg-center"
             style={{ backgroundImage: `url(${brandingImageUrl})` }}
@@ -78,7 +81,6 @@ export default function AuthPage({ setLoggedInUser }) {
             </motion.div>
         </div>
 
-        {/* --- FORM PANEL --- */}
         <div className="w-full md:w-1/2 lg:w-2/5 flex items-center justify-center p-6 sm:p-12">
              <div className="max-w-md w-full">
                 <motion.div
@@ -98,82 +100,60 @@ export default function AuthPage({ setLoggedInUser }) {
 
                     <AnimatePresence mode="wait">
                     {isLoginView ? (
-                        <motion.form
-                            key="login"
-                            onSubmit={handleSubmit}
-                            initial={{ opacity: 0, x: 50 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -50 }}
-                            transition={{ duration: 0.4 }}
-                            className="space-y-5"
-                        >
-                            <div className="relative">
-                                <label className="text-sm font-medium text-gray-700">Phone Number</label>
-                                <Phone className="absolute left-3.5 top-11 text-gray-400" size={18} />
-                                <input
-                                    type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)}
-                                    className="mt-1 block w-full pl-10 pr-4 py-3 rounded-lg bg-slate-100 border-2 border-transparent focus:border-red-500 focus:ring-0 outline-none transition"
-                                    placeholder="Your Phone Number"
-                                />
-                            </div>
-                            <div className="relative">
-                                <label className="text-sm font-medium text-gray-700">Password</label>
-                                <Lock className="absolute left-3.5 top-11 text-gray-400" size={18} />
-                                <input
-                                    type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
-                                    className="mt-1 block w-full pl-10 pr-10 py-3 rounded-lg bg-slate-100 border-2 border-transparent focus:border-red-500 focus:ring-0 outline-none transition"
-                                    placeholder="••••••••"
-                                />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-10 text-gray-500 hover:text-gray-800">
-                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                </button>
-                            </div>
-                            {error && <p className="text-sm text-red-600 bg-red-100 p-3 rounded-lg">{error}</p>}
-                            {success && <p className="text-sm text-green-600 bg-green-100 p-3 rounded-lg">{success}</p>}
-                            <motion.button
-                                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" disabled={isLoading}
-                                className="w-full py-3 px-4 rounded-lg text-base font-semibold bg-red-600 text-white shadow-lg hover:bg-red-700 disabled:opacity-60 transition-all transform"
-                            >
-                                {isLoading ? "Processing..." : "Sign In"}
-                            </motion.button>
-                        </motion.form>
-                    ) : (
-                        <motion.form
-                            key="signup" onSubmit={handleSubmit} initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }} transition={{ duration: 0.4 }}
-                            className="space-y-5"
-                        >
-                            <div className="relative">
-                                <label className="text-sm font-medium text-gray-700">Full Name</label>
-                                <User className="absolute left-3.5 top-11 text-gray-400" size={18} />
-                                <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                                    className="mt-1 block w-full pl-10 pr-4 py-3 rounded-lg bg-slate-100 border-2 border-transparent focus:border-red-500 focus:ring-0 outline-none transition"
-                                    placeholder="Your Name"
-                                />
-                            </div>
+                        <motion.form key="login" onSubmit={handleSubmit} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} transition={{ duration: 0.4 }} className="space-y-5" >
                             <div className="relative">
                                 <label className="text-sm font-medium text-gray-700">Phone Number</label>
                                 <Phone className="absolute left-3.5 top-11 text-gray-400" size={18} />
                                 <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)}
                                     className="mt-1 block w-full pl-10 pr-4 py-3 rounded-lg bg-slate-100 border-2 border-transparent focus:border-red-500 focus:ring-0 outline-none transition"
-                                    placeholder="Your Phone Number"
-                                />
+                                    placeholder="Your Phone Number" />
                             </div>
                             <div className="relative">
                                 <label className="text-sm font-medium text-gray-700">Password</label>
                                 <Lock className="absolute left-3.5 top-11 text-gray-400" size={18} />
                                 <input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
                                     className="mt-1 block w-full pl-10 pr-10 py-3 rounded-lg bg-slate-100 border-2 border-transparent focus:border-red-500 focus:ring-0 outline-none transition"
-                                    placeholder="Choose a strong password"
-                                />
+                                    placeholder="••••••••" />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-10 text-gray-500 hover:text-gray-800">
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                            {error && <p className="text-sm text-red-600 bg-red-100 p-3 rounded-lg">{error}</p>}
+                            {success && <p className="text-sm text-green-600 bg-green-100 p-3 rounded-lg">{success}</p>}
+                            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" disabled={isLoading}
+                                className="w-full py-3 px-4 rounded-lg text-base font-semibold bg-red-600 text-white shadow-lg hover:bg-red-700 disabled:opacity-60 transition-all transform" >
+                                {isLoading ? "Processing..." : "Sign In"}
+                            </motion.button>
+                        </motion.form>
+                    ) : (
+                        <motion.form key="signup" onSubmit={handleSubmit} initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 50 }} transition={{ duration: 0.4 }} className="space-y-5" >
+                            <div className="relative">
+                                <label className="text-sm font-medium text-gray-700">Full Name</label>
+                                <User className="absolute left-3.5 top-11 text-gray-400" size={18} />
+                                <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
+                                    className="mt-1 block w-full pl-10 pr-4 py-3 rounded-lg bg-slate-100 border-2 border-transparent focus:border-red-500 focus:ring-0 outline-none transition"
+                                    placeholder="Your Name" />
+                            </div>
+                            <div className="relative">
+                                <label className="text-sm font-medium text-gray-700">Phone Number</label>
+                                <Phone className="absolute left-3.5 top-11 text-gray-400" size={18} />
+                                <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)}
+                                    className="mt-1 block w-full pl-10 pr-4 py-3 rounded-lg bg-slate-100 border-2 border-transparent focus:border-red-500 focus:ring-0 outline-none transition"
+                                    placeholder="Your Phone Number" />
+                            </div>
+                            <div className="relative">
+                                <label className="text-sm font-medium text-gray-700">Password</label>
+                                <Lock className="absolute left-3.5 top-11 text-gray-400" size={18} />
+                                <input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
+                                    className="mt-1 block w-full pl-10 pr-10 py-3 rounded-lg bg-slate-100 border-2 border-transparent focus:border-red-500 focus:ring-0 outline-none transition"
+                                    placeholder="Choose a strong password" />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-10 text-gray-500 hover:text-gray-800" >
                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
                             </div>
                             {error && <p className="text-sm text-red-600 bg-red-100 p-3 rounded-lg">{error}</p>}
-                            <motion.button
-                                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" disabled={isLoading}
-                                className="w-full py-3 px-4 rounded-lg text-base font-semibold bg-red-600 text-white shadow-lg hover:bg-red-700 disabled:opacity-60 transition-all transform"
-                            >
+                            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} type="submit" disabled={isLoading}
+                                className="w-full py-3 px-4 rounded-lg text-base font-semibold bg-red-600 text-white shadow-lg hover:bg-red-700 disabled:opacity-60 transition-all transform" >
                                 {isLoading ? "Creating Account..." : "Create Account"}
                             </motion.button>
                         </motion.form>
