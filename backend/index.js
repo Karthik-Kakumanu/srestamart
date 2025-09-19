@@ -4,10 +4,10 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
-const path = require('path'); // Required for serving static files
+const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 4000; // Use Render's port or 4000 locally
+const PORT = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 
 app.use(cors());
@@ -15,9 +15,9 @@ app.use(bodyParser.json());
 
 const { Pool } = require('pg');
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // IMPORTANT: Use environment variable
+  connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false // Required for connecting to cloud databases like Render/Railway
+    rejectUnauthorized: false
   }
 });
 
@@ -302,13 +302,17 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
 
 
 // --- SERVE REACT FRONTEND ---
-// This line must come AFTER all your API routes
+// This code must come AFTER all your API routes
+
+// Get the absolute path to the project root (one level up from /backend)
+const projectRoot = path.join(__dirname, '..');
+
+// Serve static files from the frontend's build directory
 app.use(express.static(path.join(projectRoot, 'frontend', 'dist')));
 
-// This is the catch-all route that sends the React app's index.html
-// for any request that doesn't match an API route
+// The catch-all route sends the main index.html file for any non-API request
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'frontenddist', 'index.html'));
+    res.sendFile(path.join(projectRoot, 'frontend', 'dist', 'index.html'));
 });
 
 
