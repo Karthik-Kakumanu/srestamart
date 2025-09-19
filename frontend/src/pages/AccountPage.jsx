@@ -10,7 +10,6 @@ export default function AccountPage({ loggedInUser, orders, ordersLoading, handl
     <div className="flex-grow bg-slate-50">
       <main className="p-4 sm:p-8">
         <div className="max-w-5xl mx-auto">
-          
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -43,7 +42,6 @@ export default function AccountPage({ loggedInUser, orders, ordersLoading, handl
               {activeTab === 'settings' && <SettingsView handleLogout={handleLogout} />}
             </motion.div>
           </AnimatePresence>
-
         </div>
       </main>
     </div>
@@ -147,7 +145,6 @@ const OrderCard = ({ order }) => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
             <div className="border-t border-gray-100 p-4 sm:p-5 bg-slate-50">
@@ -163,7 +160,6 @@ const OrderCard = ({ order }) => {
                 {order.shipping_address ? `${order.shipping_address.label}: ${order.shipping_address.value}` : 'No address provided.'}
               </p>
 
-              {/* --- NEW: LIVE TRACKING PLACEHOLDER --- */}
               {order.delivery_status === 'Out for Delivery' && (
                 <div className="mt-4 pt-4 border-t">
                     <h4 className="font-semibold text-gray-700">Live Tracking</h4>
