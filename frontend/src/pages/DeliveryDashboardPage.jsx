@@ -3,7 +3,7 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { MapPin, Box, Check, ExternalLink, RefreshCw, RadioTower } from 'lucide-react';
 // ✅ FIXED - Use default export, not named import
-import { jwtDecode } from "https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/jwt-decode.esm.js";
+import { jwtDecode } from 'https://cdn.jsdelivr.net/npm/jwt-decode';
 
 const getPartnerToken = () => localStorage.getItem('deliveryPartnerToken') || '';
 
