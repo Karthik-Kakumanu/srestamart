@@ -1,12 +1,10 @@
 require('dotenv').config();
-
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const path = require('path');
-const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -15,7 +13,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 app.use(cors());
 app.use(bodyParser.json());
 
-// --- DATABASE ---
+const { Pool } = require('pg');
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -27,15 +25,9 @@ const checkAdminToken = (req, res, next) => {
   if (!token) return res.status(401).json({ msg: 'No admin token, authorization denied' });
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    if (decoded.user.isAdmin) {
-      req.user = decoded.user;
-      next();
-    } else {
-      throw new Error('Invalid token type');
-    }
-  } catch (e) {
-    res.status(401).json({ msg: 'Admin token is not valid' });
-  }
+    if (decoded.user.isAdmin) { req.user = decoded.user; next(); }
+    else { throw new Error('Invalid token type'); }
+  } catch (e) { res.status(401).json({ msg: 'Admin token is not valid' }); }
 };
 
 const checkUserToken = (req, res, next) => {
@@ -45,9 +37,7 @@ const checkUserToken = (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
     next();
-  } catch (e) {
-    res.status(401).json({ msg: 'Token is not valid' });
-  }
+  } catch (e) { res.status(401).json({ msg: 'Token is not valid' }); }
 };
 
 const checkPartnerToken = (req, res, next) => {
@@ -57,18 +47,16 @@ const checkPartnerToken = (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.partner = decoded;
     next();
-  } catch (e) {
-    res.status(401).json({ msg: 'Token is not valid' });
-  }
+  } catch (e) { res.status(401).json({ msg: 'Token is not valid' }); }
 };
 
-// ==========================
-// ADMIN ROUTES
-// ==========================
+// --- API ROUTES ---
+
+// --- ADMIN ROUTES ---
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
   if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
-    const payload = { user: { username, isAdmin: true } };
+    const payload = { user: { username: username, isAdmin: true } };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
     res.json({ success: true, token });
   } else {
@@ -78,9 +66,7 @@ app.post('/api/admin/login', (req, res) => {
 
 app.get('/api/admin/users', checkAdminToken, async (req, res) => {
   try {
-    const usersResult = await pool.query(
-      'SELECT id, name, phone, created_at, is_admin, addresses FROM users ORDER BY id ASC'
-    );
+    const usersResult = await pool.query('SELECT id, name, phone, created_at, is_admin, addresses FROM users ORDER BY id ASC');
     res.json(usersResult.rows);
   } catch (err) {
     console.error(err.message);
@@ -95,8 +81,7 @@ app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
         o.id, o.total_amount, o.status, o.created_at, o.items, 
         o.shipping_address, o.delivery_status, o.assigned_to_id,
         u.name as customer_name,
-        dp.name as partner_name,
-        dp.current_location as partner_location
+        dp.name as partner_name
       FROM orders o
       JOIN users u ON o.user_id = u.id
       LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
@@ -112,9 +97,7 @@ app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
 
 app.get('/api/admin/delivery-partners', checkAdminToken, async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, name, phone, current_location, is_available, created_at FROM delivery_partners ORDER BY name ASC'
-    );
+    const result = await pool.query('SELECT id, name FROM delivery_partners ORDER BY name ASC');
     res.json(result.rows);
   } catch (err) {
     console.error(err.message);
@@ -122,43 +105,23 @@ app.get('/api/admin/delivery-partners', checkAdminToken, async (req, res) => {
   }
 });
 
-// MODIFIED: Update partner_name in orders table on assignment
 app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) => {
-    const { partnerId } = req.body;
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-        const partnerRes = await client.query('SELECT name FROM delivery_partners WHERE id = $1', [partnerId]);
-        if (partnerRes.rows.length === 0) {
-            return res.status(404).json({ msg: 'Delivery partner not found.' });
-        }
-        const partnerName = partnerRes.rows[0].name;
-
-        const orderUpdateResult = await client.query(
-            'UPDATE orders SET assigned_to_id = $1, delivery_status = $2, status = $2, partner_name = $3 WHERE id = $4 RETURNING *',
-            [partnerId, 'Assigned', partnerName, req.params.orderId]
-        );
-
-        if (orderUpdateResult.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ msg: 'Order not found.' });
-        }
-        
-        // Set partner as unavailable
-        await client.query('UPDATE delivery_partners SET is_available = false WHERE id = $1', [partnerId]);
-
-        await client.query('COMMIT');
-        res.json(orderUpdateResult.rows[0]);
-    } catch (err) {
-        await client.query('ROLLBACK');
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    } finally {
-        client.release();
+  const { partnerId } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE orders SET assigned_to_id = $1, delivery_status = $2, status = $2 WHERE id = $3 RETURNING *',
+      [partnerId, 'Assigned', req.params.orderId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ msg: 'Order not found.' });
     }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
 });
 
-// --- ADMIN PRODUCT ROUTES ---
 app.post('/api/admin/products', checkAdminToken, async (req, res) => {
   const { product, variant } = req.body;
   if (!product || !product.name || !product.category) {
@@ -167,24 +130,12 @@ app.post('/api/admin/products', checkAdminToken, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const newProductQuery = `
-      INSERT INTO products (name, description, category, image_url) 
-      VALUES ($1, $2, $3, $4) RETURNING *`;
-    const newProduct = await client.query(newProductQuery, [
-      product.name,
-      product.description || '',
-      product.category,
-      product.image_url || null
-    ]);
+    const newProductQuery = `INSERT INTO products (name, description, category, image_url) VALUES ($1, $2, $3, $4) RETURNING *`;
+    const newProduct = await client.query(newProductQuery, [product.name, product.description || '', product.category, product.image_url || null]);
     const createdProduct = newProduct.rows[0];
     if (variant && variant.label && variant.price) {
-      const newVariantQuery = `
-        INSERT INTO product_variants (product_id, label, price) VALUES ($1, $2, $3)`;
-      await client.query(newVariantQuery, [
-        createdProduct.id,
-        variant.label,
-        variant.price
-      ]);
+      const newVariantQuery = `INSERT INTO product_variants (product_id, label, price) VALUES ($1, $2, $3)`;
+      await client.query(newVariantQuery, [createdProduct.id, variant.label, variant.price]);
     }
     await client.query('COMMIT');
     res.status(201).json(createdProduct);
@@ -221,95 +172,15 @@ app.delete('/api/admin/products/:id', checkAdminToken, async (req, res) => {
   }
 });
 
-app.post('/api/admin/variants', checkAdminToken, async (req, res) => {
-  const { product_id, label, price } = req.body;
-  try {
-    const newVariant = await pool.query(
-      'INSERT INTO product_variants (product_id, label, price) VALUES ($1, $2, $3) RETURNING *',
-      [product_id, label, price]
-    );
-    res.status(201).json(newVariant.rows[0]);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.put('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
-  const { label, price } = req.body;
-  try {
-    const updatedVariant = await pool.query(
-      'UPDATE product_variants SET label = $1, price = $2 WHERE id = $3 RETURNING *',
-      [label, price, req.params.id]
-    );
-    res.json(updatedVariant.rows[0]);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.delete('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM product_variants WHERE id = $1', [req.params.id]);
-    res.json({ msg: 'Variant deleted successfully' });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
-
-// NEW: Admin routes for managing delivery partners
-app.post('/api/admin/delivery-partners', checkAdminToken, async (req, res) => {
-    const { name, phone, password } = req.body;
-    try {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        const result = await pool.query(
-            'INSERT INTO delivery_partners (name, phone, password) VALUES ($1, $2, $3) RETURNING id, name, phone',
-            [name, phone, hashedPassword]
-        );
-        res.status(201).json(result.rows[0]);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
-
-app.put('/api/admin/delivery-partners/:id', checkAdminToken, async (req, res) => {
-    const { name, phone } = req.body;
-    try {
-        const result = await pool.query(
-            'UPDATE delivery_partners SET name = $1, phone = $2 WHERE id = $3 RETURNING id, name, phone',
-            [name, phone, req.params.id]
-        );
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
-
-// ==========================
-// DELIVERY PARTNER ROUTES
-// ==========================
+// --- DELIVERY PARTNER ROUTES ---
 app.post('/api/delivery/login', async (req, res) => {
   const { phone, password } = req.body;
-  try {
-    const result = await pool.query('SELECT * FROM delivery_partners WHERE phone = $1', [phone]);
-    if (result.rows.length === 0) {
-      return res.status(401).json({ success: false, msg: 'Invalid credentials' });
-    }
-    const partner = result.rows[0];
-    const isMatch = await bcrypt.compare(password, partner.password);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, msg: 'Invalid credentials' });
-    }
+  if (phone === process.env.DELIVERY_PARTNER_PHONE && password === process.env.DELIVERY_PARTNER_PASSWORD) {
+    const partner = { id: 1, name: "Ravi Kumar" }; // Placeholder for DB query
     const token = jwt.sign({ id: partner.id, name: partner.name }, JWT_SECRET, { expiresIn: '8h' });
-    res.json({ success: true, token, partner: { id: partner.id, name: partner.name } });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    res.json({ success: true, token, partner });
+  } else {
+    res.status(401).json({ success: false, msg: 'Invalid credentials' });
   }
 });
 
@@ -342,35 +213,13 @@ app.put('/api/delivery/orders/:orderId/accept', checkPartnerToken, async (req, r
   }
 });
 
-// NEW: Endpoint for partner to update their location
-app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
-    const { latitude, longitude } = req.body;
-    if (latitude == null || longitude == null) {
-        return res.status(400).json({ msg: 'Latitude and longitude are required.' });
-    }
-    try {
-        await pool.query(
-            'UPDATE delivery_partners SET current_location = $1 WHERE id = $2',
-            [JSON.stringify({ latitude, longitude }), req.partner.id]
-        );
-        res.json({ success: true, msg: 'Location updated.' });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
-
-// ==========================
-// USER ROUTES
-// ==========================
+// --- USER & PUBLIC ROUTES ---
 app.post('/api/register', async (req, res) => {
   const { name, phone, password } = req.body;
-  if (!name || !phone || !password)
-    return res.status(400).json({ msg: 'Please enter all fields' });
+  if (!name || !phone || !password) return res.status(400).json({ msg: 'Please enter all fields' });
   try {
     const userExists = await pool.query('SELECT * FROM users WHERE phone = $1', [phone]);
-    if (userExists.rows.length > 0)
-      return res.status(400).json({ msg: 'User with this phone number already exists' });
+    if (userExists.rows.length > 0) return res.status(400).json({ msg: 'User with this phone number already exists' });
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const newUser = await pool.query(
@@ -379,15 +228,13 @@ app.post('/api/register', async (req, res) => {
     );
     res.status(201).json({ msg: 'User registered successfully!', user: newUser.rows[0] });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error(err.message); res.status(500).send('Server error');
   }
 });
 
 app.post('/api/login', async (req, res) => {
   const { phone, password } = req.body;
-  if (!phone || !password)
-    return res.status(400).json({ msg: 'Please provide phone and password' });
+  if (!phone || !password) return res.status(400).json({ msg: 'Please provide phone and password' });
   try {
     const userResult = await pool.query('SELECT * FROM users WHERE phone = $1', [phone]);
     if (userResult.rows.length === 0) return res.status(400).json({ msg: 'Invalid credentials' });
@@ -395,91 +242,42 @@ app.post('/api/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
     const token = jwt.sign({ id: user.id, name: user.name }, JWT_SECRET, { expiresIn: '3h' });
-    res.json({
-      msg: `Welcome back, ${user.name}!`,
-      token,
-      user: { id: user.id, name: user.name, phone: user.phone, is_admin: user.is_admin }
-    });
+    res.json({ msg: `Welcome back, ${user.name}!`, token, user: { id: user.id, name: user.name, phone: user.phone, is_admin: user.is_admin } });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error(err.message); res.status(500).send('Server error');
   }
 });
 
-// --- PUBLIC PRODUCTS ROUTE ---
 app.get('/api/products', async (req, res) => {
   try {
-    const { category, page = 1, limit = 8 } = req.query;
-    const offset = (page - 1) * limit;
-    let whereClause = '';
-    let params = [];
-    if (category) {
-      whereClause = ' WHERE p.category = $1';
-      params.push(category);
-    }
-    const productsQuery = `
-      SELECT p.id, p.name, p.description, p.category, p.image_url, 
-             v.id as variant_id, v.label, v.price
-      FROM products p 
-      LEFT JOIN product_variants v ON p.id = v.product_id
-      ${whereClause}
-      ORDER BY p.id, v.price
-      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+    const query = `
+      SELECT p.id, p.name, p.description, p.category, p.image_url, v.id as variant_id, v.label, v.price
+      FROM products p LEFT JOIN product_variants v ON p.id = v.product_id ORDER BY p.id, v.price;
     `;
-    params.push(limit, offset);
-    const { rows } = await pool.query(productsQuery, params);
-
+    const { rows } = await pool.query(query);
     const productsMap = new Map();
     rows.forEach(row => {
       if (!productsMap.has(row.id)) {
-        productsMap.set(row.id, {
-          id: row.id,
-          name: row.name,
-          description: row.description,
-          category: row.category,
-          image_url: row.image_url,
-          variants: []
-        });
+        productsMap.set(row.id, { id: row.id, name: row.name, description: row.description, category: row.category, image_url: row.image_url, variants: [] });
       }
       if (row.variant_id) {
-        productsMap.get(row.id).variants.push({
-          id: row.variant_id,
-          label: row.label,
-          price: parseFloat(row.price)
-        });
+        productsMap.get(row.id).variants.push({ id: row.variant_id, label: row.label, price: parseFloat(row.price) });
       }
     });
-    const productsList = Array.from(productsMap.values());
-
-    let countQuery = `SELECT COUNT(DISTINCT p.id) FROM products p${whereClause}`;
-    const countParams = category ? [category] : [];
-    const countRes = await pool.query(countQuery, countParams);
-    const total = parseInt(countRes.rows[0].count);
-    const totalPages = Math.ceil(total / limit);
-
-    const categoriesQuery = 'SELECT DISTINCT category FROM products ORDER BY category';
-    const categoriesRes = await pool.query(categoriesQuery);
-    const categoriesList = categoriesRes.rows.map(row => row.category);
-
-    res.json({
-      products: productsList,
-      totalPages,
-      categories: categoriesList
-    });
+    res.json(Array.from(productsMap.values()));
   } catch (err) {
     console.error("Error fetching products:", err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ msg: 'Server Error while fetching products.' });
   }
 });
 
-// --- USER ADDRESSES ---
 app.get('/api/addresses', checkUserToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT addresses FROM users WHERE id = $1', [req.user.id]);
     res.json(result.rows[0].addresses || []);
-  } catch (err) {
+  } catch(err) {
     console.error(err.message);
-    res.status(500).send('Server error fetching addresses');
+    res.status(500).json({ msg: 'Server error fetching addresses' });
   }
 });
 
@@ -494,94 +292,57 @@ app.post('/api/addresses', checkUserToken, async (req, res) => {
       [JSON.stringify(newAddress), req.user.id]
     );
     res.status(201).json(result.rows[0].addresses);
-  } catch (err) {
+  } catch(err) {
     console.error(err.message);
-    res.status(500).send('Server error adding address');
+    res.status(500).json({ msg: 'Server error adding address' });
   }
 });
 
-// --- USER ORDERS ---
 app.post('/api/orders', checkUserToken, async (req, res) => {
   const { userId, cartItems, shippingAddress, totalAmount } = req.body;
   if (req.user.id !== userId) return res.status(403).json({ msg: 'User not authorized.' });
   try {
     const orderQuery = `
-      INSERT INTO orders (user_id, items, total_amount, shipping_address, status)
-      VALUES ($1, $2, $3, $4, $5) RETURNING id;
+      INSERT INTO orders (user_id, items, total_amount, shipping_address, status, delivery_status)
+      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;
     `;
-    const orderResult = await pool.query(orderQuery, [
-      userId,
-      JSON.stringify(cartItems),
-      totalAmount,
-      shippingAddress,
-      'Processing'
-    ]);
-    res.status(201).json({
-      success: true,
-      orderId: orderResult.rows[0].id,
-      message: 'Order placed successfully!'
-    });
+    const orderResult = await pool.query(orderQuery, [userId, JSON.stringify(cartItems), totalAmount, shippingAddress, 'Processing', 'Pending']);
+    res.status(201).json({ success: true, orderId: orderResult.rows[0].id, message: 'Order placed successfully!' });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error while creating order');
+    res.status(500).json({ msg: 'Server Error while creating order' });
   }
 });
 
-// MODIFIED: Get order details including partner info for tracking
 app.get('/api/orders', checkUserToken, async (req, res) => {
-  const userId = req.user.id;
-  try {
-    const query = `
-      SELECT 
-        o.id, o.total_amount, o.status, o.created_at, o.items, o.shipping_address, o.delivery_status,
-        o.partner_name,
-        dp.current_location as partner_location
-      FROM orders o
-      LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
-      WHERE o.user_id = $1 ORDER BY o.created_at DESC;`;
-    const { rows } = await pool.query(query, [userId]);
-    res.json(rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error fetching orders');
-  }
-});
-
-
-// NEW: Endpoint for a user to get live tracking data for a specific order
-app.get('/api/orders/:orderId/tracking', checkUserToken, async (req, res) => {
+    const userId = req.user.id;
     try {
         const query = `
             SELECT 
-                dp.current_location
+                o.*, 
+                dp.name as partner_name 
             FROM orders o
-            JOIN delivery_partners dp ON o.assigned_to_id = dp.id
-            WHERE o.id = $1 AND o.user_id = $2;
+            LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
+            WHERE o.user_id = $1 
+            ORDER BY o.created_at DESC;
         `;
-        const { rows } = await pool.query(query, [req.params.orderId, req.user.id]);
-        if (rows.length === 0) {
-            return res.status(404).json({ msg: 'Tracking data not found for this order.' });
-        }
-        res.json(rows[0].current_location);
-    } catch (err) {
+        const { rows } = await pool.query(query, [userId]);
+        res.json(rows);
+    } catch(err) {
         console.error(err.message);
-        res.status(500).send('Server error fetching tracking data');
+        res.status(500).send('Server error fetching orders');
     }
 });
 
 
-// ==========================
-// SERVE REACT FRONTEND
-// ==========================
+// --- SERVE REACT FRONTEND ---
 const projectRoot = path.join(__dirname, '..');
 app.use(express.static(path.join(projectRoot, 'frontend', 'dist')));
 app.get('*', (req, res) => {
-  res.sendFile(path.join(projectRoot, 'frontend', 'dist', 'index.html'));
+    res.sendFile(path.join(projectRoot, 'frontend', 'dist', 'index.html'));
 });
 
-// ==========================
-// START SERVER
-// ==========================
+
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} at Sresta Mart.`);
+    console.log(`Server running on port ${PORT} at Sresta Mart.`);
 });

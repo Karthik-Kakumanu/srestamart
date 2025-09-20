@@ -51,14 +51,9 @@ export default function App() {
             axios.get(`${import.meta.env.VITE_API_URL}/api/orders`, config),
             axios.get(`${import.meta.env.VITE_API_URL}/api/addresses`, config)
           ]);
-
-          const fetchedOrders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
-          const fetchedAddresses = Array.isArray(addressesRes.data) ? addressesRes.data : [];
-
-          setOrders(fetchedOrders);
-          setAddresses(fetchedAddresses);
-          setIsFirstOrder(fetchedOrders.length === 0);
-
+          setOrders(ordersRes.data);
+          setAddresses(addressesRes.data);
+          setIsFirstOrder(ordersRes.data.length === 0);
         } catch (error) {
           console.error("Failed to fetch user data:", error);
           if (error.response && error.response.status === 401) handleLogout();
