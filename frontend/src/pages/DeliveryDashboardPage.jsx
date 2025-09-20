@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { MapPin, Box, Check, ExternalLink, RefreshCw, RadioTower } from 'lucide-react';
-import jwtDecode from 'jwt-decode'; // Consistent camelCase
+// CORRECT - This asks for the specific "jwtDecode" export
+import { jwtDecode } from 'jwt-decode';
 
 const getPartnerToken = () => localStorage.getItem('deliveryPartnerToken') || '';
 
