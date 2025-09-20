@@ -175,12 +175,31 @@ app.delete('/api/admin/products/:id', checkAdminToken, async (req, res) => {
 // --- DELIVERY PARTNER ROUTES ---
 app.post('/api/delivery/login', async (req, res) => {
   const { phone, password } = req.body;
-  if (phone === process.env.DELIVERY_PARTNER_PHONE && password === process.env.DELIVERY_PARTNER_PASSWORD) {
-    const partner = { id: 1, name: "Ravi Kumar" }; // Placeholder for DB query
-    const token = jwt.sign({ id: partner.id, name: partner.name }, JWT_SECRET, { expiresIn: '8h' });
-    res.json({ success: true, token, partner });
-  } else {
-    res.status(401).json({ success: false, msg: 'Invalid credentials' });
+
+  try {
+    // First, attempt to authenticate using the database
+    const dbResult = await pool.query('SELECT id, name, password FROM delivery_partners WHERE phone = $1', [phone]);
+    if (dbResult.rows.length > 0) {
+      const partner = dbResult.rows[0];
+      // Verify the password against the hashed value using crypt
+      if (await pool.query('SELECT $1 = crypt($2, password) AS match', [password, password])) {
+        const token = jwt.sign({ id: partner.id, name: partner.name }, JWT_SECRET, { expiresIn: '8h' });
+        return res.json({ success: true, token, partner: { id: partner.id, name: partner.name } });
+      }
+    }
+
+    // Fallback: Check against .env credentials if database authentication fails
+    if (phone === process.env.DELIVERY_PARTNER_PHONE && password === process.env.DELIVERY_PARTNER_PASSWORD) {
+      const partner = { id: 1, name: "Sresta Mart Admin" }; // Placeholder for .env-based user
+      const token = jwt.sign({ id: partner.id, name: partner.name }, JWT_SECRET, { expiresIn: '8h' });
+      return res.json({ success: true, token, partner });
+    }
+
+    // If neither authentication method succeeds
+    return res.status(401).json({ success: false, msg: 'Invalid credentials' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
   }
 });
 
