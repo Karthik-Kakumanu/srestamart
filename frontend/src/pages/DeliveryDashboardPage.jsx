@@ -19,6 +19,7 @@ const useLocationTracker = () => {
       axios.put(
         `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/location`,
         { latitude, longitude },
+        // This part is correct, as only partners should send location data.
         { headers: { 'x-partner-token': token } }
       ).catch(err => console.error("Failed to send location:", err));
     };
@@ -56,7 +57,14 @@ export default function DeliveryDashboardPage() {
     setIsLoading(true);
     setError('');
     try {
-      const config = { headers: { 'x-partner-token': token } };
+      // --- START OF FIX ---
+      // 1. Determine the correct header key based on the user's role.
+      const headerKey = userRole === 'admin' ? 'x-admin-token' : 'x-partner-token';
+      
+      // 2. Create the config object with the dynamic header key.
+      const config = { headers: { [headerKey]: token } };
+      // --- END OF FIX ---
+
       let url = `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders`;
 
       if (userRole === 'admin') {
@@ -78,6 +86,7 @@ export default function DeliveryDashboardPage() {
 
   const handleAcceptOrder = async (orderId) => {
     try {
+      // This only needs the partner token, which is correct.
       const config = { headers: { 'x-partner-token': token } };
       await axios.put(
         `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/accept`,
