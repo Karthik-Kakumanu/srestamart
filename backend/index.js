@@ -1,5 +1,3 @@
-// backend/index.js
-
 require('dotenv').config();
 
 const express = require('express');
@@ -297,12 +295,21 @@ app.put('/api/admin/delivery-partners/:id', checkAdminToken, async (req, res) =>
 // ==========================
 app.post('/api/delivery/login', async (req, res) => {
   const { phone, password } = req.body;
-  if (phone === process.env.DELIVERY_PARTNER_PHONE && password === process.env.DELIVERY_PARTNER_PASSWORD) {
-    const partner = { id: 1, name: "Delivery Partner" }; // Placeholder
+  try {
+    const result = await pool.query('SELECT * FROM delivery_partners WHERE phone = $1', [phone]);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, msg: 'Invalid credentials' });
+    }
+    const partner = result.rows[0];
+    const isMatch = await bcrypt.compare(password, partner.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, msg: 'Invalid credentials' });
+    }
     const token = jwt.sign({ id: partner.id, name: partner.name }, JWT_SECRET, { expiresIn: '8h' });
-    res.json({ success: true, token, partner });
-  } else {
-    res.status(401).json({ success: false, msg: 'Invalid credentials' });
+    res.json({ success: true, token, partner: { id: partner.id, name: partner.name } });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
   }
 });
 
@@ -402,14 +409,26 @@ app.post('/api/login', async (req, res) => {
 // --- PUBLIC PRODUCTS ROUTE ---
 app.get('/api/products', async (req, res) => {
   try {
-    const query = `
+    const { category, page = 1, limit = 8 } = req.query;
+    const offset = (page - 1) * limit;
+    let whereClause = '';
+    let params = [];
+    if (category) {
+      whereClause = ' WHERE p.category = $1';
+      params.push(category);
+    }
+    const productsQuery = `
       SELECT p.id, p.name, p.description, p.category, p.image_url, 
              v.id as variant_id, v.label, v.price
       FROM products p 
-      LEFT JOIN product_variants v ON p.id = v.product_id 
-      ORDER BY p.id, v.price;
+      LEFT JOIN product_variants v ON p.id = v.product_id
+      ${whereClause}
+      ORDER BY p.id, v.price
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
-    const { rows } = await pool.query(query);
+    params.push(limit, offset);
+    const { rows } = await pool.query(productsQuery, params);
+
     const productsMap = new Map();
     rows.forEach(row => {
       if (!productsMap.has(row.id)) {
@@ -430,7 +449,23 @@ app.get('/api/products', async (req, res) => {
         });
       }
     });
-    res.json(Array.from(productsMap.values()));
+    const productsList = Array.from(productsMap.values());
+
+    let countQuery = `SELECT COUNT(DISTINCT p.id) FROM products p${whereClause}`;
+    const countParams = category ? [category] : [];
+    const countRes = await pool.query(countQuery, countParams);
+    const total = parseInt(countRes.rows[0].count);
+    const totalPages = Math.ceil(total / limit);
+
+    const categoriesQuery = 'SELECT DISTINCT category FROM products ORDER BY category';
+    const categoriesRes = await pool.query(categoriesQuery);
+    const categoriesList = categoriesRes.rows.map(row => row.category);
+
+    res.json({
+      products: productsList,
+      totalPages,
+      categories: categoriesList
+    });
   } catch (err) {
     console.error("Error fetching products:", err.message);
     res.status(500).send('Server Error');
