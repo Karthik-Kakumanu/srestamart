@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // MODIFIED: Added useRef
 import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Box, Check, ExternalLink, RefreshCw } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { MapPin, Box, Check, ExternalLink, RefreshCw, RadioTower } from 'lucide-react';
 
 const getPartnerToken = () => localStorage.getItem('deliveryPartnerToken');
 
-// NEW: Custom hook for location tracking
+// Custom hook for location tracking
 const useLocationTracker = () => {
     const locationIntervalRef = useRef(null);
 
@@ -50,7 +50,7 @@ export default function DeliveryDashboardPage() {
     const [error, setError] = useState('');
     const partner = JSON.parse(localStorage.getItem('deliveryPartner'));
 
-    // NEW: Activate location tracking
+    // Activate location tracking
     useLocationTracker();
 
     const fetchOrders = async () => {
@@ -83,8 +83,9 @@ export default function DeliveryDashboardPage() {
         }
     };
 
+    // MODIFIED: Corrected Google Maps URL and syntax
     const getGoogleMapsUrl = (address) => {
-        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+        return `https://www.google.com/maps?q=${encodeURIComponent(address)}`;
     };
 
     return (
@@ -94,9 +95,15 @@ export default function DeliveryDashboardPage() {
                     <h1 className="text-4xl font-bold text-gray-800">Delivery Dashboard</h1>
                     <p className="text-gray-500">Welcome, {partner?.name || 'Partner'}!</p>
                 </div>
-                <button onClick={fetchOrders} disabled={isLoading} className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 disabled:opacity-50">
-                    <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
-                </button>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-green-600 font-semibold">
+                        <RadioTower size={20} className="animate-pulse" />
+                        <span>Tracking Active</span>
+                    </div>
+                    <button onClick={fetchOrders} disabled={isLoading} className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 disabled:opacity-50">
+                        <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+                    </button>
+                </div>
             </header>
 
             <main className="max-w-5xl mx-auto">
@@ -152,7 +159,7 @@ export default function DeliveryDashboardPage() {
                                                     <Check size={18} /> Accept Delivery
                                                 </button>
                                             )}
-                                            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.shipping_address.value)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow">
+                                            <a href={getGoogleMapsUrl(order.shipping_address.value)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow">
                                                 <ExternalLink size={18} /> Get Directions
                                             </a>
                                         </div>
