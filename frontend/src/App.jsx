@@ -52,14 +52,11 @@ export default function App() {
             axios.get(`${import.meta.env.VITE_API_URL}/api/addresses`, config)
           ]);
 
-          // MODIFIED: Make data handling robust. Ensure we always have an array.
           const fetchedOrders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
           const fetchedAddresses = Array.isArray(addressesRes.data) ? addressesRes.data : [];
 
           setOrders(fetchedOrders);
           setAddresses(fetchedAddresses);
-          
-          // Now this line is safe because fetchedOrders is guaranteed to be an array.
           setIsFirstOrder(fetchedOrders.length === 0);
 
         } catch (error) {
@@ -69,7 +66,6 @@ export default function App() {
           setOrdersLoading(false);
         }
       } else {
-        // If there's no user, ensure loading is false.
         setOrdersLoading(false);
       }
     };
@@ -123,14 +119,11 @@ export default function App() {
         <Route path="/delivery/login" element={<DeliveryLoginPage />} />
         <Route 
             path="/delivery/dashboard" 
-            element={
-                <DeliveryProtectedRoute>
-                    <DeliveryDashboardPage />
-                </DeliveryProtectedRoute>
-            } 
+            element={<DeliveryProtectedRoute><DeliveryDashboardPage /></DeliveryProtectedRoute>} 
         />
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminProtectedRoute><AdminPage /></AdminProtectedRoute>} />
+        
         {loggedInUser ? (
           <Route path="/" element={<Layout loggedInUser={loggedInUser} handleLogout={handleLogout} cartItems={cartItems} />}>
             <Route index element={<HomePage handleAddToCart={handleAddToCart} />} />

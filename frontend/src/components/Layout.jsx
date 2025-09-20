@@ -4,9 +4,7 @@ import logoUrl from '../../images/icon.png';
 import { Home, ShoppingCart, Tag, User } from 'lucide-react';
 
 export default function Layout({ loggedInUser, handleLogout, cartItems }) {
-  // MODIFIED: Safely calculate cartItemCount
-  // This now checks if cartItems is an array before calling .reduce()
-  // If cartItems is undefined, it uses an empty array [], preventing the crash.
+  // This is now 100% safe. If cartItems is undefined, it uses an empty array.
   const cartItemCount = (Array.isArray(cartItems) ? cartItems : []).reduce((acc, item) => acc + item.quantity, 0);
 
   const activeLinkStyle = { color: '#dc2626' };
@@ -18,7 +16,7 @@ export default function Layout({ loggedInUser, handleLogout, cartItems }) {
           <img src={logoUrl} alt="Sresta Mart Logo" className="h-10 w-auto" />
           <div>
             <h1 className="text-xl font-bold text-gray-800">Sresta Mart</h1>
-            {/* Safely access loggedInUser name to prevent another potential crash */}
+            {/* This is now safe. If loggedInUser is null, it shows 'Guest'. */}
             <p className="text-sm text-gray-600">👋 Hello, {loggedInUser?.name || 'Guest'}!</p>
           </div>
         </div>
