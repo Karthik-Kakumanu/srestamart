@@ -2,12 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { MapPin, Box, Check, ExternalLink, RefreshCw, RadioTower } from 'lucide-react';
-// CORRECT - This asks for the specific "jwtDecode" export
-import { jwtDecode } from 'jwt-decode';
+// ✅ FIXED - Use default export, not named import
+import jwtDecode from 'jwt-decode';
 
 const getPartnerToken = () => localStorage.getItem('deliveryPartnerToken') || '';
 
-// Custom hook for location tracking
 const useLocationTracker = () => {
   const locationIntervalRef = useRef(null);
 
@@ -17,7 +16,8 @@ const useLocationTracker = () => {
       const token = getPartnerToken();
       if (!token) return;
 
-      axios.put(`${process.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/location`, 
+      axios.put(
+        `${process.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/location`,
         { latitude, longitude },
         { headers: { 'x-partner-token': token } }
       ).catch(err => console.error("Failed to send location:", err));
@@ -31,15 +31,13 @@ const useLocationTracker = () => {
       navigator.geolocation.getCurrentPosition(sendLocation, handleError);
       locationIntervalRef.current = setInterval(() => {
         navigator.geolocation.getCurrentPosition(sendLocation, handleError);
-      }, 30000); // 30 seconds
+      }, 30000);
     } else {
       console.error("Geolocation is not supported by this browser.");
     }
 
     return () => {
-      if (locationIntervalRef.current) {
-        clearInterval(locationIntervalRef.current);
-      }
+      if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
     };
   }, []);
 };
@@ -60,7 +58,7 @@ export default function DeliveryDashboardPage() {
     try {
       const config = { headers: { 'x-partner-token': token } };
       let url = `${process.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders`;
-      
+
       if (userRole === 'admin') {
         url = `${process.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/admin/orders`;
       } else if (userRole === 'partner' && partner.id) {
@@ -76,26 +74,27 @@ export default function DeliveryDashboardPage() {
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  useEffect(() => { fetchOrders(); }, []);
 
   const handleAcceptOrder = async (orderId) => {
     try {
       const config = { headers: { 'x-partner-token': token } };
-      await axios.put(`${process.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/accept`, {}, config);
+      await axios.put(
+        `${process.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/accept`,
+        {},
+        config
+      );
       fetchOrders();
     } catch (err) {
       alert("Failed to accept order. Please try again.");
     }
   };
 
-  const getGoogleMapsUrl = (address) => {
-    return `https://www.google.com/maps?q=${encodeURIComponent(address)}`;
-  };
+  const getGoogleMapsUrl = (address) => `https://www.google.com/maps?q=${encodeURIComponent(address)}`;
 
   return (
     <div className="min-h-screen bg-slate-100 p-4 sm:p-8">
+      {/* header */}
       <header className="max-w-5xl mx-auto mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold text-gray-800">Delivery Dashboard</h1>
@@ -106,12 +105,17 @@ export default function DeliveryDashboardPage() {
             <RadioTower size={20} className="animate-pulse" />
             <span>Tracking Active</span>
           </div>
-          <button onClick={fetchOrders} disabled={isLoading} className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 disabled:opacity-50">
+          <button
+            onClick={fetchOrders}
+            disabled={isLoading}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 disabled:opacity-50"
+          >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
           </button>
         </div>
       </header>
 
+      {/* orders list */}
       <main className="max-w-5xl mx-auto">
         {isLoading ? <p>Loading assigned orders...</p> :
          error ? <p className="text-red-500">{error}</p> :
@@ -124,7 +128,7 @@ export default function DeliveryDashboardPage() {
          ) : (
           <div className="space-y-6">
             {orders.map(order => (
-              <motion.div 
+              <motion.div
                 key={order.id}
                 layout
                 initial={{ opacity: 0, y: 20 }}
@@ -161,11 +165,19 @@ export default function DeliveryDashboardPage() {
                     </div>
                     <div className="flex items-center gap-3 self-end md:self-center">
                       {userRole === 'partner' && order.delivery_status === 'Assigned' && (
-                        <button onClick={() => handleAcceptOrder(order.id)} className="flex items-center gap-2 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors shadow">
+                        <button
+                          onClick={() => handleAcceptOrder(order.id)}
+                          className="flex items-center gap-2 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors shadow"
+                        >
                           <Check size={18} /> Accept Delivery
                         </button>
                       )}
-                      <a href={getGoogleMapsUrl(order.shipping_address?.value || '')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow">
+                      <a
+                        href={getGoogleMapsUrl(order.shipping_address?.value || '')}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow"
+                      >
                         <ExternalLink size={18} /> Get Directions
                       </a>
                     </div>
@@ -174,8 +186,7 @@ export default function DeliveryDashboardPage() {
               </motion.div>
             ))}
           </div>
-         )
-        }
+         )}
       </main>
     </div>
   );

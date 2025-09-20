@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sresta Mart</title>
 
-    <!-- ✅ Add this before your main script -->
+    <!-- ✅ jwt-decode CDN for browsers -->
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4/build/jwt-decode.min.js"></script>
     <script>
       window.jwtDecode = window.jwt_decode;
     </script>
   </head>
   <body>
-    <div id="app"></div>
-    <script src="./main.js"></script> <!-- your existing JS file -->
+    <div id="root"></div>
+    <!-- ✅ Use Vite's module script -->
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
