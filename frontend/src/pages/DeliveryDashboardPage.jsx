@@ -3,7 +3,7 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { MapPin, Box, Check, ExternalLink, RefreshCw, RadioTower } from 'lucide-react';
 // ✅ FIXED - Use default export, not named import
-import jwtDecode from 'https://cdn.jsdelivr.net/npm/jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 const getPartnerToken = () => localStorage.getItem('deliveryPartnerToken') || '';
 
@@ -90,7 +90,7 @@ export default function DeliveryDashboardPage() {
     }
   };
 
-  const getGoogleMapsUrl = (address) => `https://www.google.com/maps?q=${encodeURIComponent(address)}`;
+   const getGoogleMapsUrl = (address) => `https://maps.google.com/?q=${encodeURIComponent(address)}`;
 
   return (
     <div className="min-h-screen bg-slate-100 p-4 sm:p-8">
