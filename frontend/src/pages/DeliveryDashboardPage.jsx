@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { MapPin, Box, Check, ExternalLink, RefreshCw, RadioTower } from 'lucide-react';
-// ✅ FIXED - Use default export, not named import
+// ✅ Correctly import the named export 'jwtDecode' for v4+
 import { jwtDecode } from 'jwt-decode';
 
 const getPartnerToken = () => localStorage.getItem('deliveryPartnerToken') || '';
@@ -17,7 +17,7 @@ const useLocationTracker = () => {
       if (!token) return;
 
       axios.put(
-        `${process.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/location`,
+        `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/location`,
         { latitude, longitude },
         { headers: { 'x-partner-token': token } }
       ).catch(err => console.error("Failed to send location:", err));
@@ -57,10 +57,10 @@ export default function DeliveryDashboardPage() {
     setError('');
     try {
       const config = { headers: { 'x-partner-token': token } };
-      let url = `${process.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders`;
+      let url = `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders`;
 
       if (userRole === 'admin') {
-        url = `${process.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/admin/orders`;
+        url = `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/admin/orders`;
       } else if (userRole === 'partner' && partner.id) {
         url += `?partnerId=${partner.id}`;
       }
@@ -80,7 +80,7 @@ export default function DeliveryDashboardPage() {
     try {
       const config = { headers: { 'x-partner-token': token } };
       await axios.put(
-        `${process.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/accept`,
+        `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/accept`,
         {},
         config
       );
@@ -90,7 +90,7 @@ export default function DeliveryDashboardPage() {
     }
   };
 
-   const getGoogleMapsUrl = (address) => `https://maps.google.com/?q=${encodeURIComponent(address)}`;
+   const getGoogleMapsUrl = (address) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
   return (
     <div className="min-h-screen bg-slate-100 p-4 sm:p-8">
