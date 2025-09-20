@@ -50,7 +50,7 @@ export default function DeliveryLoginPage() {
                             <p className="mt-1 text-gray-500">Enter your credentials to view assigned deliveries.</p>
                         </div>
                         <form className="space-y-5" onSubmit={handleSubmit}>
-                           <div className="relative">
+                            <div className="relative">
                                 <label className="text-sm font-medium text-gray-700">Phone Number</label>
                                 <Phone className="absolute left-3.5 top-11 text-gray-400" size={18} />
                                 <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required
@@ -65,7 +65,7 @@ export default function DeliveryLoginPage() {
                             {error && <p className="text-sm text-center text-red-600 bg-red-100 p-3 rounded-lg">{error}</p>}
                             <div>
                                 <button type="submit" disabled={isLoading}
-                                    className="w-full py-3 px-4 rounded-lg text-base font-semibold bg-gray-800 text-white shadow-lg hover:bg-gray-900 disabled:opacity-50">
+                                    className="w-full py-3 px-4 rounded-lg text-base font-semibold bg-red-600 text-white shadow-lg hover:bg-red-700 disabled:opacity-50">
                                     {isLoading ? 'Authenticating...' : 'Sign In'}
                                 </button>
                             </div>
@@ -74,5 +74,5 @@ export default function DeliveryLoginPage() {
                 </div>
             </div>
         </div>
-    );
+    ); 
 }
