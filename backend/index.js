@@ -56,7 +56,7 @@ const checkUserToken = (req, res, next) => {
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
   if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
-    const payload = { id: 1, username: username, role: 'admin' }; // Added role
+    const payload = { id: 1, username: username, role: 'admin' };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
     res.json({ success: true, token });
   } else {
@@ -177,26 +177,22 @@ app.post('/api/delivery/login', async (req, res) => {
   const { phone, password } = req.body;
 
   try {
-    // First, attempt to authenticate using the database
     const dbResult = await pool.query('SELECT id, name, password FROM delivery_partners WHERE phone = $1', [phone]);
     if (dbResult.rows.length > 0) {
       const partner = dbResult.rows[0];
-      // Verify the password against the hashed value using crypt
-      const matchResult = await pool.query('SELECT $1 = crypt($2, password) AS match', [password, password]);
+      const matchResult = await pool.query('SELECT $1 = crypt($1, password) AS match', [password, partner.password]);
       if (matchResult.rows[0].match) {
-        const token = jwt.sign({ id: partner.id, name: partner.name, role: 'partner' }, JWT_SECRET, { expiresIn: '8h' }); // Added role
+        const token = jwt.sign({ id: partner.id, name: partner.name, role: 'partner' }, JWT_SECRET, { expiresIn: '8h' });
         return res.json({ success: true, token, partner: { id: partner.id, name: partner.name } });
       }
     }
 
-    // Fallback: Check against .env credentials if database authentication fails
     if (phone === process.env.DELIVERY_PARTNER_PHONE && password === process.env.DELIVERY_PARTNER_PASSWORD) {
       const partner = { id: 1, name: "Sresta Mart Admin" };
-      const token = jwt.sign({ id: partner.id, name: partner.name, role: 'admin' }, JWT_SECRET, { expiresIn: '8h' }); // Added role
+      const token = jwt.sign({ id: partner.id, name: partner.name, role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
       return res.json({ success: true, token, partner });
     }
 
-    // If neither authentication method succeeds
     return res.status(401).json({ success: false, msg: 'Invalid credentials' });
   } catch (err) {
     console.error(err.message);
@@ -233,6 +229,23 @@ app.put('/api/delivery/orders/:orderId/accept', checkPartnerToken, async (req, r
   }
 });
 
+app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
+  const { latitude, longitude } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE delivery_partners SET last_location = $1 WHERE id = $2 RETURNING *',
+      [`POINT(${longitude} ${latitude})`, req.partner.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ msg: 'Partner not found.' });
+    }
+    res.json({ success: true, location: result.rows[0].last_location });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error updating location');
+  }
+});
+
 // --- USER & PUBLIC ROUTES ---
 app.post('/api/register', async (req, res) => {
   const { name, phone, password } = req.body;
@@ -261,7 +274,7 @@ app.post('/api/login', async (req, res) => {
     const user = userResult.rows[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
-    const token = jwt.sign({ id: user.id, name: user.name, role: user.is_admin ? 'admin' : 'user' }, JWT_SECRET, { expiresIn: '3h' }); // Added role
+    const token = jwt.sign({ id: user.id, name: user.name, role: user.is_admin ? 'admin' : 'user' }, JWT_SECRET, { expiresIn: '3h' });
     res.json({ msg: `Welcome back, ${user.name}!`, token, user: { id: user.id, name: user.name, phone: user.phone, is_admin: user.is_admin } });
   } catch (err) {
     console.error(err.message); res.status(500).send('Server error');
@@ -295,7 +308,7 @@ app.get('/api/addresses', checkUserToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT addresses FROM users WHERE id = $1', [req.user.id]);
     res.json(result.rows[0].addresses || []);
-  } catch(err) {
+  } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: 'Server error fetching addresses' });
   }
@@ -312,7 +325,7 @@ app.post('/api/addresses', checkUserToken, async (req, res) => {
       [JSON.stringify(newAddress), req.user.id]
     );
     res.status(201).json(result.rows[0].addresses);
-  } catch(err) {
+  } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: 'Server error adding address' });
   }
@@ -335,32 +348,31 @@ app.post('/api/orders', checkUserToken, async (req, res) => {
 });
 
 app.get('/api/orders', checkUserToken, async (req, res) => {
-    const userId = req.user.id;
-    try {
-        const query = `
-            SELECT 
-                o.*, 
-                dp.name as partner_name 
-            FROM orders o
-            LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
-            WHERE o.user_id = $1 
-            ORDER BY o.created_at DESC;
-        `;
-        const { rows } = await pool.query(query, [userId]);
-        res.json(rows);
-    } catch(err) {
-        console.error(err.message);
-        res.status(500).send('Server error fetching orders');
-    }
+  const userId = req.user.id;
+  try {
+    const query = `
+      SELECT 
+        o.*, 
+        dp.name as partner_name 
+      FROM orders o
+      LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
+      WHERE o.user_id = $1 
+      ORDER BY o.created_at DESC;
+    `;
+    const { rows } = await pool.query(query, [userId]);
+    res.json(rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error fetching orders');
+  }
 });
 
 // --- SERVE REACT FRONTEND ---
-const projectRoot = path.join(__dirname, '..');
-app.use(express.static(path.join(projectRoot, 'frontend', 'dist')));
+app.use(express.static(path.join('/opt/render/project/src/frontend/dist')));
 app.get('*', (req, res) => {
-    res.sendFile(path.join(projectRoot, 'frontend', 'dist', 'index.html'));
+  res.sendFile(path.join('/opt/render/project/src/frontend/dist/index.html'));
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} at Sresta Mart.`);
+  console.log(`Server running on port ${PORT} at Sresta Mart.`);
 });
