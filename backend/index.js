@@ -77,8 +77,8 @@ app.get('/api/admin/users', checkAdminToken, async (req, res) => {
 app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
   try {
     const query = `
-      SELECT 
-        o.id, o.total_amount, o.status, o.created_at, o.items, 
+      SELECT
+        o.id, o.total_amount, o.status, o.created_at, o.items,
         o.shipping_address, o.delivery_status, o.assigned_to_id,
         u.name as customer_name,
         dp.name as partner_name
@@ -180,13 +180,7 @@ app.post('/api/delivery/login', async (req, res) => {
     const dbResult = await pool.query('SELECT id, name, password FROM delivery_partners WHERE phone = $1', [phone]);
     if (dbResult.rows.length > 0) {
       const partner = dbResult.rows[0];
-
-      // --- START OF FIX ---
-      // The original SQL query for password matching was incorrect.
-      // This new query correctly compares the provided password with the stored hash.
       const matchResult = await pool.query('SELECT crypt($1, $2) = $2 AS match', [password, partner.password]);
-      // --- END OF FIX ---
-
       if (matchResult.rows[0].match) {
         const token = jwt.sign({ id: partner.id, name: partner.name, role: 'partner' }, JWT_SECRET, { expiresIn: '8h' });
         return res.json({ success: true, token, partner: { id: partner.id, name: partner.name } });
@@ -235,12 +229,32 @@ app.put('/api/delivery/orders/:orderId/accept', checkPartnerToken, async (req, r
   }
 });
 
+// ✅ --- NEW --- Route to mark an order as completed
+app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "UPDATE orders SET delivery_status = 'Delivered', status = 'Completed' WHERE id = $1 AND assigned_to_id = $2 RETURNING *",
+      [req.params.orderId, req.partner.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ msg: 'Order not found or not assigned to you.' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// ✅ --- FIXED --- GPS Location Update Route
 app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
   const { latitude, longitude } = req.body;
   try {
+    // FIX: Changed POINT() syntax to standard PostgreSQL point literal '(x, y)'
+    const pointLiteral = `(${longitude}, ${latitude})`;
     const result = await pool.query(
       'UPDATE delivery_partners SET last_location = $1 WHERE id = $2 RETURNING *',
-      [`POINT(${longitude} ${latitude})`, req.partner.id]
+      [pointLiteral, req.partner.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ msg: 'Partner not found.' });
@@ -357,12 +371,12 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
   const userId = req.user.id;
   try {
     const query = `
-      SELECT 
-        o.*, 
-        dp.name as partner_name 
+      SELECT
+        o.*,
+        dp.name as partner_name
       FROM orders o
       LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
-      WHERE o.user_id = $1 
+      WHERE o.user_id = $1
       ORDER BY o.created_at DESC;
     `;
     const { rows } = await pool.query(query, [userId]);

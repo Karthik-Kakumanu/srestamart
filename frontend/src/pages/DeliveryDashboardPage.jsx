@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { MapPin, Box, Check, ExternalLink, RefreshCw, RadioTower } from 'lucide-react';
-// ✅ Correctly import the named export 'jwtDecode' for v4+
+// ✅ --- NEW --- Import CheckCircle icon
+import { MapPin, Box, Check, CheckCircle, ExternalLink, RefreshCw, RadioTower } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 
 const getPartnerToken = () => localStorage.getItem('deliveryPartnerToken') || '';
@@ -19,7 +19,6 @@ const useLocationTracker = () => {
       axios.put(
         `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/location`,
         { latitude, longitude },
-        // This part is correct, as only partners should send location data.
         { headers: { 'x-partner-token': token } }
       ).catch(err => console.error("Failed to send location:", err));
     };
@@ -57,20 +56,13 @@ export default function DeliveryDashboardPage() {
     setIsLoading(true);
     setError('');
     try {
-      // --- START OF FIX ---
-      // 1. Determine the correct header key based on the user's role.
       const headerKey = userRole === 'admin' ? 'x-admin-token' : 'x-partner-token';
-      
-      // 2. Create the config object with the dynamic header key.
       const config = { headers: { [headerKey]: token } };
-      // --- END OF FIX ---
 
       let url = `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders`;
 
       if (userRole === 'admin') {
         url = `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/admin/orders`;
-      } else if (userRole === 'partner' && partner.id) {
-        url += `?partnerId=${partner.id}`;
       }
 
       const res = await axios.get(url, config);
@@ -86,7 +78,6 @@ export default function DeliveryDashboardPage() {
 
   const handleAcceptOrder = async (orderId) => {
     try {
-      // This only needs the partner token, which is correct.
       const config = { headers: { 'x-partner-token': token } };
       await axios.put(
         `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/accept`,
@@ -99,7 +90,36 @@ export default function DeliveryDashboardPage() {
     }
   };
 
-   const getGoogleMapsUrl = (address) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  // ✅ --- NEW --- Function to complete a delivery
+  const handleCompleteOrder = async (orderId) => {
+    try {
+      const config = { headers: { 'x-partner-token': token } };
+      await axios.put(
+        `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/complete`,
+        {},
+        config
+      );
+      fetchOrders();
+    } catch (err) {
+      alert("Failed to complete order. Please try again.");
+    }
+  };
+
+  // ✅ --- FIXED --- Correct Google Maps URL
+  const getGoogleMapsUrl = (address) => `https://maps.google.com/?q=${encodeURIComponent(address)}`;
+
+  const getStatusPill = (status) => {
+    switch (status) {
+      case 'Out for Delivery':
+        return 'bg-blue-100 text-blue-800';
+      case 'Delivered':
+        return 'bg-green-100 text-green-800';
+      case 'Assigned':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 p-4 sm:p-8">
@@ -159,7 +179,7 @@ export default function DeliveryDashboardPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Status</p>
-                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${order.delivery_status === 'Out for Delivery' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${getStatusPill(order.delivery_status)}`}>
                       {order.delivery_status}
                     </span>
                   </div>
@@ -173,12 +193,21 @@ export default function DeliveryDashboardPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 self-end md:self-center">
+                      {/* ✅ --- MODIFIED --- Conditional button rendering */}
                       {userRole === 'partner' && order.delivery_status === 'Assigned' && (
                         <button
                           onClick={() => handleAcceptOrder(order.id)}
                           className="flex items-center gap-2 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors shadow"
                         >
                           <Check size={18} /> Accept Delivery
+                        </button>
+                      )}
+                      {userRole === 'partner' && order.delivery_status === 'Out for Delivery' && (
+                        <button
+                          onClick={() => handleCompleteOrder(order.id)}
+                          className="flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors shadow"
+                        >
+                          <CheckCircle size={18} /> Complete Delivery
                         </button>
                       )}
                       <a
