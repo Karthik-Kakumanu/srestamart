@@ -1,12 +1,18 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sresta Mart - Tangy, Tasty and Always Fresh</title>
+    <title>Sresta Mart</title>
+
+    <!-- ✅ Add this before your main script -->
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4/build/jwt-decode.min.js"></script>
+    <script>
+      window.jwtDecode = window.jwt_decode;
+    </script>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <div id="app"></div>
+    <script src="./main.js"></script> <!-- your existing JS file -->
   </body>
 </html>
