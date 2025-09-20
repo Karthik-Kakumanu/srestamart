@@ -2,6 +2,73 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, XCircle, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
+
+// NEW: Import react-leaflet components
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+
+// NEW: Fix for default marker icon issue with webpack
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
+
+// NEW: Live Tracking Map Component
+const LiveTrackingMap = ({ orderId }) => {
+    const [location, setLocation] = useState(null);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const fetchLocation = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders/${orderId}/tracking`, {
+                    headers: { 'x-auth-token': token }
+                });
+                if (res.data && res.data.latitude && res.data.longitude) {
+                    setLocation([res.data.latitude, res.data.longitude]);
+                } else {
+                    setError('Partner location not available yet.');
+                }
+            } catch (err) {
+                setError('Could not fetch tracking data.');
+                console.error(err);
+            }
+        };
+
+        fetchLocation(); // Fetch immediately
+        const interval = setInterval(fetchLocation, 30000); // And then every 30 seconds
+
+        return () => clearInterval(interval);
+    }, [orderId]);
+
+    if (error) {
+        return <div className="mt-2 p-4 bg-yellow-50 text-yellow-800 rounded-lg">{error}</div>;
+    }
+
+    if (!location) {
+        return <div className="mt-2 p-4 bg-blue-50 text-blue-800 rounded-lg">Loading map and partner location...</div>;
+    }
+
+    return (
+        <div className="mt-4 h-64 w-full rounded-lg overflow-hidden z-0">
+            <MapContainer center={location} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={location}>
+                    <Popup>
+                        Your delivery partner is here.
+                    </Popup>
+                </Marker>
+            </MapContainer>
+        </div>
+    );
+};
 
 export default function AccountPage({ loggedInUser, orders, ordersLoading, handleLogout }) {
   const [activeTab, setActiveTab] = useState('orders');

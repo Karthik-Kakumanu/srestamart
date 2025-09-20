@@ -5,11 +5,53 @@ import { MapPin, Box, Check, ExternalLink, RefreshCw } from 'lucide-react';
 
 const getPartnerToken = () => localStorage.getItem('deliveryPartnerToken');
 
+// NEW: Custom hook for location tracking
+const useLocationTracker = () => {
+    const locationIntervalRef = useRef(null);
+
+    useEffect(() => {
+        const sendLocation = (position) => {
+            const { latitude, longitude } = position.coords;
+            const token = getPartnerToken();
+            if (!token) return;
+
+            axios.put(`${import.meta.env.VITE_API_URL}/api/delivery/location`, 
+                { latitude, longitude },
+                { headers: { 'x-partner-token': token } }
+            ).catch(err => console.error("Failed to send location:", err));
+        };
+
+        const handleError = (error) => {
+            console.warn(`Location Error: ${error.message}`);
+        };
+
+        if (navigator.geolocation) {
+            // Send location immediately and then every 30 seconds
+            navigator.geolocation.getCurrentPosition(sendLocation, handleError);
+            locationIntervalRef.current = setInterval(() => {
+                navigator.geolocation.getCurrentPosition(sendLocation, handleError);
+            }, 30000); // 30 seconds
+        } else {
+            console.error("Geolocation is not supported by this browser.");
+        }
+
+        // Cleanup interval on component unmount
+        return () => {
+            if (locationIntervalRef.current) {
+                clearInterval(locationIntervalRef.current);
+            }
+        };
+    }, []);
+};
+
 export default function DeliveryDashboardPage() {
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const partner = JSON.parse(localStorage.getItem('deliveryPartner'));
+
+    // NEW: Activate location tracking
+    useLocationTracker();
 
     const fetchOrders = async () => {
         setIsLoading(true);
@@ -39,6 +81,10 @@ export default function DeliveryDashboardPage() {
         } catch (err) {
             alert("Failed to accept order. Please try again.");
         }
+    };
+
+    const getGoogleMapsUrl = (address) => {
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
     };
 
     return (

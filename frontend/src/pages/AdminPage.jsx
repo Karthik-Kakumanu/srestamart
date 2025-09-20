@@ -1,12 +1,38 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Users, Package, RefreshCw, PlusCircle, ShoppingCart, ChevronDown, DollarSign, BarChart2, UserCheck } from 'lucide-react';
+import { Users, Package, RefreshCw, PlusCircle, ShoppingCart, DollarSign, BarChart2, Truck, Map, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart as RechartsBarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import EditProductModal from '../components/admin/EditProductModal.jsx';
 import AddProductModal from '../components/admin/AddProductModal.jsx';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import L from 'leaflet';
+
+// Leaflet icon fix to prevent issues with bundlers like Vite/Webpack
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
 
 const getAuthToken = () => localStorage.getItem('adminToken'); 
+
+// Admin Live Map Component for viewing partner location
+const AdminLiveTrackingMap = ({ location }) => {
+    if (!location?.latitude || !location?.longitude) {
+        return <div className="p-2 text-xs bg-gray-200 rounded text-center">No location data available.</div>;
+    }
+    const position = [location.latitude, location.longitude];
+    return (
+        <div className="mt-2 h-48 w-full rounded-lg overflow-hidden z-0">
+            <MapContainer center={position} zoom={14} style={{ height: '100%', width: '100%' }}>
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <Marker position={position} />
+            </MapContainer>
+        </div>
+    );
+};
 
 export default function AdminPage() {
     const [view, setView] = useState('overview');
@@ -17,15 +43,22 @@ export default function AdminPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     
+    // State for Product Modals
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     
+    // State for Order Assignment Modal
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [assigningOrder, setAssigningOrder] = useState(null);
 
+    // State for Delivery Partner Modals
+    const [isAddPartnerModalOpen, setIsAddPartnerModalOpen] = useState(false);
+    const [isEditPartnerModalOpen, setIsEditPartnerModalOpen] = useState(false);
+    const [editingPartner, setEditingPartner] = useState(null);
+
     const fetchData = async () => {
-        setIsLoading(true);
+        if (!isLoading) setIsLoading(false); // Prevent full loader on auto-refresh
         setError('');
         const token = getAuthToken();
         if (!token) {
@@ -57,6 +90,8 @@ export default function AdminPage() {
 
     useEffect(() => {
         fetchData();
+        const intervalId = setInterval(fetchData, 30000); // Auto-refresh every 30 seconds
+        return () => clearInterval(intervalId);
     }, []);
     
     const handleAssignClick = (order) => {
@@ -106,6 +141,19 @@ export default function AdminPage() {
         fetchData();
     };
 
+    const handleAddPartner = () => setIsAddPartnerModalOpen(true);
+
+    const handleEditPartner = (partner) => {
+        setEditingPartner(partner);
+        setIsEditPartnerModalOpen(true);
+    };
+
+    const handleSavePartner = () => {
+        setIsAddPartnerModalOpen(false);
+        setIsEditPartnerModalOpen(false);
+        fetchData();
+    };
+
     const totalRevenue = useMemo(() => orders.reduce((acc, order) => acc + Number(order.total_amount), 0), [orders]);
 
     return (
@@ -132,16 +180,22 @@ export default function AdminPage() {
 
                 <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg">
                     <div className="flex flex-col sm:flex-row items-center justify-between mb-4 border-b border-slate-200">
-                        <div className="flex space-x-2 self-start sm:self-center">
+                        <div className="flex space-x-2 self-start sm:self-center overflow-x-auto pb-2">
                             <TabButton name="Overview" icon={<BarChart2/>} activeView={view} setView={setView} viewId="overview" />
                             <TabButton name="Products" icon={<Package/>} activeView={view} setView={setView} viewId="products" />
                             <TabButton name="Users" icon={<Users/>} activeView={view} setView={setView} viewId="users" />
                             <TabButton name="Orders" icon={<ShoppingCart/>} activeView={view} setView={setView} viewId="orders" />
+                            <TabButton name="Partners" icon={<Truck/>} activeView={view} setView={setView} viewId="partners" />
                         </div>
                         <div className="flex items-center gap-4 mt-4 sm:mt-0 self-end sm:self-center mb-2">
                             {view === 'products' && (
                                 <button onClick={() => setIsAddModalOpen(true)} className="flex items-center text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg px-3 py-2 shadow transition-transform hover:scale-105">
                                     <PlusCircle size={16} className="mr-2"/> Add Product
+                                </button>
+                            )}
+                            {view === 'partners' && (
+                                <button onClick={handleAddPartner} className="flex items-center text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg px-3 py-2 shadow transition-transform hover:scale-105">
+                                    <PlusCircle size={16} className="mr-2"/> Add Partner
                                 </button>
                             )}
                         </div>
@@ -153,7 +207,8 @@ export default function AdminPage() {
                                 view === 'overview' ? <OverviewCharts orders={orders} products={products} /> :
                                 view === 'products' ? <ProductTable products={products} onEdit={handleEditProduct} onDelete={handleDeleteProduct} /> :
                                 view === 'users' ? <UserTable users={users} /> :
-                                <OrdersTable orders={orders} onAssign={handleAssignClick} />
+                                view === 'orders' ? <OrdersTable orders={orders} onAssign={handleAssignClick} /> :
+                                <DeliveryPartnerTable partners={deliveryPartners} onEdit={handleEditPartner} />
                             }
                         </motion.div>
                     </AnimatePresence>
@@ -167,12 +222,15 @@ export default function AdminPage() {
                 {isAssignModalOpen && (
                     <AssignOrderModal 
                         order={assigningOrder}
-                        partners={deliveryPartners}
+                        partners={deliveryPartners.filter(p => p.is_available)}
                         onClose={() => setIsAssignModalOpen(false)}
                         onAssign={handleAssignOrder}
                     />
                 )}
             </AnimatePresence>
+            
+            {isAddPartnerModalOpen && <AddPartnerModal onClose={() => setIsAddPartnerModalOpen(false)} onSave={handleSavePartner} />}
+            {isEditPartnerModalOpen && <EditPartnerModal partner={editingPartner} onClose={() => setIsEditPartnerModalOpen(false)} onSave={handleSavePartner} />}
         </div>
     );
 }
@@ -228,13 +286,13 @@ const OverviewCharts = ({ orders, products }) => {
             <div className="lg:col-span-3 bg-slate-50 p-4 rounded-xl">
                 <h3 className="font-bold text-gray-700 mb-4">Sales Over Time</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={salesData}>
+                    <RechartsBarChart data={salesData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="date" fontSize={12} />
                         <YAxis allowDecimals={false} fontSize={12} />
                         <Tooltip wrapperClassName="!bg-white !border-slate-200 !rounded-lg !shadow-lg" />
                         <Bar dataKey="orders" fill="#ef4444" name="Daily Orders" radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                    </RechartsBarChart>
                 </ResponsiveContainer>
             </div>
             <div className="lg:col-span-2 bg-slate-50 p-4 rounded-xl">
@@ -376,18 +434,24 @@ const OrderRow = ({ order, onAssign }) => {
                     <td colSpan="4" className="p-0">
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
                             <div className="bg-slate-100/80 p-4 m-2 rounded-lg">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                    <div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                                    <div className="md:col-span-2">
                                         <p className="font-bold text-slate-700">Full Item List:</p>
                                         <ul className="list-disc list-inside text-slate-600 mt-1">
                                             {order.items?.map((item, index) => (
                                                 <li key={index}>{item.name} ({item.variantLabel}) - <span className="font-medium">{item.quantity} x ₹{item.price.toFixed(2)}</span></li>
                                             ))}
                                         </ul>
+                                        <p className="font-bold text-slate-700 mt-2">Shipping Details:</p>
+                                        <p className="text-slate-600 mt-1">{order.shipping_address?.label}: {order.shipping_address?.value}</p>
                                     </div>
                                     <div>
-                                        <p className="font-bold text-slate-700">Shipping Details:</p>
-                                        <p className="text-slate-600 mt-1">{order.shipping_address?.label}: {order.shipping_address?.value}</p>
+                                        <p className="font-bold text-slate-700 flex items-center gap-2"><Map size={14}/> Live Location</p>
+                                        {order.delivery_status === 'Out for Delivery' ? (
+                                            <AdminLiveTrackingMap location={order.partner_location} />
+                                        ) : (
+                                            <p className="text-slate-500 mt-2 text-xs">Tracking available when order is out for delivery.</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -398,6 +462,43 @@ const OrderRow = ({ order, onAssign }) => {
         </>
     );
 };
+
+const DeliveryPartnerTable = ({ partners, onEdit }) => (
+    <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+                <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Partner</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Known Location</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+                {partners.map(p => (
+                    <tr key={p.id}>
+                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{p.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-500">{p.phone}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${p.is_available ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                {p.is_available ? 'Available' : 'On Delivery'}
+                            </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {p.current_location ? `${p.current_location.latitude.toFixed(4)}, ${p.current_location.longitude.toFixed(4)}` : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onClick={() => onEdit(p)} className="text-indigo-600 hover:text-indigo-900 flex items-center gap-1">
+                                <Edit size={14}/> Edit
+                            </button>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+);
 
 const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
     const [selectedPartnerId, setSelectedPartnerId] = useState('');
@@ -412,7 +513,7 @@ const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
             >
                 <div className="p-6 border-b">
                     <h2 className="text-xl font-bold text-gray-800">Assign Order #{order.id}</h2>
-                    <p className="text-sm text-gray-500">Select a delivery partner for this order.</p>
+                    <p className="text-sm text-gray-500">Select an available delivery partner for this order.</p>
                 </div>
                 <div className="p-6">
                     <label className="text-sm font-medium text-gray-700">Available Partners</label>
@@ -431,6 +532,105 @@ const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
                         Confirm Assignment
                     </button>
                 </div>
+            </motion.div>
+        </div>
+    );
+};
+
+const AddPartnerModal = ({ onClose, onSave }) => {
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        try {
+            const token = getAuthToken();
+            await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/admin/delivery-partners`,
+                { name, phone, password },
+                { headers: { 'x-admin-token': token } }
+            );
+            onSave();
+        } catch (err) {
+            setError(err.response?.data?.msg || "Failed to add partner.");
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-xl shadow-lg w-full max-w-md">
+                <form onSubmit={handleSubmit}>
+                    <div className="p-6 border-b"><h2 className="text-xl font-bold text-gray-800">Add New Delivery Partner</h2></div>
+                    <div className="p-6 space-y-4">
+                        {error && <p className="text-red-500 text-sm">{error}</p>}
+                        <div>
+                            <label className="text-sm font-medium text-gray-700">Full Name</label>
+                            <input type="text" value={name} onChange={e => setName(e.target.value)} required className="mt-1 block w-full border border-gray-300 rounded-md p-2" />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-gray-700">Phone Number</label>
+                            <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required className="mt-1 block w-full border border-gray-300 rounded-md p-2" />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-gray-700">Password</label>
+                            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="mt-1 block w-full border border-gray-300 rounded-md p-2" />
+                        </div>
+                    </div>
+                    <div className="p-4 bg-slate-50 flex justify-end gap-3 rounded-b-xl">
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">Cancel</button>
+                        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">Save Partner</button>
+                    </div>
+                </form>
+            </motion.div>
+        </div>
+    );
+};
+
+const EditPartnerModal = ({ partner, onClose, onSave }) => {
+    const [name, setName] = useState(partner.name);
+    const [phone, setPhone] = useState(partner.phone);
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        try {
+            const token = getAuthToken();
+            await axios.put(
+                `${import.meta.env.VITE_API_URL}/api/admin/delivery-partners/${partner.id}`,
+                { name, phone },
+                { headers: { 'x-admin-token': token } }
+            );
+            onSave();
+        } catch (err) {
+            setError(err.response?.data?.msg || "Failed to update partner.");
+        }
+    };
+    
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-xl shadow-lg w-full max-w-md">
+                <form onSubmit={handleSubmit}>
+                    <div className="p-6 border-b"><h2 className="text-xl font-bold text-gray-800">Edit Delivery Partner</h2></div>
+                    <div className="p-6 space-y-4">
+                        {error && <p className="text-red-500 text-sm">{error}</p>}
+                        <div>
+                            <label className="text-sm font-medium text-gray-700">Full Name</label>
+                            <input type="text" value={name} onChange={e => setName(e.target.value)} required className="mt-1 block w-full border border-gray-300 rounded-md p-2" />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium text-gray-700">Phone Number</label>
+                            <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required className="mt-1 block w-full border border-gray-300 rounded-md p-2" />
+                        </div>
+                    </div>
+                    <div className="p-4 bg-slate-50 flex justify-end gap-3 rounded-b-xl">
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">Cancel</button>
+                        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">Update Partner</button>
+                    </div>
+                </form>
             </motion.div>
         </div>
     );

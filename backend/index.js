@@ -97,7 +97,8 @@ app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
         o.id, o.total_amount, o.status, o.created_at, o.items, 
         o.shipping_address, o.delivery_status, o.assigned_to_id,
         u.name as customer_name,
-        dp.name as partner_name
+        dp.name as partner_name,
+        dp.current_location as partner_location
       FROM orders o
       JOIN users u ON o.user_id = u.id
       LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
@@ -114,7 +115,7 @@ app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
 app.get('/api/admin/delivery-partners', checkAdminToken, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, name FROM delivery_partners ORDER BY name ASC'
+      'SELECT id, name, phone, current_location, is_available, created_at FROM delivery_partners ORDER BY name ASC'
     );
     res.json(result.rows);
   } catch (err) {
@@ -123,21 +124,40 @@ app.get('/api/admin/delivery-partners', checkAdminToken, async (req, res) => {
   }
 });
 
+// MODIFIED: Update partner_name in orders table on assignment
 app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) => {
-  const { partnerId } = req.body;
-  try {
-    const result = await pool.query(
-      'UPDATE orders SET assigned_to_id = $1, delivery_status = $2, status = $2 WHERE id = $3 RETURNING *',
-      [partnerId, 'Assigned', req.params.orderId]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ msg: 'Order not found.' });
+    const { partnerId } = req.body;
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const partnerRes = await client.query('SELECT name FROM delivery_partners WHERE id = $1', [partnerId]);
+        if (partnerRes.rows.length === 0) {
+            return res.status(404).json({ msg: 'Delivery partner not found.' });
+        }
+        const partnerName = partnerRes.rows[0].name;
+
+        const orderUpdateResult = await client.query(
+            'UPDATE orders SET assigned_to_id = $1, delivery_status = $2, status = $2, partner_name = $3 WHERE id = $4 RETURNING *',
+            [partnerId, 'Assigned', partnerName, req.params.orderId]
+        );
+
+        if (orderUpdateResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ msg: 'Order not found.' });
+        }
+        
+        // Set partner as unavailable
+        await client.query('UPDATE delivery_partners SET is_available = false WHERE id = $1', [partnerId]);
+
+        await client.query('COMMIT');
+        res.json(orderUpdateResult.rows[0]);
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    } finally {
+        client.release();
     }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
 });
 
 // --- ADMIN PRODUCT ROUTES ---
@@ -241,6 +261,37 @@ app.delete('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
   }
 });
 
+// NEW: Admin routes for managing delivery partners
+app.post('/api/admin/delivery-partners', checkAdminToken, async (req, res) => {
+    const { name, phone, password } = req.body;
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const result = await pool.query(
+            'INSERT INTO delivery_partners (name, phone, password) VALUES ($1, $2, $3) RETURNING id, name, phone',
+            [name, phone, hashedPassword]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+app.put('/api/admin/delivery-partners/:id', checkAdminToken, async (req, res) => {
+    const { name, phone } = req.body;
+    try {
+        const result = await pool.query(
+            'UPDATE delivery_partners SET name = $1, phone = $2 WHERE id = $3 RETURNING id, name, phone',
+            [name, phone, req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 // ==========================
 // DELIVERY PARTNER ROUTES
 // ==========================
@@ -282,6 +333,24 @@ app.put('/api/delivery/orders/:orderId/accept', checkPartnerToken, async (req, r
     console.error(err.message);
     res.status(500).send('Server Error');
   }
+});
+
+// NEW: Endpoint for partner to update their location
+app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
+    const { latitude, longitude } = req.body;
+    if (latitude == null || longitude == null) {
+        return res.status(400).json({ msg: 'Latitude and longitude are required.' });
+    }
+    try {
+        await pool.query(
+            'UPDATE delivery_partners SET current_location = $1 WHERE id = $2',
+            [JSON.stringify({ latitude, longitude }), req.partner.id]
+        );
+        res.json({ success: true, msg: 'Location updated.' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
 });
 
 // ==========================
@@ -423,13 +492,18 @@ app.post('/api/orders', checkUserToken, async (req, res) => {
   }
 });
 
+// MODIFIED: Get order details including partner info for tracking
 app.get('/api/orders', checkUserToken, async (req, res) => {
   const userId = req.user.id;
   try {
     const query = `
-      SELECT id, total_amount, status, created_at, items, shipping_address 
-      FROM orders 
-      WHERE user_id = $1 ORDER BY created_at DESC;`;
+      SELECT 
+        o.id, o.total_amount, o.status, o.created_at, o.items, o.shipping_address, o.delivery_status,
+        o.partner_name,
+        dp.current_location as partner_location
+      FROM orders o
+      LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
+      WHERE o.user_id = $1 ORDER BY o.created_at DESC;`;
     const { rows } = await pool.query(query, [userId]);
     res.json(rows);
   } catch (err) {
@@ -437,6 +511,29 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
     res.status(500).send('Server error fetching orders');
   }
 });
+
+
+// NEW: Endpoint for a user to get live tracking data for a specific order
+app.get('/api/orders/:orderId/tracking', checkUserToken, async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                dp.current_location
+            FROM orders o
+            JOIN delivery_partners dp ON o.assigned_to_id = dp.id
+            WHERE o.id = $1 AND o.user_id = $2;
+        `;
+        const { rows } = await pool.query(query, [req.params.orderId, req.user.id]);
+        if (rows.length === 0) {
+            return res.status(404).json({ msg: 'Tracking data not found for this order.' });
+        }
+        res.json(rows[0].current_location);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error fetching tracking data');
+    }
+});
+
 
 // ==========================
 // SERVE REACT FRONTEND

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, BrainCircuit, Bone, GitCommitVertical, Users, Map } from 'lucide-react';
+import { Heart, BrainCircuit, Bone } from 'lucide-react';
 
 const CATEGORY_ORDER = ['livebirds', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets'];
+const PRODUCTS_PER_PAGE = 8; // How many products to load at a time
+const BANNER_POSITION = 4;   // Display banner after the 4th product on the first page
 
 const categoryBanners = {
     livebirds: {
@@ -173,7 +175,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className="relative h-80 lg:h-full rounded-2xl shadow-2xl"
             >
-                 <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-2xl" />
+               <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-2xl" />
             </motion.div>
         </div>
     </motion.section>
@@ -184,7 +186,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     const selectedVariantId = selectedVariants[product.id];
     const currentVariant = hasVariants ? product.variants.find(v => v.id == selectedVariantId) : null;
     const currentPrice = currentVariant ? currentVariant.price : 'N/A';
-  
+ 
     return (
       <motion.div 
         variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
@@ -245,69 +247,104 @@ const SkeletonCard = () => (
     </div>
 );
 
+
 export default function HomePage({ handleAddToCart }) {
-  const [allProducts, setAllProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
+  // State for pagination
+  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [productsLoading, setProductsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Separate loading states for clarity
+  const [isInitialLoading, setIsInitialLoading] = useState(true); // For the very first load or category change
+  const [isLoadingMore, setIsLoadingMore] = useState(false); // For the "Load More" button
+
   const [error, setError] = useState('');
   const [selectedVariants, setSelectedVariants] = useState({});
-  const BANNER_POSITION = 4;
 
-  const categoryVideos = {
-    livebirds: "/videos/eggs.mp4", dryfruits: "/videos/dryfruits.mp4", dairy: "/videos/dairy.mp4",
-    oils: "/videos/oils.mp4", millets: "/videos/millets.mp4", pickles: "/videos/pickles.mp4",
-    meat: "/videos/meat.mp4",
+  // A single, generic background video for better performance
+  const backgroundVideo = "/videos/generic-background.mp4"; 
+
+  // Centralized function to fetch products
+  const fetchProductsAndCategories = async (category, page) => {
+    // Determine loading state
+    if (page === 1) {
+      setIsInitialLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
+    setError('');
+
+    try {
+      // API call with pagination and category filtering
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`, {
+        params: {
+          category: category,
+          page: page,
+          limit: PRODUCTS_PER_PAGE,
+        }
+      });
+
+      const { products: fetchedProducts, totalPages: fetchedTotalPages, categories: fetchedCategories } = res.data;
+      
+      // Set categories only on the very first load
+      if (categories.length === 0 && fetchedCategories) {
+        const sortedCategories = fetchedCategories.sort((a, b) => CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b));
+        setCategories(sortedCategories);
+        // Set the default category if not already set
+        if (!selectedCategory) {
+          setSelectedCategory(sortedCategories[0]);
+        }
+      }
+
+      // Append products if loading more, otherwise replace them
+      setProducts(prev => page === 1 ? fetchedProducts : [...prev, ...fetchedProducts]);
+      setTotalPages(fetchedTotalPages);
+      setCurrentPage(page);
+
+      // Initialize default variants for newly fetched products
+      const newVariants = {};
+      fetchedProducts.forEach(p => {
+        if (p.variants && p.variants.length > 0) {
+          newVariants[p.id] = p.variants[0].id;
+        }
+      });
+      setSelectedVariants(prev => ({ ...prev, ...newVariants }));
+
+    } catch (err) {
+      setError('Failed to load products. ' + (err.message || 'Please try again.'));
+    } finally {
+      setIsInitialLoading(false);
+      setIsLoadingMore(false);
+    }
   };
 
+  // EFFECT: Fetch categories and initial products on component mount
   useEffect(() => {
-    const fetchProducts = async () => {
-      setProductsLoading(true);
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`);
-        const products = res.data.map(p => ({ ...p, category: p.category.toLowerCase().replace(/\s+/g, '') }));
-        setAllProducts(products);
-        
-        const uniqueFetchedCategories = [...new Set(products.map(p => p.category))];
-        const sortedCategories = uniqueFetchedCategories.sort((a, b) => CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b));
-        setCategories(sortedCategories);
+    const initialCategory = CATEGORY_ORDER[0];
+    setSelectedCategory(initialCategory);
+    fetchProductsAndCategories(initialCategory, 1);
+  }, []); // Runs only once
 
-        if (sortedCategories.length > 0) {
-          const defaultCategory = selectedCategory || sortedCategories[0];
-          setSelectedCategory(defaultCategory);
-          setFilteredProducts(products.filter(p => p.category === defaultCategory));
-        } else {
-          setFilteredProducts(products);
-        }
-
-        const initialVariants = {};
-        products.forEach(p => {
-          if (p.variants && p.variants.length > 0) {
-            initialVariants[p.id] = p.variants[0].id;
-          }
-        });
-        setSelectedVariants(initialVariants);
-      } catch (err) {
-        setError('Failed to load products. ' + (err.message || ''));
-      } finally {
-        setProductsLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
-
+  // HANDLER: For changing product variants
   const handleVariantChange = (productId, variantId) => {
     setSelectedVariants(prev => ({ ...prev, [productId]: parseInt(variantId, 10) }));
   };
 
+  // HANDLER: For changing category
   const handleFilterChange = (category) => {
+    if (category === selectedCategory) return; // Do nothing if the same category is clicked
     setSelectedCategory(category);
-    setProductsLoading(true);
-    setTimeout(() => {
-        setFilteredProducts(allProducts.filter(p => p.category === category));
-        setProductsLoading(false);
-    }, 300);
+    setProducts([]); // Clear current products immediately for a snappier UI
+    fetchProductsAndCategories(category, 1);
+  };
+
+  // HANDLER: For the "Load More" button
+  const handleLoadMore = () => {
+    if (currentPage < totalPages && !isLoadingMore) {
+      fetchProductsAndCategories(selectedCategory, currentPage + 1);
+    }
   };
   
   const productGridVariants = {
@@ -318,20 +355,20 @@ export default function HomePage({ handleAddToCart }) {
   const currentBannerData = categoryBanners[selectedCategory];
   const currentFeatureData = categoryFeatures[selectedCategory];
 
-  const productsBeforeBanner = filteredProducts.slice(0, BANNER_POSITION);
-  const productsAfterBanner = filteredProducts.slice(BANNER_POSITION);
+  // Logic to inject banner only on the first page
+  const showBanner = currentPage === 1 && products.length > BANNER_POSITION;
+  const productsBeforeBanner = showBanner ? products.slice(0, BANNER_POSITION) : products;
+  const productsAfterBanner = showBanner ? products.slice(BANNER_POSITION) : [];
 
   return (
     <div className="flex-grow bg-slate-50">
       <style>{`.text-shadow { text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7); }`}</style>
-
-      {categoryVideos[selectedCategory] && (
-        <>
-          <video key={selectedCategory} autoPlay loop muted playsInline className="fixed top-0 left-0 w-full h-full object-cover -z-20" style={{ opacity: 0.2 }} />
-          <div className="fixed top-0 left-0 w-full h-full bg-black/40 -z-10"></div>
-        </>
-      )}
-
+      
+      <video autoPlay loop muted playsInline className="fixed top-0 left-0 w-full h-full object-cover -z-20" style={{ opacity: 0.2 }}>
+        <source src={backgroundVideo} type="video/mp4" />
+      </video>
+      <div className="fixed top-0 left-0 w-full h-full bg-black/40 -z-10"></div>
+      
       <div className="relative z-10">
         <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/50 to-transparent">
             <motion.h2 initial={{opacity: 0, y: -20}} animate={{opacity: 1, y: 0}} className="text-4xl sm:text-5xl font-bold text-white text-center text-shadow">
@@ -354,14 +391,14 @@ export default function HomePage({ handleAddToCart }) {
         {error && <p className="text-center text-red-300 bg-red-900/50 p-3 rounded-lg">{error}</p>}
         
         <motion.div
-            key={selectedCategory}
+            key={selectedCategory} // Re-trigger animations when category changes
             initial="hidden"
             animate="visible"
             variants={productGridVariants}
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
         >
-            {productsLoading ? (
-                [...Array(8)].map((_, i) => <SkeletonCard key={i} />)
+            {isInitialLoading ? (
+                [...Array(PRODUCTS_PER_PAGE)].map((_, i) => <SkeletonCard key={i} />)
             ) : (
                 <>
                     {productsBeforeBanner.map((product) => (
@@ -369,7 +406,7 @@ export default function HomePage({ handleAddToCart }) {
                     ))}
                     
                     <AnimatePresence>
-                        {currentBannerData && productsAfterBanner.length > 0 && <CategoryBanner {...currentBannerData} />}
+                        {showBanner && <CategoryBanner {...currentBannerData} />}
                     </AnimatePresence>
                     
                     {productsAfterBanner.map((product) => (
@@ -378,9 +415,23 @@ export default function HomePage({ handleAddToCart }) {
                 </>
             )}
         </motion.div>
+
+        <div className="text-center mt-12">
+            { !isInitialLoading && currentPage < totalPages && (
+                <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleLoadMore}
+                    disabled={isLoadingMore}
+                    className="bg-red-600 text-white font-bold py-3 px-8 rounded-full hover:bg-red-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {isLoadingMore ? "Loading..." : "Load More Products"}
+                </motion.button>
+            )}
+        </div>
         
         <AnimatePresence>
-            {!productsLoading && currentFeatureData && <CategoryFeatureSection {...currentFeatureData} />}
+            {!isInitialLoading && currentFeatureData && <CategoryFeatureSection {...currentFeatureData} />}
         </AnimatePresence>
       </main>
     </div>
