@@ -180,7 +180,13 @@ app.post('/api/delivery/login', async (req, res) => {
     const dbResult = await pool.query('SELECT id, name, password FROM delivery_partners WHERE phone = $1', [phone]);
     if (dbResult.rows.length > 0) {
       const partner = dbResult.rows[0];
-      const matchResult = await pool.query('SELECT $1 = crypt($1, password) AS match', [password, partner.password]);
+
+      // --- START OF FIX ---
+      // The original SQL query for password matching was incorrect.
+      // This new query correctly compares the provided password with the stored hash.
+      const matchResult = await pool.query('SELECT crypt($1, $2) = $2 AS match', [password, partner.password]);
+      // --- END OF FIX ---
+
       if (matchResult.rows[0].match) {
         const token = jwt.sign({ id: partner.id, name: partner.name, role: 'partner' }, JWT_SECRET, { expiresIn: '8h' });
         return res.json({ success: true, token, partner: { id: partner.id, name: partner.name } });
