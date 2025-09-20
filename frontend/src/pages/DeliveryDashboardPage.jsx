@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'; // MODIFIED: Added useRef
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { MapPin, Box, Check, ExternalLink, RefreshCw, RadioTower } from 'lucide-react';
+import jwtDecode from 'jwt-decode'; // Add this dependency: npm install jwt-decode
 
 const getPartnerToken = () => localStorage.getItem('deliveryPartnerToken');
 
@@ -26,7 +27,6 @@ const useLocationTracker = () => {
         };
 
         if (navigator.geolocation) {
-            // Send location immediately and then every 30 seconds
             navigator.geolocation.getCurrentPosition(sendLocation, handleError);
             locationIntervalRef.current = setInterval(() => {
                 navigator.geolocation.getCurrentPosition(sendLocation, handleError);
@@ -35,7 +35,6 @@ const useLocationTracker = () => {
             console.error("Geolocation is not supported by this browser.");
         }
 
-        // Cleanup interval on component unmount
         return () => {
             if (locationIntervalRef.current) {
                 clearInterval(locationIntervalRef.current);
@@ -49,6 +48,8 @@ export default function DeliveryDashboardPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const partner = JSON.parse(localStorage.getItem('deliveryPartner'));
+    const token = getPartnerToken();
+    const userRole = token ? jwtDecode(token).role : null; // Decode token to get role
 
     // Activate location tracking
     useLocationTracker();
@@ -57,9 +58,17 @@ export default function DeliveryDashboardPage() {
         setIsLoading(true);
         setError('');
         try {
-            const token = getPartnerToken();
             const config = { headers: { 'x-partner-token': token } };
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/delivery/orders`, config);
+            let url = `${import.meta.env.VITE_API_URL}/api/delivery/orders`;
+            
+            // Adjust URL based on role
+            if (userRole === 'admin') {
+                url = `${import.meta.env.VITE_API_URL}/api/admin/orders`; // Assume admin endpoint
+            } else if (userRole === 'partner' && partner?.id) {
+                url += `?partnerId=${partner.id}`; // Filter by partner ID for partners
+            }
+
+            const res = await axios.get(url, config);
             setOrders(res.data);
         } catch (err) {
             setError(err.response?.data?.msg || "Failed to fetch orders.");
@@ -74,7 +83,6 @@ export default function DeliveryDashboardPage() {
 
     const handleAcceptOrder = async (orderId) => {
         try {
-            const token = getPartnerToken();
             const config = { headers: { 'x-partner-token': token } };
             await axios.put(`${import.meta.env.VITE_API_URL}/api/delivery/orders/${orderId}/accept`, {}, config);
             fetchOrders(); // Refresh list to show updated status
@@ -83,7 +91,6 @@ export default function DeliveryDashboardPage() {
         }
     };
 
-    // MODIFIED: Corrected Google Maps URL and syntax
     const getGoogleMapsUrl = (address) => {
         return `https://www.google.com/maps?q=${encodeURIComponent(address)}`;
     };
@@ -154,7 +161,7 @@ export default function DeliveryDashboardPage() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 self-end md:self-center">
-                                            {order.delivery_status === 'Assigned' && (
+                                            {userRole === 'partner' && order.delivery_status === 'Assigned' && (
                                                 <button onClick={() => handleAcceptOrder(order.id)} className="flex items-center gap-2 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors shadow">
                                                     <Check size={18} /> Accept Delivery
                                                 </button>

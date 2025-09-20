@@ -25,9 +25,19 @@ const checkAdminToken = (req, res, next) => {
   if (!token) return res.status(401).json({ msg: 'No admin token, authorization denied' });
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    if (decoded.user.isAdmin) { req.user = decoded.user; next(); }
+    if (decoded.role === 'admin') { req.user = decoded; next(); }
     else { throw new Error('Invalid token type'); }
   } catch (e) { res.status(401).json({ msg: 'Admin token is not valid' }); }
+};
+
+const checkPartnerToken = (req, res, next) => {
+  const token = req.header('x-partner-token');
+  if (!token) return res.status(401).json({ msg: 'No token, authorization denied' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.role === 'partner') { req.partner = decoded; next(); }
+    else { throw new Error('Invalid token type'); }
+  } catch (e) { res.status(401).json({ msg: 'Token is not valid' }); }
 };
 
 const checkUserToken = (req, res, next) => {
@@ -40,23 +50,13 @@ const checkUserToken = (req, res, next) => {
   } catch (e) { res.status(401).json({ msg: 'Token is not valid' }); }
 };
 
-const checkPartnerToken = (req, res, next) => {
-  const token = req.header('x-partner-token');
-  if (!token) return res.status(401).json({ msg: 'No token, authorization denied' });
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.partner = decoded;
-    next();
-  } catch (e) { res.status(401).json({ msg: 'Token is not valid' }); }
-};
-
 // --- API ROUTES ---
 
 // --- ADMIN ROUTES ---
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
   if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
-    const payload = { user: { username: username, isAdmin: true } };
+    const payload = { id: 1, username: username, role: 'admin' }; // Added role
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
     res.json({ success: true, token });
   } else {
@@ -182,16 +182,17 @@ app.post('/api/delivery/login', async (req, res) => {
     if (dbResult.rows.length > 0) {
       const partner = dbResult.rows[0];
       // Verify the password against the hashed value using crypt
-      if (await pool.query('SELECT $1 = crypt($2, password) AS match', [password, password])) {
-        const token = jwt.sign({ id: partner.id, name: partner.name }, JWT_SECRET, { expiresIn: '8h' });
+      const matchResult = await pool.query('SELECT $1 = crypt($2, password) AS match', [password, password]);
+      if (matchResult.rows[0].match) {
+        const token = jwt.sign({ id: partner.id, name: partner.name, role: 'partner' }, JWT_SECRET, { expiresIn: '8h' }); // Added role
         return res.json({ success: true, token, partner: { id: partner.id, name: partner.name } });
       }
     }
 
     // Fallback: Check against .env credentials if database authentication fails
     if (phone === process.env.DELIVERY_PARTNER_PHONE && password === process.env.DELIVERY_PARTNER_PASSWORD) {
-      const partner = { id: 1, name: "Sresta Mart Admin" }; // Placeholder for .env-based user
-      const token = jwt.sign({ id: partner.id, name: partner.name }, JWT_SECRET, { expiresIn: '8h' });
+      const partner = { id: 1, name: "Sresta Mart Admin" };
+      const token = jwt.sign({ id: partner.id, name: partner.name, role: 'admin' }, JWT_SECRET, { expiresIn: '8h' }); // Added role
       return res.json({ success: true, token, partner });
     }
 
@@ -260,7 +261,7 @@ app.post('/api/login', async (req, res) => {
     const user = userResult.rows[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
-    const token = jwt.sign({ id: user.id, name: user.name }, JWT_SECRET, { expiresIn: '3h' });
+    const token = jwt.sign({ id: user.id, name: user.name, role: user.is_admin ? 'admin' : 'user' }, JWT_SECRET, { expiresIn: '3h' }); // Added role
     res.json({ msg: `Welcome back, ${user.name}!`, token, user: { id: user.id, name: user.name, phone: user.phone, is_admin: user.is_admin } });
   } catch (err) {
     console.error(err.message); res.status(500).send('Server error');
@@ -353,14 +354,12 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
     }
 });
 
-
 // --- SERVE REACT FRONTEND ---
 const projectRoot = path.join(__dirname, '..');
 app.use(express.static(path.join(projectRoot, 'frontend', 'dist')));
 app.get('*', (req, res) => {
     res.sendFile(path.join(projectRoot, 'frontend', 'dist', 'index.html'));
 });
-
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} at Sresta Mart.`);
