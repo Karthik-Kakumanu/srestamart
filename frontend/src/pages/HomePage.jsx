@@ -1,16 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-//-- CHANGE: Removed unused icons to keep the code clean
 import { Heart, BrainCircuit, Bone } from 'lucide-react';
 
-//-- NEW: A dedicated Header component for the big logo. It's sticky to stay at the top.
+// A custom hook to detect if the user is on a desktop-sized screen.
+// Made safer to prevent errors in different environments.
+const useIsDesktop = () => {
+    const [isDesktop, setIsDesktop] = useState(
+        typeof window !== 'undefined' ? window.innerWidth > 768 : false
+    );
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const handleResize = () => {
+            setIsDesktop(window.innerWidth > 768);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    return isDesktop;
+};
+
+// --- HEADER COMPONENT ---
 const Header = () => (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {/*-- CHANGE: Centered on mobile, left-aligned on larger screens for better design */}
             <div className="flex h-20 items-center justify-center sm:justify-start">
-                {/* You can replace this H1 with your own <img /> tag for the logo */}
                 <h1 className="text-4xl font-bold text-red-600">
                     SrestaMart
                 </h1>
@@ -20,6 +37,7 @@ const Header = () => (
 );
 
 
+// --- DATA CONSTANTS ---
 const CATEGORY_ORDER = ['livebirds', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets'];
 
 const categoryBanners = {
@@ -40,20 +58,15 @@ const categoryFeatures = {
     millets: { title: "The Ancient Superfood, Reimagined", subtitle: "Embrace a healthier, more sustainable diet.", description: "Embrace a healthier lifestyle with our diverse range of millets. These ancient super-grains are gluten-free, rich in fiber, and packed with protein. From fluffy idlis to hearty rotis, millets are the versatile, nutritious foundation for modern, healthy living.", imageUrl: "https://images.pexels.com/photos/8992769/pexels-photo-8992769.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2", features: [{ icon: <Heart className="text-red-500" />, title: "Gluten-Free", text: "An excellent choice for those with gluten sensitivity or celiac disease." }, { icon: <Bone className="text-red-500" />, title: "High in Fiber", text: "Promotes healthy digestion and helps in maintaining stable blood sugar levels." }, { icon: <BrainCircuit className="text-red-500" />, title: "Rich in Protein", text: "A great source of plant-based protein for muscle repair and overall health." }] },
 };
 
-//-- CHANGE: Simplified the component for better mobile view
+
+// --- REUSABLE COMPONENTS ---
+
 const CategoryBanner = ({ title, text, imageUrl }) => (
-    <motion.div
-        layout
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        //-- CHANGE: ClassNames adjusted for better mobile spacing and appearance
-        className="col-span-2 md:col-span-3 lg:col-span-4 my-4 rounded-xl shadow-lg overflow-hidden relative"
-    >
-        {/*-- NEW: Added lazy loading for performance. The image won't load until it's visible. */}
+    <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="col-span-full my-4 rounded-xl shadow-lg overflow-hidden relative">
         <img src={imageUrl} alt={title} loading="lazy" className="absolute w-full h-full object-cover -z-10" />
         <div className="bg-gradient-to-r from-black/70 to-black/40 w-full h-full p-4 sm:p-6">
             <div className="max-w-xl">
-                {/*-- CHANGE: Font sizes are smaller on mobile */}
                 <h3 className="text-white text-lg md:text-2xl font-bold" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>{title}</h3>
                 <p className="mt-1 text-sm text-gray-200" dangerouslySetInnerHTML={{ __html: text }} />
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="mt-3 bg-red-600 text-white font-bold py-2 px-4 rounded-full text-xs sm:text-sm hover:bg-red-700 transition-all shadow-md">Shop Now</motion.button>
@@ -62,22 +75,17 @@ const CategoryBanner = ({ title, text, imageUrl }) => (
     </motion.div>
 );
 
-//-- CHANGE: Simplified the component for better mobile view
 const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, features }) => (
     <motion.section key={title} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}
-        //-- CHANGE: Padding and margin adjusted for mobile
-        className="py-12 px-4 bg-slate-50 mt-8"
-    >
+        className="py-12 px-4 bg-slate-50 mt-8">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
-                {/*-- CHANGE: Font sizes are smaller on mobile */}
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{title}</h2>
                 <p className="mt-2 text-red-600 font-semibold italic">{subtitle}</p>
                 <p className="mt-4 text-gray-600 text-sm sm:text-base">{description}</p>
                 <div className="mt-6 space-y-5">
                     {features.map((feature, index) => (
                         <div key={index} className="flex items-start">
-                            {/*-- CHANGE: Sizing adjusted for mobile */}
                             <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                                 {React.cloneElement(feature.icon, { size: 20 })}
                             </div>
@@ -90,42 +98,34 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                 </div>
             </motion.div>
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.4 }} className="relative h-72 lg:h-full rounded-xl shadow-xl">
-                 {/*-- NEW: Added lazy loading for performance */}
                 <img src={imageUrl} alt={title} loading="lazy" className="absolute w-full h-full object-cover rounded-xl" />
             </motion.div>
         </div>
     </motion.section>
 );
 
-//-- CHANGE: Completely restyled for a compact, mobile-friendly view
-const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAddToCart }) => {
+
+// --- DIFFERENT PRODUCT CARDS FOR MOBILE AND DESKTOP ---
+
+const MobileProductCard = ({ product, selectedVariants, handleVariantChange, handleAddToCart }) => {
     const hasVariants = product.variants && product.variants.length > 0;
     const selectedVariantId = selectedVariants[product.id];
     const currentVariant = hasVariants ? product.variants.find(v => v.id == selectedVariantId) : null;
     const currentPrice = currentVariant ? currentVariant.price : 'N/A';
- 
+
     return (
-        <motion.div
-            layout
-            variants={{ hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1 } }}
-            className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col group"
-        >
-            {/*-- CHANGE: Aspect ratio is now square, better for a 2-column grid */}
+        <motion.div layout variants={{ hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1 } }}
+            className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col group">
             <div className="w-full aspect-square overflow-hidden">
-                {/*-- NEW: Added lazy loading for performance */}
                 <img src={product.image_url || 'https://placehold.co/300x300?text=Sresta+Mart'} alt={product.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
             </div>
-            {/*-- CHANGE: Padding is reduced for mobile */}
             <div className="p-3 flex flex-col flex-grow">
-                {/*-- CHANGE: Font size is smaller and line-height is tighter */}
                 <h3 className="font-bold text-sm text-gray-800 leading-tight">{product.name}</h3>
-                {/*-- CHANGE: No description shown on mobile to save space, this is a design choice */}
                 <div className="mt-2 mb-2 min-h-[30px]">
                     {hasVariants && (
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {product.variants.map(variant => {
                                 const isSelected = currentVariant?.id === variant.id;
-                                //-- CHANGE: Button styling is smaller and more compact
                                 return ( <button key={variant.id} onClick={() => handleVariantChange(product.id, variant.id)} className={`px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-all duration-200 ${isSelected ? 'bg-red-600 border-red-700 text-white shadow-sm' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'}`}>{variant.label}</button> );
                             })}
                         </div>
@@ -135,8 +135,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                     {hasVariants ? (
                         <>
                             <span className="text-md font-bold text-red-700">₹{currentPrice}</span>
-                            {/*-- CHANGE: "Add to Cart" button is now just "Add" on mobile */}
-                            <button onClick={(e) => handleAddToCart({ ...product, selectedVariant: currentVariant }, e)} className="text-white px-3 py-1.5 text-xs font-semibold rounded-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 transition-colors shadow-md" disabled={!currentVariant}>Add</button>
+                            <button onClick={(e) => handleAddToCart({ ...product, selectedVariant: currentVariant }, e)} className="text-white px-3 py-1.5 text-xs font-semibold rounded-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400" disabled={!currentVariant}>Add</button>
                         </>
                     ) : (<span className="text-xs font-semibold text-gray-500 w-full text-center">Unavailable</span>)}
                 </div>
@@ -145,19 +144,63 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     );
 };
 
-//-- REMOVED: The SkeletonCard is no longer needed because we are not showing a loading state.
+const DesktopProductCard = ({ product, selectedVariants, handleVariantChange, handleAddToCart }) => {
+    const hasVariants = product.variants && product.variants.length > 0;
+    const selectedVariantId = selectedVariants[product.id];
+    const currentVariant = hasVariants ? product.variants.find(v => v.id == selectedVariantId) : null;
+    const currentPrice = currentVariant ? currentVariant.price : 'N/A';
+
+    return (
+        <motion.div layout variants={{ hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1 } }}
+            className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 overflow-hidden flex flex-col group">
+            <div className="w-full aspect-[4/3] overflow-hidden">
+                <img src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} alt={product.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            </div>
+            <div className="p-4 flex flex-col flex-grow">
+                <h3 className="font-bold text-lg text-gray-900">{product.name}</h3>
+                <p className="text-sm text-gray-600 mt-1 flex-grow">{product.description}</p>
+                <div className="mt-3 mb-3 min-h-[34px]">
+                    {hasVariants && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {product.variants.map(variant => {
+                                const isSelected = currentVariant?.id === variant.id;
+                                return (
+                                    <button key={variant.id} onClick={() => handleVariantChange(product.id, variant.id)} className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all duration-200 ${isSelected ? 'bg-red-600 border-red-700 text-white shadow-md' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'}`}>
+                                        {variant.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+                <div className="flex justify-between items-center mt-auto pt-3">
+                    {hasVariants ? (
+                        <>
+                            <span className="text-xl font-bold text-red-700">₹{currentPrice}</span>
+                            <button onClick={(e) => handleAddToCart({ ...product, selectedVariant: currentVariant }, e)} className="text-white px-4 py-2 text-sm font-semibold rounded-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 transition-colors shadow-lg" disabled={!currentVariant}>
+                                Add to Cart
+                            </button>
+                        </>
+                    ) : (<span className="text-sm font-semibold text-gray-500 w-full text-center">Currently Unavailable</span>)}
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 
 // --- MAIN HOME PAGE COMPONENT ---
 export default function HomePage({ handleAddToCart }) {
     const [allProducts, setAllProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [categories, setCategories] = useState([]);
-    //-- CHANGE: Set the default selected category to the first one in the list
     const [selectedCategory, setSelectedCategory] = useState(CATEGORY_ORDER[0]);
     const [error, setError] = useState('');
     const [selectedVariants, setSelectedVariants] = useState({});
-    const BANNER_POSITION = 4;
     
+    const isDesktop = useIsDesktop();
+    const BANNER_POSITION = isDesktop ? 4 : 2;
+
     const categoryVideos = {
         livebirds: "/videos/eggs.mp4", dryfruits: "/videos/dryfruits.mp4", dairy: "/videos/dairy.mp4",
         oils: "/videos/oils.mp4", millets: "/videos/millets.mp4", pickles: "/videos/pickles.mp4",
@@ -166,7 +209,6 @@ export default function HomePage({ handleAddToCart }) {
 
     useEffect(() => {
         const fetchProducts = async () => {
-            //-- REMOVED: setProductsLoading(true) is gone. No more loading state.
             try {
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`);
                 if (Array.isArray(res.data)) {
@@ -177,8 +219,10 @@ export default function HomePage({ handleAddToCart }) {
                     const sortedCategories = CATEGORY_ORDER.filter(c => uniqueFetchedCategories.includes(c));
                     setCategories(sortedCategories);
 
-                    //-- CHANGE: Directly filter and set the products for the default category
-                    setFilteredProducts(products.filter(p => p.category === (selectedCategory || sortedCategories[0])));
+                    // Set the initially filtered products based on the default category
+                    const defaultCategory = sortedCategories[0];
+                    setSelectedCategory(defaultCategory);
+                    setFilteredProducts(products.filter(p => p.category === defaultCategory));
 
                     const initialVariants = {};
                     products.forEach(p => {
@@ -191,41 +235,40 @@ export default function HomePage({ handleAddToCart }) {
             } catch (err) {
                 setError('Failed to load products. ' + (err.message || ''));
             }
-            //-- REMOVED: finally block with setProductsLoading(false) is gone.
         };
         fetchProducts();
-    }, []); //-- This useEffect still runs only once when the component loads.
+    }, []); // CORRECTED: Empty array ensures this fetches ONLY ONCE on page load.
 
     const handleVariantChange = (productId, variantId) => {
         setSelectedVariants(prev => ({ ...prev, [productId]: parseInt(variantId, 10) }));
     };
 
-    //-- CHANGE: This function is now much simpler and faster.
     const handleFilterChange = (category) => {
         setSelectedCategory(category);
-        //-- CHANGE: No loading state and no artificial setTimeout delay. It's instant.
         setFilteredProducts(allProducts.filter(p => p.category === category));
     };
     
-    const productGridVariants = {
-        visible: { transition: { staggerChildren: 0.05 } },
-        hidden: {}
-    };
-
     const currentBannerData = categoryBanners[selectedCategory];
     const currentFeatureData = categoryFeatures[selectedCategory];
-
+    
     const productsBeforeBanner = filteredProducts.slice(0, BANNER_POSITION);
     const productsAfterBanner = filteredProducts.slice(BANNER_POSITION);
 
+    const renderProductCard = (product) => {
+        const cardProps = { product, selectedVariants, handleVariantChange, handleAddToCart };
+        // This conditional logic renders the correct card for the screen size
+        if (isDesktop) {
+            return <DesktopProductCard key={`${product.id}-desktop`} {...cardProps} />;
+        }
+        return <MobileProductCard key={`${product.id}-mobile`} {...cardProps} />;
+    };
+
     return (
-        //-- NEW: A flex container to hold the new Header and the main content
-        <div className="flex flex-col min-h-screen bg-slate-50">
+        <div className="flex flex-col min-h-screen bg-slate-100">
             <Header />
             <div className="flex-grow">
                 <style>{`.text-shadow { text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7); }`}</style>
 
-                {/*-- NEW: This entire block is wrapped to only show the video on medium screens (md) and up */}
                 <div className="hidden md:block">
                     {categoryVideos[selectedCategory] && (
                         <>
@@ -242,7 +285,6 @@ export default function HomePage({ handleAddToCart }) {
                         </motion.h2>
                         <div className="mt-6 flex justify-center flex-wrap gap-2 px-4">
                             {categories.map(category => (
-                                //-- CHANGE: Button padding and text size adjusted for mobile
                                 <button key={category} onClick={() => handleFilterChange(category)} className={`relative px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-300 ${ selectedCategory === category ? `bg-white text-red-600 shadow-lg` : 'bg-white/20 text-white hover:bg-white/40 text-shadow'}`}>
                                     {category.charAt(0).toUpperCase() + category.slice(1)}
                                 </button>
@@ -251,38 +293,22 @@ export default function HomePage({ handleAddToCart }) {
                     </div>
                 </div>
                 
-                {/*-- CHANGE: Padding adjusted for a tighter mobile layout */}
                 <main className="px-3 sm:px-6 py-4 relative z-10">
                     {error && <div className="text-center bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert"><strong className="font-bold">Error:</strong><span className="block sm:inline ml-2">{error}</span></div>}
                     
-                    <motion.div
-                        layout //-- NEW: Added layout prop for smooth animation when filtering
-                        key={selectedCategory}
-                        initial="hidden"
-                        animate="visible"
-                        variants={productGridVariants}
-                        //-- CHANGE: This is the key for the mobile layout. 2 columns on mobile, more on bigger screens.
-                        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5"
+                    <motion.div layout key={selectedCategory}
+                        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
                     >
-                        {/*-- REMOVED: The conditional logic for `productsLoading` is gone. */}
-                        {/*-- We now directly map over the `filteredProducts` array. */}
-                        {productsBeforeBanner.map((product) => (
-                             //-- NEW: Added unique keys to prevent React warnings
-                            <ProductCard key={`${product.id}-before`} product={product} selectedVariants={selectedVariants} handleVariantChange={handleVariantChange} handleAddToCart={handleAddToCart} />
-                        ))}
+                        {productsBeforeBanner.map(renderProductCard)}
                         
                         <AnimatePresence>
                             {currentBannerData && filteredProducts.length > BANNER_POSITION && <CategoryBanner {...currentBannerData} />}
                         </AnimatePresence>
                         
-                        {productsAfterBanner.map((product) => (
-                             //-- NEW: Added unique keys to prevent React warnings
-                            <ProductCard key={`${product.id}-after`} product={product} selectedVariants={selectedVariants} handleVariantChange={handleVariantChange} handleAddToCart={handleAddToCart} />
-                        ))}
+                        {productsAfterBanner.map(renderProductCard)}
                     </motion.div>
                     
                     <AnimatePresence>
-                        {/*-- CHANGE: Render the feature section only if there are products to show */}
                         {filteredProducts.length > 0 && currentFeatureData && <CategoryFeatureSection {...currentFeatureData} />}
                     </AnimatePresence>
                 </main>
