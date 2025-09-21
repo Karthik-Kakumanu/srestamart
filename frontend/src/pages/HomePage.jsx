@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, BrainCircuit, Bone, GitCommitVertical, Users, Map } from 'lucide-react';
+import { Heart, BrainCircuit, Bone } from 'lucide-react';
+import logoIcon from '../../images/icon.png'; // Make sure this path is correct
 
 const CATEGORY_ORDER = ['livebirds', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets'];
 
@@ -184,7 +185,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     const selectedVariantId = selectedVariants[product.id];
     const currentVariant = hasVariants ? product.variants.find(v => v.id == selectedVariantId) : null;
     const currentPrice = currentVariant ? currentVariant.price : 'N/A';
-  
+ 
     return (
       <motion.div 
         variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
@@ -267,8 +268,6 @@ export default function HomePage({ handleAddToCart }) {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`);
         
-        // --- FIX IS HERE ---
-        // We must check if the data is an array before trying to map it.
         if (Array.isArray(res.data)) {
             const products = res.data.map(p => ({ ...p, category: p.category.toLowerCase().replace(/\s+/g, '') }));
             setAllProducts(products);
@@ -293,7 +292,6 @@ export default function HomePage({ handleAddToCart }) {
             });
             setSelectedVariants(initialVariants);
         } else {
-            // If data is not an array, it's an error from the backend
             setError('Failed to load products. Unexpected data format received.');
         }
 
@@ -343,10 +341,29 @@ export default function HomePage({ handleAddToCart }) {
 
       <div className="relative z-10">
         <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/50 to-transparent">
-            <motion.h2 initial={{opacity: 0, y: -20}} animate={{opacity: 1, y: 0}} className="text-4xl sm:text-5xl font-bold text-white text-center text-shadow">
-            Explore Our Collection
+          <div className="flex flex-col items-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="mb-4"
+            >
+              <img 
+                src={logoIcon} 
+                alt="Sresta Mart Logo" 
+                className="h-16 md:h-20 w-auto" 
+              />
+            </motion.div>
+            <motion.h2 
+              initial={{opacity: 0, y: -20}} 
+              animate={{opacity: 1, y: 0}}
+              transition={{ delay: 0.2 }}
+              className="text-4xl sm:text-5xl font-bold text-white text-center text-shadow"
+            >
+              Explore Our Collection
             </motion.h2>
-            <div className="mt-8 flex justify-center flex-wrap gap-2 px-4">
+          </div>
+          <div className="mt-8 flex justify-center flex-wrap gap-2 px-4">
             {categories.map(category => (
                 <button key={category} onClick={() => handleFilterChange(category)} 
                 className={`relative px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
@@ -355,7 +372,7 @@ export default function HomePage({ handleAddToCart }) {
                     {category.charAt(0).toUpperCase() + category.slice(1)}
                 </button>
             ))}
-            </div>
+          </div>
         </div>
       </div>
       
