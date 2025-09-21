@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { X, Plus, Trash2 } from 'lucide-react';
 
-// Step 1: This function gets the special 'adminToken' from localStorage.
 const getAuthToken = () => localStorage.getItem('adminToken');
 
 export default function EditProductModal({ product, onClose, onSave }) {
@@ -36,7 +35,6 @@ export default function EditProductModal({ product, onClose, onSave }) {
         setIsSaving(true);
         setError('');
         
-        // Step 2: Get the admin token.
         const token = getAuthToken();
         if (!token) {
             setError('No admin token, authorization denied');
@@ -44,26 +42,27 @@ export default function EditProductModal({ product, onClose, onSave }) {
             return;
         }
 
-        // Step 3: Create the configuration object with the correct header.
         const config = { headers: { 'x-admin-token': token } };
 
         try {
-            // Step 4: Use the 'config' object in EVERY API call below.
-            
             // Update main product details
-            await axios.put(`http://localhost:4000/api/admin/products/${product.id}`, productData, config);
+            // <<< --- FIX #1 --- >>>
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/products/${product.id}`, productData, config);
             
             // Process all variant changes
             for (const variant of variants) {
                 if (variant.isDeleted && variant.id) {
-                    await axios.delete(`http://localhost:4000/api/admin/variants/${variant.id}`, config);
+                    // <<< --- FIX #2 --- >>>
+                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/variants/${variant.id}`, config);
                 } else if (variant.isNew) {
-                    await axios.post(`http://localhost:4000/api/admin/variants`, { product_id: product.id, label: variant.label, price: variant.price }, config);
+                    // <<< --- FIX #3 --- >>>
+                    await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/variants`, { product_id: product.id, label: variant.label, price: variant.price }, config);
                 } else if (variant.id && !variant.isDeleted) {
-                    await axios.put(`http://localhost:4000/api/admin/variants/${variant.id}`, { label: variant.label, price: variant.price }, config);
+                    // <<< --- FIX #4 --- >>>
+                    await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/variants/${variant.id}`, { label: variant.label, price: variant.price }, config);
                 }
             }
-            onSave(); // This refreshes the data on the main AdminPage
+            onSave();
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to save changes.');
         } finally {
