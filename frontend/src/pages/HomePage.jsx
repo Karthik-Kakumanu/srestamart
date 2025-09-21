@@ -253,7 +253,7 @@ export default function HomePage({ handleAddToCart }) {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [productsLoading, setProductsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedVariants, setSelectedVariants] = useState({});
+  const [selectedVariants, setSelectedVariants]_useState({});
   const BANNER_POSITION = 4;
 
   const categoryVideos = {
@@ -341,17 +341,18 @@ export default function HomePage({ handleAddToCart }) {
 
       <div className="relative z-10">
         <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/50 to-transparent">
-          <div className="flex flex-col items-center">
+          {/* ----- START: MODIFIED SECTION ----- */}
+          <div className="flex flex-row items-center justify-center mb-8">
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
-              className="mb-4"
+              className="mr-4" // Adds space between logo and text
             >
               <img 
                 src={logoIcon} 
                 alt="Sresta Mart Logo" 
-                className="h-16 md:h-20 w-auto" 
+                className="h-20 md:h-24 w-auto" // Increased logo size
               />
             </motion.div>
             <motion.h2 
@@ -363,6 +364,7 @@ export default function HomePage({ handleAddToCart }) {
               Explore Our Collection
             </motion.h2>
           </div>
+          {/* ----- END: MODIFIED SECTION ----- */}
           <div className="mt-8 flex justify-center flex-wrap gap-2 px-4">
             {categories.map(category => (
                 <button key={category} onClick={() => handleFilterChange(category)} 
