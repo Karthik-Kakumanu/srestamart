@@ -7,9 +7,9 @@ import { Eye, EyeOff, User, Phone, Lock, KeyRound } from "lucide-react";
 import logoUrl from "../../images/icon.png";
 
 // CHANGED IMAGE URL: This image now represents non-veg items (fresh, uncooked poultry)
-const brandingImageUrl = "https://images.pexels.com/photos/616335/pexels-photo-616335.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"; 
+//const brandingImageUrl = "https://images.pexels.com/photos/616335/pexels-photo-616335.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"; 
 // Alternative options could be:
-// For eggs: "https://images.pexels.com/photos/162712/egg-yolk-chicken-raw-162712.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+const brandingImageUrl = "https://images.pexels.com/photos/162712/egg-yolk-chicken-raw-162712.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
 // For fresh meat variety: "https://images.pexels.com/photos/106343/pexels-photo-106343.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" (Your previous one, which is also good for general fresh non-veg)
 
 
