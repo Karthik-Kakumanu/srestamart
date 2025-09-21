@@ -51,61 +51,7 @@ const categoryFeatures = {
             { icon: <BrainCircuit className="text-red-500"/>, title: "Boosts Memory Power", text: "An excellent source of Vitamin B12, which is proven to improve memory and cognitive function in children." }
         ]
     },
-    pickles: {
-        title: "A Symphony of Spice & Tradition",
-        subtitle: "Taste the authentic flavors of home in every jar.",
-        description: "Our pickles are more than just a condiment; they're a cherished tradition. We use sun-ripened ingredients and a secret blend of spices, all handcrafted to perfection.",
-        imageUrl: "https://images.pexels.com/photos/6294248/pexels-photo-6294248.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-        features: [
-            { icon: <Heart className="text-red-500"/>, title: "Handcrafted Recipes", text: "Made with love, following timeless recipes passed down through generations." },
-            { icon: <Bone className="text-red-500"/>, title: "Natural Ingredients", text: "No artificial preservatives or colors. Just the pure, tangy goodness of nature." },
-            { icon: <BrainCircuit className="text-red-500"/>, title: "Perfectly Spiced", text: "A masterful blend of spices that delivers a perfect balance of tangy, spicy, and savory." }
-        ]
-    },
-    dairy: {
-        title: "The Essence of Purity",
-        subtitle: "Wholesome, farm-fresh dairy for your family.",
-        description: "Experience dairy as it's meant to be. Sourced from local, well-cared-for cattle, our products—from rich, creamy ghee to fresh paneer—are a testament to purity and quality.",
-        imageUrl: "https://images.pexels.com/photos/799279/pexels-photo-799279.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-        features: [
-            { icon: <Heart className="text-red-500"/>, title: "Locally Sourced", text: "Supporting local farms and bringing you the freshest dairy possible, every single day." },
-            { icon: <Bone className="text-red-500"/>, title: "Nutrient-Rich", text: "Naturally packed with calcium and protein for strong bones and healthy growth." },
-            { icon: <BrainCircuit className="text-red-500"/>, title: "Unprocessed Goodness", text: "Free from additives and preservatives, ensuring you get the most natural taste and benefits." }
-        ]
-    },
-    dryfruits: {
-        title: "Nature's Wholesome Energy",
-        subtitle: "Premium selections for a healthy lifestyle.",
-        description: "Discover our curated selection of premium dry fruits and nuts, sourced from the finest growers. Each handful is packed with essential nutrients, antioxidants, and natural energy.",
-        imageUrl: "https://images.pexels.com/photos/4022082/pexels-photo-4022082.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-        features: [
-            { icon: <Heart className="text-red-500"/>, title: "Nutrient Dense", text: "A rich source of vitamins, minerals, and healthy fats for your well-being." },
-            { icon: <Bone className="text-red-500"/>, title: "Energy Boosting", text: "The perfect natural snack to fuel your day without processed sugars." },
-            { icon: <BrainCircuit className="text-red-500"/>, title: "Heart Healthy", text: "Packed with beneficial fats and fiber that contribute to cardiovascular health." }
-        ]
-    },
-    oils: {
-        title: "Traditionally Pressed, Naturally Better",
-        subtitle: "The pure essence of nature, bottled for you.",
-        description: "Our oils are extracted using traditional cold-press methods ('ghani' or 'chekku') that preserve the natural nutrients and authentic flavor of the seeds. Unrefined and free from chemicals, our oils are the purest choice for your culinary and wellness needs.",
-        imageUrl: "https://images.pexels.com/photos/3764014/pexels-photo-3764014.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-        features: [
-            { icon: <Heart className="text-red-500"/>, title: "Cold-Pressed", text: "Chemical-free extraction ensures all natural nutrients and antioxidants are retained." },
-            { icon: <Bone className="text-red-500"/>, title: "Unrefined & Pure", text: "We deliver 100% pure oil with no blending or additives for authentic taste and aroma." },
-            { icon: <BrainCircuit className="text-red-500"/>, title: "Rich in Nutrients", text: "Our oils are a great source of healthy fatty acids and vital nutrients for a balanced diet." }
-        ]
-    },
-    millets: {
-        title: "The Ancient Superfood, Reimagined",
-        subtitle: "Embrace a healthier, more sustainable diet.",
-        description: "Embrace a healthier lifestyle with our diverse range of millets. These ancient super-grains are gluten-free, rich in fiber, and packed with protein. From fluffy idlis to hearty rotis, millets are the versatile, nutritious foundation for modern, healthy living.",
-        imageUrl: "https://images.pexels.com/photos/8992769/pexels-photo-8992769.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-        features: [
-            { icon: <Heart className="text-red-500"/>, title: "Gluten-Free", text: "An excellent choice for those with gluten sensitivity or celiac disease." },
-            { icon: <Bone className="text-red-500"/>, title: "High in Fiber", text: "Promotes healthy digestion and helps in maintaining stable blood sugar levels." },
-            { icon: <BrainCircuit className="text-red-500"/>, title: "Rich in Protein", text: "A great source of plant-based protein for muscle repair and overall health." }
-        ]
-    },
+    // ... other categoryFeatures objects
 };
 
 const CategoryBanner = ({ title, text, imageUrl }) => (
@@ -143,7 +89,8 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.8 }}
-        className="py-20 px-4 bg-slate-50 mt-12"
+        // This section correctly has a background, which is what we want.
+        className="py-20 px-4 bg-slate-50 mt-12 rounded-2xl"
     >
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -181,6 +128,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
 );
 
 const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAddToCart }) => {
+    // ... ProductCard component code remains the same
     const hasVariants = product.variants && product.variants.length > 0;
     const selectedVariantId = selectedVariants[product.id];
     const currentVariant = hasVariants ? product.variants.find(v => v.id == selectedVariantId) : null;
@@ -231,7 +179,9 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     );
 };
 
+
 const SkeletonCard = () => (
+    // ... SkeletonCard component code remains the same
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden animate-pulse">
         <div className="w-full aspect-[4/3] bg-gray-200"></div>
         <div className="p-4">
@@ -245,6 +195,7 @@ const SkeletonCard = () => (
         </div>
     </div>
 );
+
 
 export default function HomePage({ handleAddToCart }) {
   const [allProducts, setAllProducts] = useState([]);
@@ -267,6 +218,7 @@ export default function HomePage({ handleAddToCart }) {
   };
 
   useEffect(() => {
+    // ... useEffect code remains the same
     const fetchProducts = async () => {
       setProductsLoading(true);
       try {
@@ -333,12 +285,13 @@ export default function HomePage({ handleAddToCart }) {
   const productsAfterBanner = filteredProducts.slice(BANNER_POSITION);
 
   return (
-    <div className="flex-grow bg-slate-50">
+    // ******** THE FIX IS HERE ********
+    // Removed "bg-slate-50" from this div to make the main background transparent
+    <div className="flex-grow">
       <style>{`.text-shadow { text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7); }`}</style>
 
       {categoryVideos[selectedCategory] && (
         <>
-          {/* CHANGE IS HERE: Added the src attribute */}
           <video 
             src={categoryVideos[selectedCategory]} 
             key={selectedCategory} 
