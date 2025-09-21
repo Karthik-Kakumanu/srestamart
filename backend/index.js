@@ -1,3 +1,5 @@
+// index.js (Full Backend Code)
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -5,6 +7,8 @@ const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const twilio = require('twilio'); // Added for Twilio
+const crypto = require('crypto'); // Added to generate OTP
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -12,6 +16,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 
 app.use(cors());
 app.use(bodyParser.json());
+
+// --- TWILIO CLIENT INITIALIZATION ---
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const { Pool } = require('pg');
 const pool = new Pool({
@@ -49,6 +56,7 @@ const checkUserToken = (req, res, next) => {
     next();
   } catch (e) { res.status(401).json({ msg: 'Token is not valid' }); }
 };
+
 
 // --- API ROUTES ---
 
@@ -229,7 +237,6 @@ app.put('/api/delivery/orders/:orderId/accept', checkPartnerToken, async (req, r
   }
 });
 
-// ✅ --- NEW --- Route to mark an order as completed
 app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req, res) => {
   try {
     const result = await pool.query(
@@ -246,11 +253,9 @@ app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req,
   }
 });
 
-// ✅ --- FIXED --- GPS Location Update Route
 app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
   const { latitude, longitude } = req.body;
   try {
-    // FIX: Changed POINT() syntax to standard PostgreSQL point literal '(x, y)'
     const pointLiteral = `(${longitude}, ${latitude})`;
     const result = await pool.query(
       'UPDATE delivery_partners SET last_location = $1 WHERE id = $2 RETURNING *',
@@ -299,6 +304,70 @@ app.post('/api/login', async (req, res) => {
   } catch (err) {
     console.error(err.message); res.status(500).send('Server error');
   }
+});
+
+// ✅ --- NEW TWILIO PASSWORD RESET ROUTES ---
+
+// 1. ENDPOINT TO SEND THE OTP
+app.post('/api/forgot-password-twilio', async (req, res) => {
+    const { phone } = req.body;
+
+    try {
+        const userResult = await pool.query('SELECT * FROM users WHERE phone = $1', [phone]);
+        if (userResult.rows.length === 0) {
+            return res.json({ msg: 'If an account exists, an OTP has been sent.' });
+        }
+
+        const otp = crypto.randomInt(100000, 999999).toString();
+        const expires = new Date(Date.now() + 10 * 60 * 1000); // Expires in 10 minutes
+
+        await pool.query(
+            'UPDATE users SET reset_password_otp = $1, reset_password_expires = $2 WHERE phone = $3',
+            [otp, expires, phone]
+        );
+
+        await twilioClient.messages.create({
+            body: `Your Sresta Mart password reset code is: ${otp}`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: `+91${phone}`
+        });
+        
+        res.json({ msg: 'OTP has been sent to your mobile number.' });
+
+    } catch (err) {
+        console.error("Twilio Send Error:", err);
+        res.status(500).json({ msg: 'Failed to send OTP. Please try again later.' });
+    }
+});
+
+// 2. ENDPOINT TO VERIFY OTP AND RESET PASSWORD
+app.post('/api/reset-password-twilio', async (req, res) => {
+    const { phone, otp, newPassword } = req.body;
+
+    try {
+        const userResult = await pool.query(
+            'SELECT * FROM users WHERE phone = $1 AND reset_password_otp = $2 AND reset_password_expires > NOW()',
+            [phone, otp]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(400).json({ msg: 'Invalid or expired OTP.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        await pool.query(
+            'UPDATE users SET password = $1, reset_password_otp = NULL, reset_password_expires = NULL WHERE phone = $2',
+            [hashedPassword, phone]
+        );
+
+        res.json({ msg: 'Password reset successfully! You can now log in.' });
+
+    } catch (err) {
+        console.error("Reset Password Error:", err);
+        res.status(500).send('Server error during password reset.');
+    }
 });
 
 app.get('/api/products', async (req, res) => {
