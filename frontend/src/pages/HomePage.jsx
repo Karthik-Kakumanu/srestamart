@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-// NEW: Importing more icons for the category filters
-import { Heart, BrainCircuit, Bone, Egg, Leaf, Milk, Wheat, CookingPot, Beef } from 'lucide-react';
+// NEW: Importing ALL icons needed for the feature sections
+import { 
+    Heart, BrainCircuit, Bone, Egg, Leaf, Milk, Wheat, CookingPot, Beef,
+    Microscope, Shield, Sun, Droplets, BatteryCharging, Sparkles, TestTube, FilterX, Vegan, Activity 
+} from 'lucide-react';
 import logoIcon from '../../images/icon.png';
 
 const CATEGORY_ORDER = ['livebirds', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets', 'meat'];
 
-// NEW: Mapping icons to each category
 const categoryIcons = {
     livebirds: <Egg size={16} />,
     pickles: <CookingPot size={16} />,
@@ -51,20 +53,76 @@ const categoryBanners = {
     }
 };
 
+// --- FULLY POPULATED CATEGORY FEATURES OBJECT ---
 const categoryFeatures = {
     livebirds: {
         title: "The Power of Natu Kodi Eggs",
         subtitle: `"Healthy is always wealthy for our girl child, girls and women's"`,
         description: "Our Natu Kodi eggs are a powerhouse of nutrition, specially chosen for their incredible health benefits.",
-        imageUrl: "https://images.pexels.com/photos/162712/egg-white-food-protein-162712.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        imageUrl: "https://images.pexels.com/photos/162712/egg-yolk-chicken-raw-162712.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
         features: [
             { icon: <Heart className="text-red-500"/>, title: "Hormonal Balance", text: "Rich in Omega fatty acids, essential for helping girls and women maintain hormonal balance." },
             { icon: <Bone className="text-red-500"/>, title: "Rich in Calcium", text: "Packed with natural calcium to support strong bones at every stage of life." },
             { icon: <BrainCircuit className="text-red-500"/>, title: "Boosts Memory Power", text: "An excellent source of Vitamin B12, which is proven to improve memory and cognitive function in children." }
         ]
     },
-    // ... other categoryFeatures objects
+    pickles: {
+        title: "Authentic Homemade Flavors",
+        subtitle: `"A taste of tradition in every bite."`,
+        description: "Our pickles are made using timeless family recipes and natural preservation techniques, ensuring every jar is packed with authentic taste and goodness.",
+        imageUrl: "https://images.pexels.com/photos/6294248/pexels-photo-6294248.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        features: [
+            { icon: <Microscope className="text-red-500"/>, title: "Probiotic Rich", text: "Naturally fermented pickles are a great source of probiotics that promote a healthy gut." },
+            { icon: <Leaf className="text-red-500"/>, title: "Natural Ingredients", text: "Made with sun-dried ingredients and pure oils, free from any artificial preservatives." },
+            { icon: <Shield className="text-red-500"/>, title: "Boosts Immunity", text: "Rich in antioxidants and essential vitamins like Vitamin K that help strengthen the immune system." }
+        ]
+    },
+    dairy: {
+        title: "Farm-Fresh Goodness",
+        subtitle: `"Pure, creamy, and delivered from local farms."`,
+        description: "Experience the unmatched taste and quality of our dairy products, from pure A2 milk to rich, golden ghee, essential for a healthy lifestyle.",
+        imageUrl: "https://images.pexels.com/photos/799273/pexels-photo-799273.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        features: [
+            { icon: <Bone className="text-red-500"/>, title: "Rich in Protein & Calcium", text: "Essential for building strong bones, teeth, and promoting healthy muscle development." },
+            { icon: <Sun className="text-red-500"/>, title: "Source of Vitamin D", text: "Our fortified dairy products help your body absorb calcium and support immune function." },
+            { icon: <Droplets className="text-red-500"/>, title: "Pure and Unadulterated", text: "We guarantee purity with no added hormones or preservatives, just natural goodness." }
+        ]
+    },
+    dryfruits: {
+        title: "Nature's Nutrient-Dense Snack",
+        subtitle: `"Your daily dose of energy and wellness."`,
+        description: "Our handpicked selection of premium dry fruits and nuts are packed with vitamins, minerals, and healthy fats for a perfect, guilt-free snack.",
+        imageUrl: "https://images.pexels.com/photos/4047144/pexels-photo-4047144.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        features: [
+            { icon: <Heart className="text-red-500"/>, title: "Heart Healthy", text: "Contains healthy fats and antioxidants that help lower bad cholesterol and support cardiovascular health." },
+            { icon: <BatteryCharging className="text-red-500"/>, title: "Instant Energy Booster", text: "A perfect pre-workout or midday snack to provide a quick and sustained energy lift." },
+            { icon: <Sparkles className="text-red-500"/>, title: "Improves Digestion", text: "High in dietary fiber, which aids in digestion and helps maintain a healthy gut." }
+        ]
+    },
+    oils: {
+        title: "Cold-Pressed Liquid Gold",
+        subtitle: `"Purity in every single drop."`,
+        description: "Extracted using traditional cold-press methods, our oils retain their natural nutrients, flavor, and aroma, making your meals healthier and tastier.",
+        imageUrl: "https://images.pexels.com/photos/41004/almond-oil-health-benefit-all-natural-41004.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        features: [
+            { icon: <TestTube className="text-red-500"/>, title: "Retains Nutrients", text: "Cold-pressing ensures that vitamins and antioxidants are preserved, unlike refined oils." },
+            { icon: <Heart className="text-red-500"/>, title: "Rich in Healthy Fats", text: "Abundant in monounsaturated and polyunsaturated fats, which are beneficial for heart health." },
+            { icon: <FilterX className="text-red-500"/>, title: "100% Chemical-Free", text: "Absolutely no chemicals or solvents are used in the extraction process, ensuring ultimate purity." }
+        ]
+    },
+    millets: {
+        title: "The Ancient Supergrain",
+        subtitle: `"Rediscover the wholesome power of millets."`,
+        description: "Gluten-free and rich in fiber, millets are a fantastic, low-glycemic alternative to rice and wheat, perfect for managing a healthy lifestyle.",
+        imageUrl: "https://images.pexels.com/photos/13303681/pexels-photo-13303681.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        features: [
+            { icon: <Wheat className="text-red-500"/>, title: "High in Dietary Fiber", text: "Promotes healthy digestion, helps in weight management, and keeps you feeling full longer." },
+            { icon: <Vegan className="text-red-500"/>, title: "Naturally Gluten-Free", text: "An excellent choice for individuals with celiac disease or gluten sensitivity." },
+            { icon: <Activity className="text-red-500"/>, title: "Manages Blood Sugar", text: "With a low glycemic index, millets help in preventing spikes in blood sugar levels." }
+        ]
+    }
 };
+
 
 const CategoryBanner = ({ title, text, imageUrl }) => (
     <motion.div layout initial={{ opacity: 0, y: 50, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -50 }} transition={{ duration: 0.5, ease: 'easeOut' }} className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-6 rounded-2xl shadow-xl overflow-hidden relative transform">
@@ -86,7 +144,6 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.8 }}
-        // UPDATED: Added a semi-transparent, blurred background for a "glass" effect
         className="py-16 px-4 mt-16 rounded-3xl bg-gray-50/80 backdrop-blur-sm shadow-2xl ring-1 ring-black/5"
     >
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -256,11 +313,9 @@ export default function HomePage({ handleAddToCart }) {
   const productsAfterBanner = filteredProducts.slice(BANNER_POSITION);
 
   return (
-    // FIX & UPDATE: Removed solid background and added explicit transparency
     <div className="flex-grow bg-transparent">
       <style>{`.text-shadow { text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7); }`}</style>
 
-      {/* NEW: Smoothly animated video background */}
       <AnimatePresence>
         {categoryVideos[selectedCategory] && (
           <motion.video 
@@ -272,12 +327,11 @@ export default function HomePage({ handleAddToCart }) {
             transition={{ duration: 1, ease: 'easeInOut' }}
             autoPlay loop muted playsInline 
             className="fixed top-0 left-0 w-full h-full object-cover -z-20"
-            style={{ opacity: 0.15 }} // Reduced opacity for better text readability
           />
         )}
       </AnimatePresence>
       <div className="fixed top-0 left-0 w-full h-full bg-black/30 -z-10"></div>
-
+      
       <div className="relative z-10">
         <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/50 to-transparent">
           <div className="flex flex-row items-center justify-center mb-8">
@@ -288,22 +342,21 @@ export default function HomePage({ handleAddToCart }) {
               Explore Our Collection
             </motion.h2>
           </div>
-          {/* UPDATED: Category filters with icons */}
           <div className="mt-8 flex justify-center flex-wrap gap-3 px-4">
             {categories.map(category => (
                 <motion.button 
-                  key={category} 
-                  onClick={() => handleFilterChange(category)}
-                  whileHover={{ y: -3 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
-                    selectedCategory === category 
-                    ? `bg-white text-red-600 shadow-lg` 
-                    : 'bg-white/20 text-white hover:bg-white/40 text-shadow backdrop-blur-sm'
-                  }`}
+                    key={category} 
+                    onClick={() => handleFilterChange(category)}
+                    whileHover={{ y: -3 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
+                        selectedCategory === category 
+                        ? `bg-white text-red-600 shadow-lg` 
+                        : 'bg-white/20 text-white hover:bg-white/40 text-shadow backdrop-blur-sm'
+                    }`}
                 >
-                  {categoryIcons[category]}
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                    {categoryIcons[category]}
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
                 </motion.button>
             ))}
           </div>
