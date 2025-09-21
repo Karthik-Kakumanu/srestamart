@@ -50,7 +50,8 @@ export default function AddProductModal({ onClose, onSave }) {
         };
 
         try {
-            await axios.post('http://localhost:4000/api/admin/products', payload, config);
+            // <<< --- THIS IS THE CORRECTED LINE --- >>>
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/products`, payload, config);
             onSave();
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to create product.');
