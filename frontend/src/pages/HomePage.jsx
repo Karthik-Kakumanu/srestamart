@@ -253,12 +253,16 @@ export default function HomePage({ handleAddToCart }) {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [productsLoading, setProductsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedVariants, setSelectedVariants]=useState({});
+  const [selectedVariants, setSelectedVariants] = useState({});
   const BANNER_POSITION = 4;
 
   const categoryVideos = {
-    livebirds: "/videos/eggs.mp4", dryfruits: "/videos/dryfruits.mp4", dairy: "/videos/dairy.mp4",
-    oils: "/videos/oils.mp4", millets: "/videos/millets.mp4", pickles: "/videos/pickles.mp4",
+    livebirds: "/videos/eggs.mp4",
+    dryfruits: "/videos/dryfruits.mp4",
+    dairy: "/videos/dairy.mp4",
+    oils: "/videos/oils.mp4",
+    millets: "/videos/millets.mp4",
+    pickles: "/videos/pickles.mp4",
     meat: "/videos/meat.mp4",
   };
 
@@ -334,25 +338,34 @@ export default function HomePage({ handleAddToCart }) {
 
       {categoryVideos[selectedCategory] && (
         <>
-          <video key={selectedCategory} autoPlay loop muted playsInline className="fixed top-0 left-0 w-full h-full object-cover -z-20" style={{ opacity: 0.2 }} />
+          {/* CHANGE IS HERE: Added the src attribute */}
+          <video 
+            src={categoryVideos[selectedCategory]} 
+            key={selectedCategory} 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            className="fixed top-0 left-0 w-full h-full object-cover -z-20 transition-opacity duration-1000" 
+            style={{ opacity: 0.2 }} 
+          />
           <div className="fixed top-0 left-0 w-full h-full bg-black/40 -z-10"></div>
         </>
       )}
 
       <div className="relative z-10">
         <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/50 to-transparent">
-          {/* ----- START: MODIFIED SECTION ----- */}
           <div className="flex flex-row items-center justify-center mb-8">
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
-              className="mr-4" // Adds space between logo and text
+              className="mr-4"
             >
               <img 
                 src={logoIcon} 
                 alt="Sresta Mart Logo" 
-                className="h-20 md:h-24 w-auto" // Increased logo size
+                className="h-20 md:h-24 w-auto"
               />
             </motion.div>
             <motion.h2 
@@ -364,7 +377,6 @@ export default function HomePage({ handleAddToCart }) {
               Explore Our Collection
             </motion.h2>
           </div>
-          {/* ----- END: MODIFIED SECTION ----- */}
           <div className="mt-8 flex justify-center flex-wrap gap-2 px-4">
             {categories.map(category => (
                 <button key={category} onClick={() => handleFilterChange(category)} 
