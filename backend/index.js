@@ -14,7 +14,34 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 
-app.use(cors());
+
+// --- START OF IMPORTANT CHANGE ---
+
+// Define the websites that are allowed to connect to this backend
+const allowedOrigins = [
+  'https://www.srestamart.com', 
+  'https://srestamart.com', // <-- IMPORTANT: REPLACE with your real custom domain
+  'https://srestamart.onrender.com',
+  'http://localhost:5173' // For your local testing
+];
+
+// Apply the new, more secure CORS settings
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests that don't have an origin (like Postman or mobile apps)
+    if (!origin) return callback(null, true);
+    
+    // If the incoming origin is in our list, allow it
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      // Otherwise, block it
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+}));
+
+// --- END OF IMPORTANT CHANGE ---
 app.use(bodyParser.json());
 
 // --- TWILIO CLIENT INITIALIZATION ---
