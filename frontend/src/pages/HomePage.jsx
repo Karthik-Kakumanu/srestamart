@@ -253,7 +253,7 @@ export default function HomePage({ handleAddToCart }) {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [productsLoading, setProductsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedVariants, setSelectedVariants]_useState({});
+  const [selectedVariants, setSelectedVariants]=useState({});
   const BANNER_POSITION = 4;
 
   const categoryVideos = {
