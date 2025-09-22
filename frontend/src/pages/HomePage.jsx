@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import logoIcon from '../../images/icon.png';
 
-// --- (No changes to constants, icons, or banners) ---
+// --- Constants, Icons, and Banners ---
 const CATEGORY_ORDER = ['livebirds', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets', 'meat'];
 
 const categoryIcons = {
@@ -119,13 +119,26 @@ const categoryFeatures = {
 };
 
 const CategoryBanner = ({ title, text, imageUrl }) => (
-    <motion.div layout initial={{ opacity: 0, y: 50, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -50 }} transition={{ duration: 0.5, ease: 'easeOut' }} className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-6 rounded-2xl shadow-xl overflow-hidden relative transform">
+    <motion.div 
+        layout 
+        initial={{ opacity: 0, y: 50, scale: 0.95 }} 
+        animate={{ opacity: 1, y: 0, scale: 1 }} 
+        exit={{ opacity: 0, y: -50 }} 
+        transition={{ duration: 0.5, ease: 'easeOut' }} 
+        className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-6 rounded-2xl shadow-xl overflow-hidden relative transform"
+    >
         <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover -z-10" />
         <div className="bg-gradient-to-r from-black/70 to-black/40 w-full h-full p-6 sm:p-8">
             <div className="max-w-2xl">
                 <h3 className="text-white text-2xl md:text-3xl font-bold" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>{title}</h3>
                 <p className="mt-2 text-base text-gray-200" dangerouslySetInnerHTML={{ __html: text }} />
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="mt-4 bg-red-600 text-white font-bold py-2 px-5 rounded-full hover:bg-red-700 transition-all shadow-lg">Shop Now</motion.button>
+                <motion.button 
+                    whileHover={{ scale: 1.05 }} 
+                    whileTap={{ scale: 0.95 }} 
+                    className="mt-4 bg-red-600 text-white font-bold py-2 px-5 rounded-full hover:bg-red-700 transition-all shadow-lg"
+                >
+                    Shop Now
+                </motion.button>
             </div>
         </div>
     </motion.div>
@@ -138,13 +151,18 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.8 }}
-        className="py-16 px-4 mt-16 rounded-3xl bg-gray-50/80 backdrop-blur-sm shadow-2xl ring-1 ring-black/5"
+        className="py-16 px-4 mt-16 rounded-3xl bg-black/70 backdrop-blur-lg shadow-2xl ring-1 ring-white/10"
     >
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.2 }}>
-                <h2 className="text-4xl font-bold text-gray-800">{title}</h2>
-                <p className="mt-2 text-red-600 font-semibold italic">{subtitle}</p>
-                <p className="mt-4 text-gray-600">{description}</p>
+            <motion.div 
+                initial={{ opacity: 0, x: -50 }} 
+                whileInView={{ opacity: 1, x: 0 }} 
+                viewport={{ once: true }} 
+                transition={{ duration: 0.8, delay: 0.2 }}
+            >
+                <h2 className="text-4xl font-bold text-white">{title}</h2>
+                <p className="mt-2 text-red-400 font-semibold italic">{subtitle}</p>
+                <p className="mt-4 text-gray-300">{description}</p>
                 <div className="mt-8 space-y-6">
                     {features.map((feature, index) => (
                         <div key={index} className="flex items-start">
@@ -152,15 +170,21 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                                 {React.cloneElement(feature.icon, { size: 24 })}
                             </div>
                             <div className="ml-4">
-                                <h4 className="font-bold text-lg text-gray-800">{feature.title}</h4>
-                                <p className="mt-1 text-gray-500">{feature.text}</p>
+                                <h4 className="font-bold text-lg text-white">{feature.title}</h4>
+                                <p className="mt-1 text-gray-300">{feature.text}</p>
                             </div>
                         </div>
                     ))}
                 </div>
             </motion.div>
-            <motion.div initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.4 }} className="relative h-80 lg:h-full rounded-2xl shadow-2xl">
-               <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-2xl" />
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }} 
+                whileInView={{ opacity: 1, scale: 1 }} 
+                viewport={{ once: true }} 
+                transition={{ duration: 0.8, delay: 0.4 }} 
+                className="relative h-80 lg:h-full rounded-2xl shadow-2xl"
+            >
+                <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-2xl" />
             </motion.div>
         </div>
     </motion.section>
@@ -173,20 +197,35 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     const currentPrice = currentVariant ? currentVariant.price : 'N/A';
 
     return (
-        <motion.div variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 flex flex-col group">
+        <motion.div 
+            variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }} 
+            className="bg-black/70 backdrop-blur-lg rounded-2xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 flex flex-col group"
+        >
             <div className="w-full aspect-[4/3] overflow-hidden">
-                <img src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img 
+                    src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} 
+                    alt={product.name} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                />
             </div>
             <div className="p-4 flex flex-col flex-grow">
-                <h3 className="font-bold text-lg text-gray-800">{product.name}</h3>
-                <p className="text-sm text-gray-500 mt-1 flex-grow">{product.description}</p>
+                <h3 className="font-bold text-lg text-white">{product.name}</h3>
+                <p className="text-sm text-gray-300 mt-1 flex-grow">{product.description}</p>
                 <div className="mt-3 mb-2 min-h-[34px]">
                     {hasVariants && (
                         <div className="flex items-center gap-2 flex-wrap">
                             {product.variants.map(variant => {
                                 const isSelected = currentVariant?.id === variant.id;
                                 return (
-                                    <button key={variant.id} onClick={() => handleVariantChange(product.id, variant.id)} className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all duration-200 ${isSelected ? 'bg-red-600 border-red-700 text-white shadow-md' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'}`}>
+                                    <button 
+                                        key={variant.id} 
+                                        onClick={() => handleVariantChange(product.id, variant.id)} 
+                                        className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all duration-200 ${
+                                            isSelected 
+                                            ? 'bg-red-600 border-red-700 text-white shadow-md' 
+                                            : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500'
+                                        }`}
+                                    >
                                         {variant.label}
                                     </button>
                                 );
@@ -197,12 +236,18 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                 <div className="flex justify-between items-center mt-auto pt-2">
                     {hasVariants ? (
                         <>
-                            <span className="text-xl font-bold text-red-700">₹{currentPrice}</span>
-                            <button onClick={(e) => handleAddToCart({ ...product, selectedVariant: currentVariant }, e)} className="text-white px-3 py-2 text-sm font-semibold rounded-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 transition-colors shadow-md hover:shadow-lg" disabled={!currentVariant}>
+                            <span className="text-xl font-bold text-red-400">₹{currentPrice}</span>
+                            <button 
+                                onClick={(e) => handleAddToCart({ ...product, selectedVariant: currentVariant }, e)} 
+                                className="text-white px-3 py-2 text-sm font-semibold rounded-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 transition-colors shadow-md hover:shadow-lg" 
+                                disabled={!currentVariant}
+                            >
                                 Add to Cart
                             </button>
                         </>
-                    ) : (<span className="text-sm font-semibold text-gray-500 w-full text-center">Currently Unavailable</span>)}
+                    ) : (
+                        <span className="text-sm font-semibold text-gray-400 w-full text-center">Currently Unavailable</span>
+                    )}
                 </div>
             </div>
         </motion.div>
@@ -210,15 +255,15 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
 };
 
 const SkeletonCard = () => (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden animate-pulse">
-        <div className="w-full aspect-[4/3] bg-gray-200"></div>
+    <div className="bg-black/70 backdrop-blur-lg rounded-2xl shadow-lg overflow-hidden animate-pulse">
+        <div className="w-full aspect-[4/3] bg-gray-600"></div>
         <div className="p-4">
-            <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-full mb-4"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="h-5 bg-gray-600 rounded w-3/4 mb-2"></div>
+            <div className="h-3 bg-gray-600 rounded w-full mb-4"></div>
+            <div className="h-3 bg-gray-600 rounded w-1/2 mb-4"></div>
             <div className="flex justify-between items-center">
-                <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-                <div className="h-8 bg-gray-200 rounded-full w-1/3"></div>
+                <div className="h-6 bg-gray-600 rounded w-1/4"></div>
+                <div className="h-8 bg-gray-600 rounded-full w-1/3"></div>
             </div>
         </div>
     </div>
@@ -318,8 +363,28 @@ export default function HomePage({ handleAddToCart }) {
     };
 
     return (
-        <div> 
+        <div className="relative min-h-screen">
             <style>{`.text-shadow { text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7); }`}</style>
+
+            {/* Full-Screen Video Background */}
+            <AnimatePresence>
+                {categoryVideos[selectedCategory] && (
+                    <motion.video 
+                        key={selectedCategory} 
+                        src={categoryVideos[selectedCategory]} 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1, ease: 'easeInOut' }}
+                        autoPlay 
+                        loop 
+                        muted 
+                        playsInline 
+                        className="fixed inset-0 w-full h-full object-cover -z-20"
+                    />
+                )}
+            </AnimatePresence>
+            <div className="fixed inset-0 bg-black/50 -z-10"></div>
 
             {/* Sidebar Menu */}
             <AnimatePresence>
@@ -342,7 +407,7 @@ export default function HomePage({ handleAddToCart }) {
                             <div className="flex justify-between items-center mb-8">
                                 <img src={logoIcon} alt="Sresta Mart Logo" className="h-12 w-auto"/>
                                 <button onClick={() => setIsSidebarOpen(false)} className="p-1">
-                                    <X className="text-gray-600" />
+                                    <X className="text-gray-300" />
                                 </button>
                             </div>
                             <nav className="flex-grow">
@@ -355,7 +420,7 @@ export default function HomePage({ handleAddToCart }) {
                                                 className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-md font-medium transition-colors ${
                                                     selectedCategory === category 
                                                     ? 'bg-red-100 text-red-700' 
-                                                    : 'text-gray-700 hover:bg-gray-100'
+                                                    : 'text-gray-300 hover:bg-gray-800'
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-3">
@@ -367,16 +432,16 @@ export default function HomePage({ handleAddToCart }) {
                                         </li>
                                     ))}
                                 </ul>
-                                <hr className="my-6" />
+                                <hr className="my-6 border-gray-600" />
                                 <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Portals</h3>
                                 <ul className="space-y-2">
                                     <li>
-                                        <a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-md font-medium text-gray-700 hover:bg-gray-100">
+                                        <a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-md font-medium text-gray-300 hover:bg-gray-800">
                                             <User size={18} /> Vendor
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-md font-medium text-gray-700 hover:bg-gray-100">
+                                        <a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-md font-medium text-gray-300 hover:bg-gray-800">
                                             <Truck size={18} /> Delivery
                                         </a>
                                     </li>
@@ -388,19 +453,29 @@ export default function HomePage({ handleAddToCart }) {
             </AnimatePresence>
 
             <div className="relative z-10">
-                <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/50 to-transparent">
+                <div className="pt-8 sm:pt-12 pb-6 bg-black/70 backdrop-blur-lg">
                     <div className="flex flex-row items-center justify-center mb-8 relative px-4">
                         <button 
                             onClick={() => setIsSidebarOpen(true)}
-                            className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm"
+                            className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 p-2 bg-black/50 rounded-full backdrop-blur-sm"
                         >
                             <Menu className="text-white"/>
                         </button>
                         <div className="flex items-center">
-                            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, ease: "easeOut" }} className="mr-4 hidden sm:block">
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.8 }} 
+                                animate={{ opacity: 1, scale: 1 }} 
+                                transition={{ duration: 0.6, ease: "easeOut" }} 
+                                className="mr-4 hidden sm:block"
+                            >
                                 <img src={logoIcon} alt="Sresta Mart Logo" className="h-20 md:h-24 w-auto"/>
                             </motion.div>
-                            <motion.h2 initial={{opacity: 0, y: -20}} animate={{opacity: 1, y: 0}} transition={{ delay: 0.2 }} className="text-4xl sm:text-5xl font-bold text-white text-shadow">
+                            <motion.h2 
+                                initial={{opacity: 0, y: -20}} 
+                                animate={{opacity: 1, y: 0}} 
+                                transition={{ delay: 0.2 }} 
+                                className="text-4xl sm:text-5xl font-bold text-white text-shadow"
+                            >
                                 Explore Our Collection
                             </motion.h2>
                         </div>
@@ -408,14 +483,13 @@ export default function HomePage({ handleAddToCart }) {
                     <div className="mt-8 hidden sm:flex justify-center flex-wrap gap-3 px-4">
                         {categories.map(category => (
                             <motion.button 
-                                key={category} 
-                                onClick={() => handleFilterChange(category)}
-                                whileHover={{ y: -3 }}
+                                key={category}                                onClick={() => handleFilterChange(category)}
+                                whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
-                                    selectedCategory === category 
-                                    ? `bg-white text-red-600 shadow-lg` 
-                                    : 'bg-white/20 text-white hover:bg-white/40 text-shadow backdrop-blur-sm'
+                                className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-colors duration-200 ${
+                                    selectedCategory === category
+                                        ? 'bg-red-600 text-white shadow-md'
+                                        : 'bg-gray-800/70 text-gray-200 hover:bg-gray-700/70 backdrop-blur-sm'
                                 }`}
                             >
                                 {categoryIcons[category]}
@@ -424,88 +498,92 @@ export default function HomePage({ handleAddToCart }) {
                         ))}
                     </div>
                 </div>
-            </div>
 
-            <main className="p-4 sm:p-8 relative z-10 max-w-7xl mx-auto">
-                {/* Video Background for Product Grid */}
-                <div className="relative">
-                    <AnimatePresence>
-                        {categoryVideos[selectedCategory] && (
-                            <motion.video 
-                                key={selectedCategory} 
-                                src={categoryVideos[selectedCategory]} 
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 1, ease: 'easeInOut' }}
-                                autoPlay loop muted playsInline 
-                                className="absolute top-0 left-0 w-full h-full object-cover -z-10"
+                {/* Main Content */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-red-100/90 backdrop-blur-sm text-red-700 p-4 rounded-lg mb-8 text-center"
+                        >
+                            {error}
+                        </motion.div>
+                    )}
+
+                    {/* Product Grid and Banner */}
+                    <motion.div
+                        variants={productGridVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+                    >
+                        {productsLoading
+                            ? Array.from({ length: 12 }).map((_, index) => <SkeletonCard key={index} />)
+                            : productsBeforeBanner.map(product => (
+                                  <ProductCard
+                                      key={product.id}
+                                      product={product}
+                                      selectedVariants={selectedVariants}
+                                      handleVariantChange={handleVariantChange}
+                                      handleAddToCart={handleAddToCart}
+                                  />
+                              ))}
+                        {currentPage === 1 && currentBannerData && (
+                            <CategoryBanner
+                                title={currentBannerData.title}
+                                text={currentBannerData.text}
+                                imageUrl={currentBannerData.imageUrl}
                             />
                         )}
-                    </AnimatePresence>
-                    <div className="absolute top-0 left-0 w-full h-full bg-black/30 -z-5"></div>
-
-                    {error && <div className="text-center bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6" role="alert"><strong className="font-bold">Error:</strong><span className="block sm:inline ml-2">{error}</span></div>}
-                    
-                    <motion.div key={                    selectedCategory} variants={productGridVariants} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
-                        {productsLoading ? (
-                            Array.from({ length: 12 }).map((_, index) => <SkeletonCard key={index} />)
-                        ) : (
-                            <>
-                                {productsBeforeBanner.map(product => (
-                                    <ProductCard 
-                                        key={product.id} 
-                                        product={product} 
-                                        selectedVariants={selectedVariants} 
-                                        handleVariantChange={handleVariantChange} 
-                                        handleAddToCart={handleAddToCart} 
-                                    />
-                                ))}
-                                {currentPage === 1 && currentBannerData && (
-                                    <CategoryBanner 
-                                        title={currentBannerData.title} 
-                                        text={currentBannerData.text} 
-                                        imageUrl={currentBannerData.imageUrl} 
-                                    />
-                                )}
-                                {productsAfterBanner.map(product => (
-                                    <ProductCard 
-                                        key={product.id} 
-                                        product={product} 
-                                        selectedVariants={selectedVariants} 
-                                        handleVariantChange={handleVariantChange} 
-                                        handleAddToCart={handleAddToCart} 
-                                    />
-                                ))}
-                            </>
-                        )}
+                        {productsLoading
+                            ? null
+                            : productsAfterBanner.map(product => (
+                                  <ProductCard
+                                      key={product.id}
+                                      product={product}
+                                      selectedVariants={selectedVariants}
+                                      handleVariantChange={handleVariantChange}
+                                      handleAddToCart={handleAddToCart}
+                                  />
+                              ))}
                     </motion.div>
 
                     {/* Pagination */}
                     {!productsLoading && totalPages > 1 && (
-                        <div className="flex justify-center items-center gap-4 mt-8">
-                            <button 
-                                onClick={goToPreviousPage} 
+                        <div className="mt-12 flex justify-center gap-4">
+                            <button
+                                onClick={goToPreviousPage}
                                 disabled={currentPage === 1}
-                                className="px-4 py-2 bg-red-600 text-white rounded-full disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-red-700 transition-colors"
+                                className="px-4 py-2 bg-gray-800/70 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700/70 backdrop-blur-sm transition-colors"
                             >
                                 Previous
                             </button>
-                            <span className="text-gray-700">Page {currentPage} of {totalPages}</span>
-                            <button 
-                                onClick={goToNextPage} 
+                            <span className="px-4 py-2 text-white text-shadow">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                            <button
+                                onClick={goToNextPage}
                                 disabled={currentPage === totalPages}
-                                className="px-4 py-2 bg-red-600 text-white rounded-full disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-red-700 transition-colors"
+                                className="px-4 py-2 bg-gray-800/70 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700/70 backdrop-blur-sm transition-colors"
                             >
                                 Next
                             </button>
                         </div>
                     )}
-                </div>
 
-                {/* Category Features Section */}
-                {currentFeatureData && <CategoryFeatureSection {...currentFeatureData} />}
-            </main>
+                    {/* Category Features Section */}
+                    {currentFeatureData && (
+                        <CategoryFeatureSection
+                            title={currentFeatureData.title}
+                            subtitle={currentFeatureData.subtitle}
+                            description={currentFeatureData.description}
+                            imageUrl={currentFeatureData.imageUrl}
+                            features={currentFeatureData.features}
+                        />
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
