@@ -44,7 +44,7 @@ export default function AdminPage() {
                 axios.get(`${import.meta.env.VITE_API_URL}/api/admin/delivery-partners`, config)
             ]);
             
-            setProducts(productsRes.data);
+            setProducts(productsRes.data.products);
             setUsers(usersRes.data);
             setOrders(ordersRes.data);
             setDeliveryPartners(partnersRes.data);
