@@ -1,5 +1,3 @@
-// index.js (Full Backend Code)
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -11,7 +9,7 @@ const twilio = require('twilio'); // Added for Twilio
 const crypto = require('crypto'); // Added to generate OTP
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 
 
@@ -342,6 +340,7 @@ app.post('/api/forgot-password-twilio', async (req, res) => {
     try {
         const userResult = await pool.query('SELECT * FROM users WHERE phone = $1', [phone]);
         if (userResult.rows.length === 0) {
+            // Security: Don't reveal if a user exists.
             return res.json({ msg: 'If an account exists, an OTP has been sent.' });
         }
 
@@ -397,28 +396,87 @@ app.post('/api/reset-password-twilio', async (req, res) => {
     }
 });
 
+// =================================================================
+// === START: PAGINATED PRODUCTS ENDPOINT (REPLACES THE OLD ONE) ===
+// =================================================================
 app.get('/api/products', async (req, res) => {
   try {
-    const query = `
+    // Step 1: Get page and limit from query, with default values
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 20; // Default to 20 products per page
+    const offset = (page - 1) * limit;
+
+    // Step 2: Get the total count of all products for pagination metadata
+    const totalProductsResult = await pool.query('SELECT COUNT(*) FROM products');
+    const totalProducts = parseInt(totalProductsResult.rows[0].count, 10);
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    // Step 3: Fetch only the IDs of the products for the current page
+    const productIdsResult = await pool.query(
+      'SELECT id FROM products ORDER BY id ASC LIMIT $1 OFFSET $2',
+      [limit, offset]
+    );
+    const productIds = productIdsResult.rows.map(row => row.id);
+
+    // If there are no product IDs for this page, return an empty result
+    if (productIds.length === 0) {
+      return res.status(200).json({
+        products: [],
+        currentPage: page,
+        totalPages,
+        totalProducts,
+      });
+    }
+
+    // Step 4: Fetch the product details and their variants for ONLY the paginated product IDs
+    const productsAndVariantsQuery = `
       SELECT p.id, p.name, p.description, p.category, p.image_url, v.id as variant_id, v.label, v.price
-      FROM products p LEFT JOIN product_variants v ON p.id = v.product_id ORDER BY p.id, v.price;
+      FROM products p
+      LEFT JOIN product_variants v ON p.id = v.product_id
+      WHERE p.id = ANY($1::int[])
+      ORDER BY p.id, v.price;
     `;
-    const { rows } = await pool.query(query);
+    const { rows } = await pool.query(productsAndVariantsQuery, [productIds]);
+
+    // Step 5: Group the variants under their parent products (same logic as before)
     const productsMap = new Map();
     rows.forEach(row => {
       if (!productsMap.has(row.id)) {
-        productsMap.set(row.id, { id: row.id, name: row.name, description: row.description, category: row.category, image_url: row.image_url, variants: [] });
+        productsMap.set(row.id, {
+          id: row.id,
+          name: row.name,
+          description: row.description,
+          category: row.category,
+          image_url: row.image_url,
+          variants: []
+        });
       }
       if (row.variant_id) {
-        productsMap.get(row.id).variants.push({ id: row.variant_id, label: row.label, price: parseFloat(row.price) });
+        productsMap.get(row.id).variants.push({
+          id: row.variant_id,
+          label: row.label,
+          price: parseFloat(row.price)
+        });
       }
     });
-    res.json(Array.from(productsMap.values()));
+
+    // Step 6: Send the final paginated response
+    res.status(200).json({
+      products: Array.from(productsMap.values()),
+      currentPage: page,
+      totalPages,
+      totalProducts,
+    });
+
   } catch (err) {
-    console.error("Error fetching products:", err.message);
+    console.error("Error fetching paginated products:", err.message);
     res.status(500).json({ msg: 'Server Error while fetching products.' });
   }
 });
+// ===============================================================
+// === END: PAGINATED PRODUCTS ENDPOINT ==========================
+// ===============================================================
+
 
 app.get('/api/addresses', checkUserToken, async (req, res) => {
   try {
