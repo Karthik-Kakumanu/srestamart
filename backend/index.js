@@ -505,7 +505,7 @@ app.post('/api/orders', checkUserToken, async (req, res) => {
     res.status(201).json({ success: true, orderId: orderResult.rows[0].id, message: 'Order placed successfully!' });
   } catch (err) {
     console.error(err.message);
-    res.status(500.json({ msg: 'Server Error while creating order' });
+    res.status(500).json({ msg: 'Server Error while creating order' }); // Fixed syntax
   }
 });
 
