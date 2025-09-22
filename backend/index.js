@@ -5,44 +5,34 @@ const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const path = require('path');
-const twilio = require('twilio'); // Added for Twilio
-const crypto = require('crypto'); // Added to generate OTP
+const twilio = require('twilio');
+const crypto = require('crypto');
 
 const app = express();
-const PORT = process.process.env.PORT || 10000;
+// --- FIX: Corrected the typo from process.process.env to process.env ---
+const PORT = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 
-
-// --- START OF IMPORTANT CHANGE ---
-
-// Define the websites that are allowed to connect to this backend
 const allowedOrigins = [
   'https://www.srestamart.com', 
-  'https://srestamart.com', // <-- IMPORTANT: REPLACE with your real custom domain
+  'https://srestamart.com',
   'https://srestamart.onrender.com',
-  'http://localhost:5173' // For your local testing
+  'http://localhost:5173'
 ];
 
-// Apply the new, more secure CORS settings
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests that don't have an origin (like Postman or mobile apps)
     if (!origin) return callback(null, true);
-    
-    // If the incoming origin is in our list, allow it
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      // Otherwise, block it
       callback(new Error('Not allowed by CORS'));
     }
   }
 }));
 
-// --- END OF IMPORTANT CHANGE ---
 app.use(bodyParser.json());
 
-// --- TWILIO CLIENT INITIALIZATION ---
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const { Pool } = require('pg');
@@ -331,94 +321,83 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// ✅ --- NEW TWILIO PASSWORD RESET ROUTES ---
-
-// 1. ENDPOINT TO SEND THE OTP
 app.post('/api/forgot-password-twilio', async (req, res) => {
     const { phone } = req.body;
-
     try {
         const userResult = await pool.query('SELECT * FROM users WHERE phone = $1', [phone]);
         if (userResult.rows.length === 0) {
-            // Security: Don't reveal if a user exists.
             return res.json({ msg: 'If an account exists, an OTP has been sent.' });
         }
-
         const otp = crypto.randomInt(100000, 999999).toString();
         const expires = new Date(Date.now() + 10 * 60 * 1000); // Expires in 10 minutes
-
         await pool.query(
             'UPDATE users SET reset_password_otp = $1, reset_password_expires = $2 WHERE phone = $3',
             [otp, expires, phone]
         );
-
         await twilioClient.messages.create({
             body: `Your Sresta Mart password reset code is: ${otp}`,
             from: process.env.TWILIO_PHONE_NUMBER,
             to: `+91${phone}`
         });
-        
         res.json({ msg: 'OTP has been sent to your mobile number.' });
-
     } catch (err) {
         console.error("Twilio Send Error:", err);
         res.status(500).json({ msg: 'Failed to send OTP. Please try again later.' });
     }
 });
 
-// 2. ENDPOINT TO VERIFY OTP AND RESET PASSWORD
 app.post('/api/reset-password-twilio', async (req, res) => {
     const { phone, otp, newPassword } = req.body;
-
     try {
         const userResult = await pool.query(
             'SELECT * FROM users WHERE phone = $1 AND reset_password_otp = $2 AND reset_password_expires > NOW()',
             [phone, otp]
         );
-
         if (userResult.rows.length === 0) {
             return res.status(400).json({ msg: 'Invalid or expired OTP.' });
         }
-
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
-
         await pool.query(
             'UPDATE users SET password = $1, reset_password_otp = NULL, reset_password_expires = NULL WHERE phone = $2',
             [hashedPassword, phone]
         );
-
         res.json({ msg: 'Password reset successfully! You can now log in.' });
-
     } catch (err) {
         console.error("Reset Password Error:", err);
         res.status(500).send('Server error during password reset.');
     }
 });
 
-// =================================================================
-// === START: PAGINATED PRODUCTS ENDPOINT (REPLACES THE OLD ONE) ===
-// =================================================================
+// --- UPDATED Products route with pagination and category filtering ---
 app.get('/api/products', async (req, res) => {
   try {
-    // Step 1: Get page and limit from query, with default values
+    const category = req.query.category; 
     const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 20; // Default to 20 products per page
+    const limit = parseInt(req.query.limit, 10) || 12;
     const offset = (page - 1) * limit;
 
-    // Step 2: Get the total count of all products for pagination metadata
-    const totalProductsResult = await pool.query('SELECT COUNT(*) FROM products');
+    let countQuery = 'SELECT COUNT(*) FROM products';
+    let productsQuery = 'SELECT id FROM products';
+    const queryParams = [];
+
+    if (category) {
+      countQuery += ' WHERE LOWER(REPLACE(category, \' \', \'\')) = $1';
+      productsQuery += ' WHERE LOWER(REPLACE(category, \' \', \'\')) = $1';
+      queryParams.push(category);
+    }
+    
+    const totalProductsResult = await pool.query(countQuery, queryParams);
     const totalProducts = parseInt(totalProductsResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalProducts / limit);
 
-    // Step 3: Fetch only the IDs of the products for the current page
+    productsQuery += ` ORDER BY id ASC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
     const productIdsResult = await pool.query(
-      'SELECT id FROM products ORDER BY id ASC LIMIT $1 OFFSET $2',
-      [limit, offset]
+      productsQuery,
+      [...queryParams, limit, offset]
     );
     const productIds = productIdsResult.rows.map(row => row.id);
 
-    // If there are no product IDs for this page, return an empty result
     if (productIds.length === 0) {
       return res.status(200).json({
         products: [],
@@ -428,7 +407,6 @@ app.get('/api/products', async (req, res) => {
       });
     }
 
-    // Step 4: Fetch the product details and their variants for ONLY the paginated product IDs
     const productsAndVariantsQuery = `
       SELECT p.id, p.name, p.description, p.category, p.image_url, v.id as variant_id, v.label, v.price
       FROM products p
@@ -438,7 +416,6 @@ app.get('/api/products', async (req, res) => {
     `;
     const { rows } = await pool.query(productsAndVariantsQuery, [productIds]);
 
-    // Step 5: Group the variants under their parent products (same logic as before)
     const productsMap = new Map();
     rows.forEach(row => {
       if (!productsMap.has(row.id)) {
@@ -460,7 +437,6 @@ app.get('/api/products', async (req, res) => {
       }
     });
 
-    // Step 6: Send the final paginated response
     res.status(200).json({
       products: Array.from(productsMap.values()),
       currentPage: page,
@@ -473,10 +449,6 @@ app.get('/api/products', async (req, res) => {
     res.status(500).json({ msg: 'Server Error while fetching products.' });
   }
 });
-// ===============================================================
-// === END: PAGINATED PRODUCTS ENDPOINT ==========================
-// ===============================================================
-
 
 app.get('/api/addresses', checkUserToken, async (req, res) => {
   try {
