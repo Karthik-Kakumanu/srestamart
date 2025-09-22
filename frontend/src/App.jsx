@@ -130,8 +130,7 @@ export default function App() {
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
             <Route path="/checkout" element={<CheckoutPage user={loggedInUser} addresses={addresses} setAddresses={setAddresses} setCheckoutDetails={setCheckoutDetails} cartItems={cartItems} />} />
             <Route path="/payment" element={<PaymentPage user={loggedInUser} checkoutDetails={checkoutDetails} handleClearCart={handleClearCart} isFirstOrder={isFirstOrder} />} />
-            {/* I've updated this line to pass the loggedInUser prop */}
-            <Route path="/order-success" element={<OrderSuccessPage loggedInUser={loggedInUser} />} />
+            <Route path="/order-success" element={<OrderSuccessPage />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Route>
         ) : (
