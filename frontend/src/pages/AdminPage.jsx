@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Users, Package, RefreshCw, PlusCircle, ShoppingCart, ChevronDown, DollarSign, BarChart2, UserCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import EditProductModal from '../components/admin/EditProductModal.jsx';
 import AddProductModal from '../components/admin/AddProductModal.jsx';
 
@@ -15,8 +15,8 @@ export default function AdminPage() {
     const [orders, setOrders] = useState([]);
     const [deliveryPartners, setDeliveryPartners] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
-    
+    const [error, setError] = state('');
+
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -38,13 +38,13 @@ export default function AdminPage() {
 
         try {
             const [productsRes, usersRes, ordersRes, partnersRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_URL}/api/products`),
+                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/products`, config),
                 axios.get(`${import.meta.env.VITE_API_URL}/api/admin/users`, config),
                 axios.get(`${import.meta.env.VITE_API_URL}/api/admin/orders`, config),
                 axios.get(`${import.meta.env.VITE_API_URL}/api/admin/delivery-partners`, config)
             ]);
             
-            setProducts(productsRes.data.products);
+            setProducts(productsRes.data);
             setUsers(usersRes.data);
             setOrders(ordersRes.data);
             setDeliveryPartners(partnersRes.data);
@@ -204,11 +204,12 @@ const OverviewCharts = ({ orders, products }) => {
     const salesData = useMemo(() => {
         const salesByDay = orders.reduce((acc, order) => {
             const date = new Date(order.created_at).toLocaleDateString('en-CA');
-            if (!acc[date]) acc[date] = 0;
-            acc[date]++;
+            if (!acc[date]) acc[date] = { orders: 0, revenue: 0 };
+            acc[date].orders += 1;
+            acc[date].revenue += Number(order.total_amount);
             return acc;
         }, {});
-        return Object.keys(salesByDay).map(date => ({ date, orders: salesByDay[date] })).sort((a,b) => new Date(a.date) - new Date(b.date));
+        return Object.keys(salesByDay).map(date => ({ date, orders: salesByDay[date].orders, revenue: salesByDay[date].revenue })).sort((a,b) => new Date(a.date) - new Date(b.date));
     }, [orders]);
 
     const categoryData = useMemo(() => {
@@ -224,21 +225,24 @@ const OverviewCharts = ({ orders, products }) => {
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 p-4">
-            <div className="lg:col-span-3 bg-slate-50 p-4 rounded-xl">
-                <h3 className="font-bold text-gray-700 mb-4">Sales Over Time</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4">
+            <div className="bg-slate-50 p-4 rounded-xl">
+                <h3 className="font-bold text-gray-700 mb-4">Daily Orders & Revenue</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={salesData}>
+                    <LineChart data={salesData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="date" fontSize={12} />
-                        <YAxis allowDecimals={false} fontSize={12} />
+                        <YAxis yAxisId="left" fontSize={12} />
+                        <YAxis yAxisId="right" orientation="right" fontSize={12} />
                         <Tooltip wrapperClassName="!bg-white !border-slate-200 !rounded-lg !shadow-lg" />
-                        <Bar dataKey="orders" fill="#ef4444" name="Daily Orders" radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                        <Legend />
+                        <Line yAxisId="left" type="monotone" dataKey="orders" stroke="#ef4444" name="Orders" />
+                        <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#3b82f6" name="Revenue (₹)" />
+                    </LineChart>
                 </ResponsiveContainer>
             </div>
-            <div className="lg:col-span-2 bg-slate-50 p-4 rounded-xl">
-                 <h3 className="font-bold text-gray-700 mb-4">Product Categories</h3>
+            <div className="bg-slate-50 p-4 rounded-xl">
+                 <h3 className="font-bold text-gray-700 mb-4">Product Categories Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                         <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>

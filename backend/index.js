@@ -9,7 +9,6 @@ const twilio = require('twilio');
 const crypto = require('crypto');
 
 const app = express();
-// --- FIX: Corrected the typo from process.process.env to process.env ---
 const PORT = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 
@@ -71,7 +70,6 @@ const checkUserToken = (req, res, next) => {
     next();
   } catch (e) { res.status(401).json({ msg: 'Token is not valid' }); }
 };
-
 
 // --- API ROUTES ---
 
@@ -192,6 +190,24 @@ app.delete('/api/admin/products/:id', checkAdminToken, async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
+  }
+});
+
+app.get('/api/admin/products', checkAdminToken, async (req, res) => {
+  try {
+    const query = `
+      SELECT p.id, p.name, p.description, p.category, p.image_url, 
+             json_agg(json_build_object('id', v.id, 'label', v.label, 'price', v.price)) as variants
+      FROM products p
+      LEFT JOIN product_variants v ON p.id = v.product_id
+      GROUP BY p.id
+      ORDER BY p.id DESC;
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error fetching products for admin');
   }
 });
 
@@ -489,7 +505,7 @@ app.post('/api/orders', checkUserToken, async (req, res) => {
     res.status(201).json({ success: true, orderId: orderResult.rows[0].id, message: 'Order placed successfully!' });
   } catch (err) {
     console.error(err.message);
-    res.status(500).json({ msg: 'Server Error while creating order' });
+    res.status(500.json({ msg: 'Server Error while creating order' });
   }
 });
 
