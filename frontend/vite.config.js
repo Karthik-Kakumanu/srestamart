@@ -1,9 +1,19 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // The 'build' section that externalized 'jwt-decode' has been removed.
-  // Vite will now correctly bundle the library with your application code.
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', 'lodash', 'react-ga', 'framer-motion', 'lucide-react'],
+          homepage: ['./src/pages/HomePage.jsx'],
+          cart: ['./src/pages/CartPage.jsx'],
+          auth: ['./src/pages/AuthPage.jsx']
+        }
+      }
+    }
+  }
 });
