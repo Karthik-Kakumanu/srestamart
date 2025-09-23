@@ -111,7 +111,7 @@ app.get('/api/admin/users', checkAdminToken, async (req, res) => {
     const usersResult = await pool.query('SELECT id, name, phone, created_at, is_admin, addresses FROM users ORDER BY id ASC');
     res.json(usersResult.rows);
   } catch (err) {
-    console.error(err.message);
+    console.error('Error fetching users:', err.message);
     res.status(500).send('Server Error');
   }
 });
@@ -132,7 +132,7 @@ app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
     const { rows } = await pool.query(query);
     res.json(rows);
   } catch (err) {
-    console.error(err.message);
+    console.error('Error fetching orders:', err.message);
     res.status(500).send('Server Error fetching all orders');
   }
 });
@@ -142,7 +142,7 @@ app.get('/api/admin/delivery-partners', checkAdminToken, async (req, res) => {
     const result = await pool.query('SELECT id, name FROM delivery_partners ORDER BY name ASC');
     res.json(result.rows);
   } catch (err) {
-    console.error(err.message);
+    console.error('Error fetching delivery partners:', err.message);
     res.status(500).send('Server Error');
   }
 });
@@ -159,7 +159,7 @@ app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) =
     }
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err.message);
+    console.error('Error assigning order:', err.message);
     res.status(500).send('Server Error');
   }
 });
@@ -183,7 +183,7 @@ app.post('/api/admin/products', checkAdminToken, async (req, res) => {
     res.status(201).json(createdProduct);
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error(err.message);
+    console.error('Error creating product:', err.message);
     res.status(500).send('Server Error');
   } finally {
     client.release();
@@ -199,7 +199,7 @@ app.put('/api/admin/products/:id', checkAdminToken, async (req, res) => {
     );
     res.json(updatedProduct.rows[0]);
   } catch (err) {
-    console.error(err.message);
+    console.error('Error updating product:', err.message);
     res.status(500).send('Server Error');
   }
 });
@@ -209,7 +209,7 @@ app.delete('/api/admin/products/:id', checkAdminToken, async (req, res) => {
     await pool.query('DELETE FROM products WHERE id = $1', [req.params.id]);
     res.json({ msg: 'Product and its variants deleted successfully' });
   } catch (err) {
-    console.error(err.message);
+    console.error('Error deleting product:', err.message);
     res.status(500).send('Server Error');
   }
 });
@@ -260,7 +260,10 @@ app.put('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
 // 3. DELETE a variant
 app.delete('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
     try {
-        const deletedVariant = await pool.query('DELETE FROM product_variants WHERE id = $1 RETURNING *', [req.params.id]);
+        const deletedVariant = await pool.query(
+            'DELETE FROM product_variants WHERE id = $1 RETURNING *',
+            [req.params.id]
+        );
         if (deletedVariant.rows.length === 0) {
             return res.status(404).json({ msg: 'Variant not found' });
         }
@@ -270,114 +273,6 @@ app.delete('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-
-app.get('/api/admin/products', checkAdminToken, async (req, res) => {
-  try {
-    const query = `
-      SELECT p.id, p.name, p.description, p.category, p.image_url, 
-             json_agg(json_build_object('id', v.id, 'label', v.label, 'price', v.price)) as variants
-      FROM products p
-      LEFT JOIN product_variants v ON p.id = v.product_id
-      GROUP BY p.id
-      ORDER BY p.id DESC;
-    `;
-    const { rows } = await pool.query(query);
-    res.json(rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error fetching products for admin');
-  }
-});
-
-
-// --- DELIVERY PARTNER ROUTES (MOVED TO CORRECT POSITION) ---
-app.post('/api/delivery/login', async (req, res) => {
-  const { phone, password } = req.body;
-  try {
-    const dbResult = await pool.query('SELECT id, name, password FROM delivery_partners WHERE phone = $1', [phone]);
-    if (dbResult.rows.length > 0) {
-      const partner = dbResult.rows[0];
-      const matchResult = await pool.query('SELECT crypt($1, $2) = $2 AS match', [password, partner.password]);
-      if (matchResult.rows[0].match) {
-        const token = jwt.sign({ id: partner.id, name: partner.name, role: 'partner' }, JWT_SECRET, { expiresIn: '8h' });
-        return res.json({ success: true, token, partner: { id: partner.id, name: partner.name } });
-      }
-    }
-    if (phone === process.env.DELIVERY_PARTNER_PHONE && password === process.env.DELIVERY_PARTNER_PASSWORD) {
-      const partner = { id: 1, name: "Sresta Mart Admin" };
-      const token = jwt.sign({ id: partner.id, name: partner.name, role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
-      return res.json({ success: true, token, partner });
-    }
-    return res.status(401).json({ success: false, msg: 'Invalid credentials' });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-});
-
-app.get('/api/delivery/orders', checkPartnerToken, async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT o.*, u.name as customer_name FROM orders o JOIN users u ON o.user_id = u.id WHERE o.assigned_to_id = $1 ORDER BY o.created_at DESC',
-      [req.partner.id]
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.put('/api/delivery/orders/:orderId/accept', checkPartnerToken, async (req, res) => {
-  try {
-    const result = await pool.query(
-      "UPDATE orders SET delivery_status = 'Out for Delivery', status = 'Out for Delivery' WHERE id = $1 AND assigned_to_id = $2 RETURNING *",
-      [req.params.orderId, req.partner.id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ msg: 'Order not found or not assigned to you.' });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req, res) => {
-  try {
-    const result = await pool.query(
-      "UPDATE orders SET delivery_status = 'Delivered', status = 'Completed' WHERE id = $1 AND assigned_to_id = $2 RETURNING *",
-      [req.params.orderId, req.partner.id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ msg: 'Order not found or not assigned to you.' });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
-
-app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
-  const { latitude, longitude } = req.body;
-  try {
-    const pointLiteral = `(${longitude}, ${latitude})`;
-    const result = await pool.query(
-      'UPDATE delivery_partners SET last_location = $1 WHERE id = $2 RETURNING *',
-      [pointLiteral, req.partner.id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ msg: 'Partner not found.' });
-    }
-    res.json({ success: true, location: result.rows[0].last_location });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error updating location');
-  }
-});
-
 
 // --- USER & PUBLIC ROUTES (MOVED TO CORRECT POSITION) ---
 app.post('/api/register', async (req, res) => {
@@ -394,7 +289,7 @@ app.post('/api/register', async (req, res) => {
     );
     res.status(201).json({ msg: 'User registered successfully!', user: newUser.rows[0] });
   } catch (err) {
-    console.error(err.message); res.status(500).send('Server error');
+    console.error('Error registering user:', err.message); res.status(500).send('Server error');
   }
 });
 
@@ -410,7 +305,7 @@ app.post('/api/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, name: user.name, role: user.is_admin ? 'admin' : 'user' }, JWT_SECRET, { expiresIn: '3h' });
     res.json({ msg: `Welcome back, ${user.name}!`, token, user: { id: user.id, name: user.name, phone: user.phone, is_admin: user.is_admin } });
   } catch (err) {
-    console.error(err.message); res.status(500).send('Server error');
+    console.error('Error logging in:', err.message); res.status(500).send('Server error');
   }
 });
 
@@ -434,7 +329,7 @@ app.post('/api/forgot-password-twilio', async (req, res) => {
         });
         res.json({ msg: 'OTP has been sent to your mobile number.' });
     } catch (err) {
-        console.error("Twilio Send Error:", err);
+        console.error("Twilio Send Error:", err.message);
         res.status(500).json({ msg: 'Failed to send OTP. Please try again later.' });
     }
 });
@@ -457,7 +352,7 @@ app.post('/api/reset-password-twilio', async (req, res) => {
         );
         res.json({ msg: 'Password reset successfully! You can now log in.' });
     } catch (err) {
-        console.error("Reset Password Error:", err);
+        console.error("Reset Password Error:", err.message);
         res.status(500).send('Server error during password reset.');
     }
 });
@@ -538,7 +433,7 @@ app.get('/api/addresses', checkUserToken, async (req, res) => {
     const result = await pool.query('SELECT addresses FROM users WHERE id = $1', [req.user.id]);
     res.json(result.rows[0].addresses || []);
   } catch (err) {
-    console.error(err.message);
+    console.error('Error fetching addresses:', err.message);
     res.status(500).json({ msg: 'Server error fetching addresses' });
   }
 });
@@ -555,7 +450,7 @@ app.post('/api/addresses', checkUserToken, async (req, res) => {
     );
     res.status(201).json(result.rows[0].addresses);
   } catch (err) {
-    console.error(err.message);
+    console.error('Error adding address:', err.message);
     res.status(500).json({ msg: 'Server error adding address' });
   }
 });
@@ -571,7 +466,7 @@ app.post('/api/orders', checkUserToken, async (req, res) => {
     const orderResult = await pool.query(orderQuery, [userId, JSON.stringify(cartItems), totalAmount, shippingAddress, 'Processing', 'Pending']);
     res.status(201).json({ success: true, orderId: orderResult.rows[0].id, message: 'Order placed successfully!' });
   } catch (err) {
-    console.error(err.message);
+    console.error('Error creating order:', err.message);
     res.status(500).json({ msg: 'Server Error while creating order' });
   }
 });
@@ -591,7 +486,7 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
     const { rows } = await pool.query(query, [userId]);
     res.json(rows);
   } catch (err) {
-    console.error(err.message);
+    console.error('Error fetching orders:', err.message);
     res.status(500).send('Server error fetching orders');
   }
 });

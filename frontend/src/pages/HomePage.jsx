@@ -6,6 +6,8 @@ import {
     Microscope, Shield, Sun, Droplets, BatteryCharging, Sparkles, TestTube, FilterX, Vegan, Activity,
     Menu, X, ChevronRight, User, Truck, Search, ShoppingCart
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { debounce } from 'lodash';
 import logoIcon from '../../images/icon.png';
 
 // --- Enhanced Constants, Icons, and Banners for More Attractiveness ---
@@ -146,17 +148,18 @@ const CategoryBanner = ({ title, text, imageUrl }) => (
         animate={{ opacity: 1, y: 0, scale: 1 }} 
         exit={{ opacity: 0, y: -50 }} 
         transition={{ duration: 0.6, ease: 'easeOut' }} 
-        className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-6 rounded-2xl shadow-lg overflow-hidden relative transform hover:scale-102 transition-transform duration-300"
+        className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-6 rounded-2xl shadow-sm overflow-hidden relative transform hover:scale-102 transition-transform duration-300"
     >
-        <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover -z-10 filter brightness-75" />
+        <img src={imageUrl} alt={title} loading="lazy" className="absolute w-full h-full object-cover -z-10 filter brightness-75" />
         <div className="bg-gradient-to-r from-white/20 via-white/10 to-transparent w-full h-full p-4 sm:p-8 flex items-center">
-            <div className="max-w-2xl">
+            <div className="max-w-2xl bg-white/10 backdrop-blur-sm p-4 rounded-lg">
                 <h3 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold leading-tight" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.5)' }}>{title}</h3>
                 <p className="mt-3 text-sm sm:text-base text-gray-100 leading-relaxed" dangerouslySetInnerHTML={{ __html: text }} />
                 <motion.button 
                     whileHover={{ scale: 1.08, boxShadow: '0 0 10px rgba(255,0,0,0.4)' }} 
                     whileTap={{ scale: 0.92 }} 
                     className="mt-4 bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold py-2 px-6 rounded-full hover:from-red-600 hover:to-red-800 transition-all shadow-md"
+                    aria-label={`Shop now for ${title}`}
                 >
                     Shop Now <ChevronRight size={16} className="inline ml-1" />
                 </motion.button>
@@ -172,7 +175,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.8 }}
-        className="py-12 px-4 sm:px-6 mt-12 rounded-2xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-lg shadow-lg ring-1 ring-red-400/10"
+        className="py-12 px-4 sm:px-6 mt-12 rounded-2xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-lg shadow-sm ring-1 ring-red-400/10"
     >
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <motion.div 
@@ -210,9 +213,9 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                 whileInView={{ opacity: 1, scale: 1 }} 
                 viewport={{ once: true }} 
                 transition={{ duration: 0.8, delay: 0.4 }} 
-                className="relative h-80 md:h-96 rounded-2xl shadow-lg overflow-hidden"
+                className="relative h-80 md:h-96 rounded-2xl shadow-sm overflow-hidden"
             >
-                <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-2xl filter brightness-90" />
+                <img src={imageUrl} alt={`Visual representation of ${title}`} loading="lazy" className="absolute w-full h-full object-cover rounded-2xl filter brightness-90" />
                 <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent"></div>
             </motion.div>
         </div>
@@ -228,13 +231,14 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     return (
         <motion.div 
             variants={{ hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1 } }} 
-            className="bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-lg rounded-2xl shadow-md overflow-hidden transform hover:scale-105 hover:shadow-lg transition-all duration-300 flex flex-col group"
+            className="bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-lg rounded-2xl shadow-sm overflow-hidden transform hover:scale-105 hover:shadow-md transition-all duration-300 flex flex-col group"
             whileHover={{ y: -5 }}
         >
             <div className="w-full aspect-[4/3] overflow-hidden relative">
                 <img 
                     src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} 
                     alt={product.name} 
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute top-1 right-1 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm">
@@ -253,7 +257,10 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                                     <button 
                                         key={variant.id} 
                                         onClick={() => handleVariantChange(product.id, variant.id)} 
-                                        className={`px-3 py-1 text-xs font-medium rounded-full border transition-all duration-300 ${
+                                        onKeyDown={(e) => e.key === 'Enter' && handleVariantChange(product.id, variant.id)}
+                                        tabIndex={0}
+                                        aria-label={`Select variant ${variant.label}`}
+                                        className={`px-3 py-1 text-xs font-medium rounded-full border transition-all duration-300 touch-manipulation ${
                                             isSelected 
                                             ? 'bg-red-500 border-red-600 text-white shadow-sm' 
                                             : 'bg-gray-700/30 border-gray-500 text-gray-300 hover:bg-gray-600/30 hover:shadow-sm'
@@ -272,7 +279,10 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                             <span className="text-lg font-semibold text-red-400">₹{currentPrice}</span>
                             <button 
                                 onClick={(e) => handleAddToCart({ ...product, selectedVariant: currentVariant }, e)} 
-                                className="flex items-center gap-1 text-white px-3 py-1.5 text-xs font-medium rounded-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 disabled:bg-gray-400 transition-all shadow-sm hover:shadow-md" 
+                                onKeyDown={(e) => e.key === 'Enter' && handleAddToCart({ ...product, selectedVariant: currentVariant }, e)}
+                                tabIndex={0}
+                                aria-label={`Add ${product.name} to cart`}
+                                className="flex items-center gap-1 text-white px-3 py-1.5 text-xs font-medium rounded-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 disabled:bg-gray-400 transition-all shadow-sm hover:shadow-md touch-manipulation" 
                                 disabled={!currentVariant}
                             >
                                 <ShoppingCart size={14} /> Add
@@ -288,7 +298,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
 };
 
 const SkeletonCard = () => (
-    <div className="bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-lg rounded-2xl shadow-md overflow-hidden animate-pulse">
+    <div className="bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-lg rounded-2xl shadow-sm overflow-hidden animate-pulse">
         <div className="w-full aspect-[4/3] bg-gray-600"></div>
         <div className="p-4">
             <div className="h-5 bg-gray-600 rounded w-4/5 mb-2"></div>
@@ -304,16 +314,14 @@ const SkeletonCard = () => (
 
 export default function HomePage({ handleAddToCart }) {
     // --- Enhanced STATE MANAGEMENT for Better UX ---
-    const [products, setProducts] = useState([]); 
     const [categories, setCategories] = useState(CATEGORY_ORDER);
     const [selectedCategory, setSelectedCategory] = useState(CATEGORY_ORDER[0]);
-    const [productsLoading, setProductsLoading] = useState(true);
     const [error, setError] = useState('');
     const [selectedVariants, setSelectedVariants] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(0);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [videoLoading, setVideoLoading] = useState(true);
 
     const BANNER_POSITION = 4;
 
@@ -327,35 +335,44 @@ export default function HomePage({ handleAddToCart }) {
         meat: "/videos/meat.mp4",
     };
 
+    const fetchProducts = async ({ queryKey }) => {
+        const [, { category, page, query }] = queryKey;
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?page=${page}&limit=12&category=${category}`);
+        return res.data;
+    };
+
+    const { data, isLoading: productsLoading, error: queryError } = useQuery({
+        queryKey: ['products', { category: selectedCategory, page: currentPage, query: searchQuery }],
+        queryFn: fetchProducts,
+        keepPreviousData: true,
+    });
+
     useEffect(() => {
-        if (!selectedCategory) return;
-        const fetchProducts = async () => {
-            setProductsLoading(true);
-            setError('');
-            try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?page=${currentPage}&limit=12&category=${selectedCategory}`);
-                if (res.data && Array.isArray(res.data.products)) {
-                    const fetchedProducts = res.data.products.map(p => ({ ...p, category: p.category.toLowerCase().replace(/\s+/g, '') }));
-                    setProducts(fetchedProducts);
-                    setTotalPages(res.data.totalPages);
-                    const initialVariants = {};
-                    fetchedProducts.forEach(p => {
-                        if (p.variants && p.variants.length > 0) {
-                            initialVariants[p.id] = p.variants[0].id;
-                        }
-                    });
-                    setSelectedVariants(prev => ({ ...prev, ...initialVariants }));
-                } else {
-                    setError('Failed to load products. Unexpected data format received.');
+        if (queryError) {
+            setError('Failed to load products. ' + (queryError.message || ''));
+        }
+        if (data && Array.isArray(data.products)) {
+            const fetchedProducts = data.products.map(p => ({ ...p, category: p.category.toLowerCase().replace(/\s+/g, '') }));
+            setTotalPages(data.totalPages);
+            const initialVariants = {};
+            fetchedProducts.forEach(p => {
+                if (p.variants && p.variants.length > 0) {
+                    initialVariants[p.id] = p.variants[0].id;
                 }
-            } catch (err) {
-                setError('Failed to load products. ' + (err.message || ''));
-            } finally {
-                setProductsLoading(false);
-            }
-        };
-        fetchProducts();
-    }, [selectedCategory, currentPage]);
+            });
+            setSelectedVariants(prev => ({ ...prev, ...initialVariants }));
+            setProducts(fetchedProducts);
+        }
+    }, [data, queryError]);
+
+    const [products, setProducts] = useState([]);
+    const [totalPages, setTotalPages] = useState(0);
+
+    const debouncedSetSearchQuery = debounce(setSearchQuery, 300);
+
+    const handleSearchChange = (e) => {
+        debouncedSetSearchQuery(e.target.value);
+    };
 
     const handleVariantChange = (productId, variantId) => {
         setSelectedVariants(prev => ({ ...prev, [productId]: parseInt(variantId, 10) }));
@@ -436,28 +453,45 @@ export default function HomePage({ handleAddToCart }) {
                     .py-4 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
                     .py-3 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
                     .text-shadow { text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4); }
+                    .grid-cols-1 { grid-template-columns: 1fr; }
                 }
             `}</style>
 
-            {/* Adjusted Full-Screen Video Background with Lighter Overlay */}
+            {/* Adjusted Full-Screen Video Background with Lighter Overlay and Loading State */}
             <AnimatePresence>
                 {categoryVideos[selectedCategory] && (
-                    <motion.video 
-                        key={selectedCategory} 
-                        src={categoryVideos[selectedCategory]} 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 1, ease: 'easeInOut' }}
-                        autoPlay 
-                        loop 
-                        muted 
-                        playsInline 
-                        className="fixed inset-0 w-full h-full object-cover -z-20 filter blur-sm scale-105"
-                    />
+                    <>
+                        <motion.div
+                            initial={{ opacity: 1 }}
+                            animate={{ opacity: 0 }}
+                            transition={{ duration: 1 }}
+                            className="fixed inset-0 bg-gray-800 -z-20"
+                        />
+                        <motion.video 
+                            key={selectedCategory} 
+                            src={categoryVideos[selectedCategory]} 
+                            preload="metadata"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 1, ease: 'easeInOut' }}
+                            autoPlay 
+                            loop 
+                            muted 
+                            playsInline 
+                            className="fixed inset-0 w-full h-full object-cover -z-20 filter blur-sm scale-105"
+                            onLoadStart={() => setVideoLoading(true)}
+                            onCanPlay={() => setVideoLoading(false)}
+                        />
+                    </>
                 )}
             </AnimatePresence>
-            <div className="fixed inset-0 bg-gradient-to-b from-white/30 to-white/20 -z-10"></div>
+            {videoLoading && (
+                <div className="fixed inset-0 flex items-center justify-center -z-10">
+                    <div className="w-12 h-12 border-4 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            )}
+            <div className="fixed inset-0 bg-gradient-to-b from-white/25 to-white/15 -z-10"></div>
 
             {/* Sidebar Menu with Mobile-Friendly Styling */}
             <AnimatePresence>
@@ -475,11 +509,17 @@ export default function HomePage({ handleAddToCart }) {
                             initial="closed"
                             animate="open"
                             exit="closed"
-                            className="fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-white/20 to-white/10 backdrop-blur-lg shadow-lg z-50 p-6 flex flex-col"
+                            className="fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-white/20 to-white/10 backdrop-blur-lg shadow-lg z-50 p-6 flex flex-col overflow-y-auto"
                         >
                             <div className="flex justify-between items-center mb-8">
                                 <img src={logoIcon} alt="Sresta Mart Logo" className="h-12 w-auto"/>
-                                <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-gray-700/30 rounded-full">
+                                <button 
+                                    onClick={() => setIsSidebarOpen(false)} 
+                                    onKeyDown={(e) => e.key === 'Enter' && setIsSidebarOpen(false)}
+                                    tabIndex={0}
+                                    aria-label="Close sidebar"
+                                    className="p-2 bg-gray-700/30 rounded-full"
+                                >
                                     <X className="text-gray-200" size={20} />
                                 </button>
                             </div>
@@ -490,7 +530,10 @@ export default function HomePage({ handleAddToCart }) {
                                         <li key={category}>
                                             <button 
                                                 onClick={() => handleFilterChange(category)}
-                                                className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-base font-medium transition-all duration-300 ${
+                                                onKeyDown={(e) => e.key === 'Enter' && handleFilterChange(category)}
+                                                tabIndex={0}
+                                                aria-label={`Select category ${category}`}
+                                                className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-base font-medium transition-all duration-300 touch-manipulation ${
                                                     selectedCategory === category 
                                                     ? 'bg-red-500/80 text-white shadow-sm' 
                                                     : 'text-gray-200 hover:bg-gray-700/30 hover:shadow-sm'
@@ -509,12 +552,12 @@ export default function HomePage({ handleAddToCart }) {
                                 <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Quick Access</h3>
                                 <ul className="space-y-2">
                                     <li>
-                                        <a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/30 transition-all">
+                                        <a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/30 transition-all touch-manipulation">
                                             <User size={16} /> Vendor Portal
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/30 transition-all">
+                                        <a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/30 transition-all touch-manipulation">
                                             <Truck size={16} /> Delivery Hub
                                         </a>
                                     </li>
@@ -530,7 +573,11 @@ export default function HomePage({ handleAddToCart }) {
                     <div className="flex flex-row items-center justify-center mb-8 relative px-4 sm:px-6">
                         <button 
                             onClick={() => setIsSidebarOpen(true)}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-sm hover:bg-white/30 transition-all"
+                            onKeyDown={(e) => e.key === 'Enter' && setIsSidebarOpen(true)}
+                            tabIndex={0}
+                            aria-label="Open menu"
+                            aria-expanded={isSidebarOpen}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-sm hover:bg-white/30 transition-all touch-manipulation"
                         >
                             <Menu className="text-white" size={20}/>
                         </button>
@@ -541,7 +588,7 @@ export default function HomePage({ handleAddToCart }) {
                                 transition={{ duration: 0.8, ease: "easeOut" }} 
                                 className="hidden sm:block"
                             >
-                                <img src={logoIcon} alt="Sresta Mart Logo" className="h-20 md:h-24 w-auto shadow-md rounded-full"/>
+                                <img src={logoIcon} alt="Sresta Mart Logo" loading="lazy" className="h-20 md:h-24 w-auto shadow-md rounded-full"/>
                             </motion.div>
                             <motion.h2 
                                 initial={{opacity: 0, y: -30}} 
@@ -558,9 +605,12 @@ export default function HomePage({ handleAddToCart }) {
                             <motion.button 
                                 key={category} 
                                 onClick={() => handleFilterChange(category)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleFilterChange(category)}
+                                tabIndex={0}
+                                aria-label={`Select category ${category}`}
                                 whileHover={{ scale: 1.08, boxShadow: '0 0 10px rgba(255,0,0,0.3)' }}
                                 whileTap={{ scale: 0.92 }}
-                                className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-sm ${
+                                className={`px-5 py-3 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-sm touch-manipulation ${
                                     selectedCategory === category
                                         ? 'bg-gradient-to-r from-red-500 to-red-700 text-white'
                                         : 'bg-gray-700/30 text-gray-100 hover:bg-gray-600/30 backdrop-blur-sm'
@@ -571,14 +621,15 @@ export default function HomePage({ handleAddToCart }) {
                             </motion.button>
                         ))}
                     </div>
-                    {/* Search Bar Optimized for Mobile */}
-                    <div className="mt-6 max-w-xl mx-auto px-4 sm:px-6">
+                    {/* Search Bar Optimized for Mobile - Made Sticky */}
+                    <div className="mt-6 max-w-xl mx-auto px-4 sm:px-6 sticky top-0 z-10 bg-gradient-to-b from-white/20 to-transparent">
                         <div className="relative">
                             <input 
                                 type="text" 
                                 placeholder="Search products..." 
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={handleSearchChange}
+                                aria-label="Search products"
                                 className="w-full py-3 px-5 pr-10 rounded-full bg-gray-700/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-sm backdrop-blur-sm text-sm"
                             />
                             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -642,8 +693,11 @@ export default function HomePage({ handleAddToCart }) {
                         <div className="mt-12 flex justify-center items-center gap-4 flex-wrap">
                             <button
                                 onClick={goToPreviousPage}
+                                onKeyDown={(e) => e.key === 'Enter' && goToPreviousPage()}
+                                tabIndex={0}
+                                aria-label="Previous page"
                                 disabled={currentPage === 1}
-                                className="px-4 py-2 bg-gradient-to-r from-gray-700/30 to-gray-800/30 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-800/30 hover:to-gray-900/30 shadow-sm hover:shadow-md transition-all text-sm"
+                                className="px-4 py-2 bg-gradient-to-r from-gray-700/30 to-gray-800/30 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-800/30 hover:to-gray-900/30 shadow-sm hover:shadow-md transition-all text-sm touch-manipulation"
                             >
                                 Previous
                             </button>
@@ -652,8 +706,11 @@ export default function HomePage({ handleAddToCart }) {
                             </span>
                             <button
                                 onClick={goToNextPage}
+                                onKeyDown={(e) => e.key === 'Enter' && goToNextPage()}
+                                tabIndex={0}
+                                aria-label="Next page"
                                 disabled={currentPage === totalPages}
-                                className="px-4 py-2 bg-gradient-to-r from-gray-700/30 to-gray-800/30 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-800/30 hover:to-gray-900/30 shadow-sm hover:shadow-md transition-all text-sm"
+                                className="px-4 py-2 bg-gradient-to-r from-gray-700/30 to-gray-800/30 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-800/30 hover:to-gray-900/30 shadow-sm hover:shadow-md transition-all text-sm touch-manipulation"
                             >
                                 Next
                             </button>

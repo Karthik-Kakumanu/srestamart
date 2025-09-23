@@ -10,7 +10,6 @@ export default function Layout({ loggedInUser, handleLogout, cartItems }) {
   const activeLinkStyle = { color: '#dc2626' };
 
   return (
-    // THE FIX: 'bg-slate-50' has been removed from this line.
     <div className="min-h-screen flex flex-col">
       <header className="bg-white/80 backdrop-blur-sm shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center space-x-3">
@@ -30,17 +29,17 @@ export default function Layout({ loggedInUser, handleLogout, cartItems }) {
 
       <footer className="sticky bottom-0 left-0 w-full bg-white/90 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.05)] p-2 z-40">
         <div className="max-w-md mx-auto grid grid-cols-4 gap-2">
-          <NavLink to="/" style={({ isActive }) => isActive ? activeLinkStyle : undefined} className="flex flex-col items-center p-2 rounded-lg text-gray-500 hover:text-red-500">
+          <NavLink to="/" style={({ isActive }) => isActive ? activeLinkStyle : undefined} className="flex flex-col items-center p-3 rounded-lg text-gray-500 hover:text-red-500 touch-manipulation" aria-label="Home">
             <Home /><span className="text-xs font-bold mt-1">Home</span>
           </NavLink>
-          <NavLink to="/cart" style={({ isActive }) => isActive ? activeLinkStyle : undefined} className="relative flex flex-col items-center p-2 rounded-lg text-gray-500 hover:text-red-500">
+          <NavLink to="/cart" style={({ isActive }) => isActive ? activeLinkStyle : undefined} className="relative flex flex-col items-center p-3 rounded-lg text-gray-500 hover:text-red-500 touch-manipulation" aria-label="Cart">
             {cartItemCount > 0 && <span className="absolute top-1 right-3.5 bg-red-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartItemCount}</span>}
             <ShoppingCart /><span className="text-xs font-bold mt-1">Cart</span>
           </NavLink>
-          <NavLink to="/coupons" style={({ isActive }) => isActive ? activeLinkStyle : undefined} className="flex flex-col items-center p-2 rounded-lg text-gray-500 hover:text-red-500">
+          <NavLink to="/coupons" style={({ isActive }) => isActive ? activeLinkStyle : undefined} className="flex flex-col items-center p-3 rounded-lg text-gray-500 hover:text-red-500 touch-manipulation" aria-label="Coupons">
             <Tag /><span className="text-xs font-bold mt-1">Coupons</span>
           </NavLink>
-          <NavLink to="/account" style={({ isActive }) => isActive ? activeLinkStyle : undefined} className="flex flex-col items-center p-2 rounded-lg text-gray-500 hover:text-red-500">
+          <NavLink to="/account" style={({ isActive }) => isActive ? activeLinkStyle : undefined} className="flex flex-col items-center p-3 rounded-lg text-gray-500 hover:text-red-500 touch-manipulation" aria-label="Account">
             <User /><span className="text-xs font-bold mt-1">Account</span>
           </NavLink>
         </div>
