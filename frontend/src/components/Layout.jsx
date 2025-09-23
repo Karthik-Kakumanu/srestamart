@@ -4,7 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home, ShoppingCart, Tag, User, HelpCircle, Phone, MessageSquare, Instagram, X } from 'lucide-react';
 
-const logoUrl = 'https://img.icons8.com/plasticine/100/sresta.png';
+import logoUrl from '../assets/logo.png';
 
 const NotificationBadge = ({ count }) => {
     if (!count || count <= 0) return null;
