@@ -1,3 +1,5 @@
+// backend/index.js (Full Code with Correct Order)
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -7,7 +9,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const twilio = require('twilio');
 const crypto = require('crypto');
-const multer = require('multer'); // CHANGE: Import multer for file handling
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT;
@@ -32,25 +34,18 @@ app.use(cors({
 }));
 
 app.use(bodyParser.json());
-
-// This line serves images from the public/products folder
 app.use('/images/products', express.static(path.join(__dirname, 'public/products')));
 
-// CHANGE: Multer configuration to define how files are stored
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Files will be saved in the 'public/products' directory
     cb(null, 'public/products'); 
   },
   filename: function (req, file, cb) {
-    // Create a unique filename to prevent files from being overwritten
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
-
 const upload = multer({ storage: storage });
-// END CHANGE
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
@@ -70,7 +65,6 @@ const checkAdminToken = (req, res, next) => {
     else { throw new Error('Invalid token type'); }
   } catch (e) { res.status(401).json({ msg: 'Admin token is not valid' }); }
 };
-
 const checkPartnerToken = (req, res, next) => {
   const token = req.header('x-partner-token');
   if (!token) return res.status(401).json({ msg: 'No token, authorization denied' });
@@ -80,7 +74,6 @@ const checkPartnerToken = (req, res, next) => {
     else { throw new Error('Invalid token type'); }
   } catch (e) { res.status(401).json({ msg: 'Token is not valid' }); }
 };
-
 const checkUserToken = (req, res, next) => {
   const token = req.header('x-auth-token');
   if (!token) return res.status(401).json({ msg: 'No token, authorization denied' });
@@ -91,25 +84,16 @@ const checkUserToken = (req, res, next) => {
   } catch (e) { res.status(401).json({ msg: 'Token is not valid' }); }
 };
 
-
 // --- API ROUTES ---
 
 // --- ADMIN ROUTES ---
-
-// CHANGE: New endpoint specifically for uploading a file
 app.post('/api/admin/upload', checkAdminToken, upload.single('productImage'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ msg: 'No file uploaded.' });
     }
-    
-    // Construct the public URL of the uploaded file
     const imageUrl = `${req.protocol}://${req.get('host')}/images/products/${req.file.filename}`;
-    
-    // Send the URL back to the frontend
     res.json({ success: true, imageUrl: imageUrl });
 });
-// END CHANGE
-
 
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
@@ -121,10 +105,6 @@ app.post('/api/admin/login', (req, res) => {
     res.status(401).json({ success: false, msg: 'Invalid Admin Credentials' });
   }
 });
-
-// --- All your other routes remain unchanged ---
-// (The app.post('/api/admin/products', ...) route will work perfectly with this new system)
-// I am including them all here for completeness.
 
 app.get('/api/admin/users', checkAdminToken, async (req, res) => {
   try {
@@ -252,23 +232,10 @@ app.get('/api/admin/products', checkAdminToken, async (req, res) => {
   }
 });
 
-// ... All other user, delivery, etc. routes go here ...
 
-
-// --- SERVE REACT FRONTEND ---
-app.use(express.static(path.join('/opt/render/project/src/frontend/dist')));
-app.get('*', (req, res) => {
-  res.sendFile(path.join('/opt/render/project/src/frontend/dist/index.html'));
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} at Sresta Mart.`);
-});
-
-// --- DELIVERY PARTNER ROUTES ---
+// --- DELIVERY PARTNER ROUTES (MOVED TO CORRECT POSITION) ---
 app.post('/api/delivery/login', async (req, res) => {
   const { phone, password } = req.body;
-
   try {
     const dbResult = await pool.query('SELECT id, name, password FROM delivery_partners WHERE phone = $1', [phone]);
     if (dbResult.rows.length > 0) {
@@ -279,13 +246,11 @@ app.post('/api/delivery/login', async (req, res) => {
         return res.json({ success: true, token, partner: { id: partner.id, name: partner.name } });
       }
     }
-
     if (phone === process.env.DELIVERY_PARTNER_PHONE && password === process.env.DELIVERY_PARTNER_PASSWORD) {
       const partner = { id: 1, name: "Sresta Mart Admin" };
       const token = jwt.sign({ id: partner.id, name: partner.name, role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
       return res.json({ success: true, token, partner });
     }
-
     return res.status(401).json({ success: false, msg: 'Invalid credentials' });
   } catch (err) {
     console.error(err.message);
@@ -356,7 +321,8 @@ app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
   }
 });
 
-// --- USER & PUBLIC ROUTES ---
+
+// --- USER & PUBLIC ROUTES (MOVED TO CORRECT POSITION) ---
 app.post('/api/register', async (req, res) => {
   const { name, phone, password } = req.body;
   if (!name || !phone || !password) return res.status(400).json({ msg: 'Please enter all fields' });
@@ -399,7 +365,7 @@ app.post('/api/forgot-password-twilio', async (req, res) => {
             return res.json({ msg: 'If an account exists, an OTP has been sent.' });
         }
         const otp = crypto.randomInt(100000, 999999).toString();
-        const expires = new Date(Date.now() + 10 * 60 * 1000); // Expires in 10 minutes
+        const expires = new Date(Date.now() + 10 * 60 * 1000);
         await pool.query(
             'UPDATE users SET reset_password_otp = $1, reset_password_expires = $2 WHERE phone = $3',
             [otp, expires, phone]
@@ -439,35 +405,29 @@ app.post('/api/reset-password-twilio', async (req, res) => {
     }
 });
 
-// --- UPDATED Products route with pagination and category filtering ---
 app.get('/api/products', async (req, res) => {
   try {
     const category = req.query.category; 
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 12;
     const offset = (page - 1) * limit;
-
     let countQuery = 'SELECT COUNT(*) FROM products';
     let productsQuery = 'SELECT id FROM products';
     const queryParams = [];
-
     if (category) {
       countQuery += ' WHERE LOWER(REPLACE(category, \' \', \'\')) = $1';
       productsQuery += ' WHERE LOWER(REPLACE(category, \' \', \'\')) = $1';
       queryParams.push(category);
     }
-    
     const totalProductsResult = await pool.query(countQuery, queryParams);
     const totalProducts = parseInt(totalProductsResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalProducts / limit);
-
     productsQuery += ` ORDER BY id ASC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
     const productIdsResult = await pool.query(
       productsQuery,
       [...queryParams, limit, offset]
     );
     const productIds = productIdsResult.rows.map(row => row.id);
-
     if (productIds.length === 0) {
       return res.status(200).json({
         products: [],
@@ -476,7 +436,6 @@ app.get('/api/products', async (req, res) => {
         totalProducts,
       });
     }
-
     const productsAndVariantsQuery = `
       SELECT p.id, p.name, p.description, p.category, p.image_url, v.id as variant_id, v.label, v.price
       FROM products p
@@ -485,7 +444,6 @@ app.get('/api/products', async (req, res) => {
       ORDER BY p.id, v.price;
     `;
     const { rows } = await pool.query(productsAndVariantsQuery, [productIds]);
-
     const productsMap = new Map();
     rows.forEach(row => {
       if (!productsMap.has(row.id)) {
@@ -506,14 +464,12 @@ app.get('/api/products', async (req, res) => {
         });
       }
     });
-
     res.status(200).json({
       products: Array.from(productsMap.values()),
       currentPage: page,
       totalPages,
       totalProducts,
     });
-
   } catch (err) {
     console.error("Error fetching paginated products:", err.message);
     res.status(500).json({ msg: 'Server Error while fetching products.' });
@@ -559,7 +515,7 @@ app.post('/api/orders', checkUserToken, async (req, res) => {
     res.status(201).json({ success: true, orderId: orderResult.rows[0].id, message: 'Order placed successfully!' });
   } catch (err) {
     console.error(err.message);
-    res.status(500).json({ msg: 'Server Error while creating order' }); // Fixed syntax
+    res.status(500).json({ msg: 'Server Error while creating order' });
   }
 });
 
@@ -583,12 +539,13 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
   }
 });
 
-// --- SERVE REACT FRONTEND ---
+// --- SERVE REACT FRONTEND (MUST BE NEAR THE END) ---
 app.use(express.static(path.join('/opt/render/project/src/frontend/dist')));
 app.get('*', (req, res) => {
   res.sendFile(path.join('/opt/render/project/src/frontend/dist/index.html'));
 });
 
+// --- START SERVER (MUST BE THE VERY LAST THING) ---
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} at Sresta Mart.`);
 });
