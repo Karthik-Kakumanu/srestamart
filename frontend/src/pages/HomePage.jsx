@@ -4,122 +4,137 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Heart, BrainCircuit, Bone, Egg, Leaf, Milk, Wheat, CookingPot, Beef,
     Microscope, Shield, Sun, Droplets, BatteryCharging, Sparkles, TestTube, FilterX, Vegan, Activity,
-    Menu, X, ChevronRight, User, Truck
+    Menu, X, ChevronRight, User, Truck, Search, ShoppingCart
 } from 'lucide-react';
 import logoIcon from '../../images/icon.png';
 
-// --- Constants, Icons, and Banners ---
+// --- Enhanced Constants, Icons, and Banners for More Attractiveness ---
 const CATEGORY_ORDER = ['livebirds', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets', 'meat'];
 
 const categoryIcons = {
-    livebirds: <Egg size={16} />,
-    pickles: <CookingPot size={16} />,
-    dairy: <Milk size={16} />,
-    dryfruits: <Leaf size={16} />,
-    oils: <Leaf size={16} />,
-    millets: <Wheat size={16} />,
-    meat: <Beef size={16} />,
+    livebirds: <Egg size={18} className="text-yellow-400" />,
+    pickles: <CookingPot size={18} className="text-orange-500" />,
+    dairy: <Milk size={18} className="text-blue-300" />,
+    dryfruits: <Leaf size={18} className="text-green-500" />,
+    oils: <Leaf size={18} className="text-amber-600" />,
+    millets: <Wheat size={18} className="text-yellow-600" />,
+    meat: <Beef size={18} className="text-red-600" />,
 };
 
 const categoryBanners = {
     livebirds: {
-        title: "Nature’s Power Pack for Women",
-        text: "Our <strong>Natu Kodi Eggs</strong> are a commitment to health, delivering Omega fatty acids & vital nutrients to support hormonal balance, improve memory, and boost energy.",
+        title: "Nature’s Ultimate Power Pack for Women",
+        text: "Our <strong>Natu Kodi Eggs</strong> embody a true commitment to wellness, packed with Omega-3 fatty acids & essential nutrients to harmonize hormones, sharpen memory, and skyrocket energy levels.",
         imageUrl: "https://images.pexels.com/photos/235648/pexels-photo-235648.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
     },
     pickles: {
-        title: "A Taste of Tradition in Every Jar",
-        text: "Handcrafted with authentic recipes and the freshest ingredients, our pickles bring the timeless flavors of home to your table. Tangy, spicy, and irresistibly delicious.",
+        title: "Timeless Tradition in Every Exquisite Jar",
+        text: "Meticulously handcrafted with heirloom recipes and the freshest seasonal ingredients, our pickles deliver an explosion of tangy, spicy, and utterly irresistible flavors straight from home kitchens.",
         imageUrl: "https://images.pexels.com/photos/4198233/pexels-photo-4198233.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
     },
     dairy: {
-        title: "Pure, Fresh & Delivered Daily",
-        text: "From creamy yogurts to rich, pure ghee, our dairy products are sourced from local farms, ensuring unparalleled freshness and nutritional value for your family.",
+        title: "Ultra-Pure, Freshly Delivered Daily",
+        text: "From velvety yogurts to luxurious, golden ghee, our dairy delights are sourced from pristine local farms, guaranteeing unmatched freshness and superior nutritional benefits for your loved ones.",
         imageUrl: "https://images.pexels.com/photos/248412/pexels-photo-248412.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
     },
     dryfruits: {
-        title: "Nature's Finest Superfoods",
-        text: "Packed with energy and wholesome goodness, our premium selection of dry fruits and nuts are the perfect healthy snack for any time of the day.",
+        title: "Nature's Premium Superfood Treasures",
+        text: "Brimming with vitality and pure goodness, our elite assortment of dry fruits and nuts serves as the ultimate healthy indulgence for any moment of your day.",
         imageUrl: "https://images.pexels.com/photos/4198020/pexels-photo-4198020.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
     },
     oils: {
-        title: "Cold-Pressed Purity",
-        text: "Experience the authentic flavor and health benefits of our traditionally extracted, cold-pressed oils. Pure, unadulterated, and perfect for wholesome cooking.",
+        title: "Exquisite Cold-Pressed Purity",
+        text: "Savor the genuine essence and profound health advantages of our artisan cold-pressed oils. Unrefined, authentic, and ideal for elevating your wholesome culinary creations.",
         imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLXazaU1EBSkr4Hctcq7lWC3nXZDdtaVLz2w&s"
     },
     millets: {
-        title: "The Ancient Grain for Modern Health",
-        text: "Rediscover the power of millets. Our range of ancient grains is rich in fiber and nutrients, making them a perfect, healthy choice for a balanced diet.",
+        title: "Ancient Grains for Contemporary Vitality",
+        text: "Reignite your passion for millets. Our curated selection of heritage grains is loaded with fiber and vital nutrients, crafting the perfect foundation for a vibrant, balanced lifestyle.",
         imageUrl: "https://images.pexels.com/photos/8992769/pexels-photo-8992769.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
-    }
+    },
+    meat: {
+        title: "Premium Fresh Meats for Gourmet Delights",
+        text: "Sourced from ethical farms, our high-quality meats offer rich flavors and essential proteins, perfect for creating mouthwatering dishes that nourish and satisfy.",
+        imageUrl: "https://images.pexels.com/photos/65175/pexels-photo-65175.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+    },
 };
 
 const categoryFeatures = {
     livebirds: {
-        title: "The Power of Natu Kodi Eggs",
-        subtitle: `"Healthy is always wealthy for our girl child, girls and women's"`,
-        description: "Our Natu Kodi eggs are a powerhouse of nutrition, specially chosen for their incredible health benefits.",
+        title: "Unlock the Power of Natu Kodi Eggs",
+        subtitle: `"Health is the true wealth for our girl child, girls, and women."`,
+        description: "Our Natu Kodi eggs are nutritional dynamos, carefully selected for their extraordinary benefits that empower wellness at every life stage.",
         imageUrl: "https://images.pexels.com/photos/162712/egg-white-food-protein-162712.jpeg?auto=compress&cs=tinysrgb&w=600",
         features: [
-            { icon: <Heart className="text-red-500"/>, title: "Hormonal Balance", text: "Rich in Omega fatty acids, essential for helping girls and women maintain hormonal balance." },
-            { icon: <Bone className="text-red-500"/>, title: "Rich in Calcium", text: "Packed with natural calcium to support strong bones at every stage of life." },
-            { icon: <BrainCircuit className="text-red-500"/>, title: "Boosts Memory Power", text: "An excellent source of Vitamin B12, which is proven to improve memory and cognitive function in children." }
+            { icon: <Heart className="text-red-500"/>, title: "Hormonal Harmony", text: "Abundant in Omega fatty acids, crucial for balancing hormones in girls and women." },
+            { icon: <Bone className="text-red-500"/>, title: "Superior Calcium Boost", text: "Naturally loaded with calcium to fortify bones throughout life." },
+            { icon: <BrainCircuit className="text-red-500"/>, title: "Memory Enhancement", text: "A prime source of Vitamin B12, enhancing cognitive sharpness and memory in kids." }
         ]
     },
     pickles: {
-        title: "Authentic Homemade Flavors",
-        subtitle: `"A taste of tradition in every bite."`,
-        description: "Our pickles are made using timeless family recipes and natural preservation techniques, ensuring every jar is packed with authentic taste and goodness.",
+        title: "Exquisite Homemade Flavor Symphony",
+        subtitle: `"Tradition's taste in every delightful bite."`,
+        description: "Crafted with cherished family recipes and natural fermentation, each jar bursts with authentic, healthful flavors that elevate every meal.",
         imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT8m41uJaxOcN9ZVxI78lDW_OFxL6g6E-mTig&s",
         features: [
-            { icon: <Microscope className="text-red-500"/>, title: "Probiotic Rich", text: "Naturally fermented pickles are a great source of probiotics that promote a healthy gut." },
-            { icon: <Leaf className="text-red-500"/>, title: "Natural Ingredients", text: "Made with sun-dried ingredients and pure oils, free from any artificial preservatives." },
-            { icon: <Shield className="text-red-500"/>, title: "Boosts Immunity", text: "Rich in antioxidants and essential vitamins like Vitamin K that help strengthen the immune system." }
+            { icon: <Microscope className="text-red-500"/>, title: "Probiotic Powerhouse", text: "Fermented naturally for gut-healthy probiotics that enhance digestion." },
+            { icon: <Leaf className="text-red-500"/>, title: "Pure Natural Essence", text: "Sun-dried ingredients and premium oils, sans artificial additives." },
+            { icon: <Shield className="text-red-500"/>, title: "Immunity Fortifier", text: "Packed with antioxidants and Vitamin K for robust immune support." }
         ]
     },
     dairy: {
-        title: "Farm-Fresh Goodness",
-        subtitle: `"Pure, creamy, and delivered from local farms."`,
-        description: "Experience the unmatched taste and quality of our dairy products, from pure A2 milk to rich, golden ghee, essential for a healthy lifestyle.",
+        title: "Exquisite Farm-Fresh Indulgence",
+        subtitle: `"Pure, creamy delights straight from local farms."`,
+        description: "Indulge in the superior quality of our dairy range, from A2 milk to opulent ghee, vital for nourishing daily vitality.",
         imageUrl: "https://images.pexels.com/photos/799273/pexels-photo-799273.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
         features: [
-            { icon: <Bone className="text-red-500"/>, title: "Rich in Protein & Calcium", text: "Essential for building strong bones, teeth, and promoting healthy muscle development." },
-            { icon: <Sun className="text-red-500"/>, title: "Source of Vitamin D", text: "Our fortified dairy products help your body absorb calcium and support immune function." },
-            { icon: <Droplets className="text-red-500"/>, title: "Pure and Unadulterated", text: "We guarantee purity with no added hormones or preservatives, just natural goodness." }
+            { icon: <Bone className="text-red-500"/>, title: "Protein & Calcium Rich", text: "Key for strong bones, teeth, and muscle growth." },
+            { icon: <Sun className="text-red-500"/>, title: "Vitamin D Source", text: "Aids calcium absorption and bolsters immunity." },
+            { icon: <Droplets className="text-red-500"/>, title: "Unadulterated Purity", text: "No hormones or preservatives—just natural excellence." }
         ]
     },
-    // --- FIX WAS APPLIED HERE ---
     dryfruits: {
-        title: "Nature's Nutrient-Dense Snack",
-        subtitle: `"Your daily dose of energy and wellness."`,
-        description: "Our handpicked selection of premium dry fruits and nuts are packed with vitamins, minerals, and healthy fats for a perfect, guilt-free snack.",
+        title: "Nature's Elite Nutrient-Packed Snacks",
+        subtitle: `"Daily energy and wellness in every handful."`,
+        description: "Our premium dry fruits and nuts are vitamin-rich treasures, offering healthy fats for guilt-free snacking anytime.",
         imageUrl: "https://images.pexels.com/photos/2983141/pexels-photo-2983141.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
         features: [
-            { icon: <Heart className="text-red-500"/>, title: "Heart Healthy", text: "Loaded with healthy fats, fiber, and antioxidants that support cardiovascular health." },
-            { icon: <BatteryCharging className="text-red-500"/>, title: "Energy Booster", text: "A natural source of quick energy, making them a perfect pre-workout or afternoon snack." },
-            { icon: <Sparkles className="text-red-500"/>, title: "Rich in Vitamins & Minerals", text: "An excellent source of essential nutrients like potassium, magnesium, and iron." }
+            { icon: <Heart className="text-red-500"/>, title: "Heart-Protective", text: "Full of healthy fats, fiber, and antioxidants for cardiovascular wellness." },
+            { icon: <BatteryCharging className="text-red-500"/>, title: "Instant Energy Surge", text: "Natural boost for workouts or midday slumps." },
+            { icon: <Sparkles className="text-red-500"/>, title: "Vitamin & Mineral Haven", text: "Essential nutrients like potassium, magnesium, and iron." }
         ]
     },
     oils: {
-        title: "Cold-Pressed Liquid Gold",
-        subtitle: `"Purity in every single drop."`,
-        description: "Extracted using traditional cold-press methods, our oils retain their natural nutrients, flavor, and aroma, making your meals healthier and tastier.",
+        title: "Luxurious Cold-Pressed Liquid Gold",
+        subtitle: `"Purity distilled in every drop."`,
+        description: "Traditionally cold-pressed to preserve nutrients, flavor, and aroma, transforming your cooking into a healthful art.",
         imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlD8qSZ1Qpf6F_pTnhy_snOlaPyGqLEB3YbQ&s",
         features: [
-            { icon: <TestTube className="text-red-500"/>, title: "Retains Nutrients", text: "Cold-pressing ensures that vitamins and antioxidants are preserved, unlike refined oils." },
-            { icon: <Heart className="text-red-500"/>, title: "Rich in Healthy Fats", text: "Abundant in monounsaturated and polyunsaturated fats, which are beneficial for heart health." },
-            { icon: <FilterX className="text-red-500"/>, title: "100% Chemical-Free", text: "Absolutely no chemicals or solvents are used in the extraction process, ensuring ultimate purity." }
+            { icon: <TestTube className="text-red-500"/>, title: "Nutrient Preservation", text: "Vitamins and antioxidants intact, superior to refined alternatives." },
+            { icon: <Heart className="text-red-500"/>, title: "Healthy Fat Abundance", text: "Monounsaturated and polyunsaturated fats for heart health." },
+            { icon: <FilterX className="text-red-500"/>, title: "Chemical-Free Assurance", text: "No solvents or chemicals—pure extraction mastery." }
         ]
     },
     millets: {
-        title: "The Ancient Supergrain",
-        subtitle: `"Rediscover the wholesome power of millets."`,
-        description: "Gluten-free and rich in fiber, millets are a fantastic, low-glycemic alternative to rice and wheat, perfect for managing a healthy lifestyle.",
+        title: "The Timeless Supergrain Revolution",
+        subtitle: `"Wholesome ancient power for modern living."`,
+        description: "Gluten-free, fiber-rich millets offer a low-GI alternative to staples, ideal for sustained health and energy.",
         imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTsUCfJOmuHsF_FNrRaSTIE96Q9ToAH9sGF7Q&s",
         features: [
-            { icon: <Wheat className="text-red-500"/>, title: "High in Dietary Fiber", text: "Promotes healthy digestion, helps in weight management, and keeps you feeling full longer." },
-            { icon: <Vegan className="text-red-500"/>, title: "Naturally Gluten-Free", text: "An excellent choice for individuals with celiac disease or gluten sensitivity." },
-            { icon: <Activity className="text-red-500"/>, title: "Manages Blood Sugar", text: "With a low glycemic index, millets help in preventing spikes in blood sugar levels." }
+            { icon: <Wheat className="text-red-500"/>, title: "Fiber-Rich Delight", text: "Aids digestion, weight control, and satiety." },
+            { icon: <Vegan className="text-red-500"/>, title: "Gluten-Free Naturally", text: "Perfect for gluten sensitivities or celiac needs." },
+            { icon: <Activity className="text-red-500"/>, title: "Blood Sugar Stabilizer", text: "Low GI prevents sugar spikes effectively." }
+        ]
+    },
+    meat: {
+        title: "Premium Ethical Meats",
+        subtitle: `"Fresh, flavorful, and responsibly sourced."`,
+        description: "Our meats are from sustainable farms, providing high-protein options with rich taste for gourmet cooking.",
+        imageUrl: "https://images.pexels.com/photos/618681/pexels-photo-618681.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        features: [
+            { icon: <Beef className="text-red-500"/>, title: "Protein Powerhouse", text: "Essential for muscle repair and growth." },
+            { icon: <Shield className="text-red-500"/>, title: "Ethical Sourcing", text: "From farms prioritizing animal welfare." },
+            { icon: <Sparkles className="text-red-500"/>, title: "Flavorful Variety", text: "Cuts perfect for diverse cuisines." }
         ]
     }
 };
@@ -130,20 +145,20 @@ const CategoryBanner = ({ title, text, imageUrl }) => (
         initial={{ opacity: 0, y: 50, scale: 0.95 }} 
         animate={{ opacity: 1, y: 0, scale: 1 }} 
         exit={{ opacity: 0, y: -50 }} 
-        transition={{ duration: 0.5, ease: 'easeOut' }} 
-        className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-6 rounded-2xl shadow-xl overflow-hidden relative transform"
+        transition={{ duration: 0.6, ease: 'easeOut' }} 
+        className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-8 rounded-3xl shadow-2xl overflow-hidden relative transform hover:scale-102 transition-transform duration-300"
     >
-        <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover -z-10" />
-        <div className="bg-gradient-to-r from-black/70 to-black/40 w-full h-full p-6 sm:p-8">
-            <div className="max-w-2xl">
-                <h3 className="text-white text-2xl md:text-3xl font-bold" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>{title}</h3>
-                <p className="mt-2 text-base text-gray-200" dangerouslySetInnerHTML={{ __html: text }} />
+        <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover -z-10 filter brightness-75" />
+        <div className="bg-gradient-to-r from-black/80 via-black/60 to-transparent w-full h-full p-8 sm:p-12 flex items-center">
+            <div className="max-w-3xl">
+                <h3 className="text-white text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.7)' }}>{title}</h3>
+                <p className="mt-4 text-lg sm:text-xl text-gray-100 leading-relaxed" dangerouslySetInnerHTML={{ __html: text }} />
                 <motion.button 
-                    whileHover={{ scale: 1.05 }} 
-                    whileTap={{ scale: 0.95 }} 
-                    className="mt-4 bg-red-600 text-white font-bold py-2 px-5 rounded-full hover:bg-red-700 transition-all shadow-lg"
+                    whileHover={{ scale: 1.08, boxShadow: '0 0 15px rgba(255,0,0,0.5)' }} 
+                    whileTap={{ scale: 0.92 }} 
+                    className="mt-6 bg-gradient-to-r from-red-600 to-red-800 text-white font-bold py-3 px-8 rounded-full hover:from-red-700 hover:to-red-900 transition-all shadow-xl"
                 >
-                    Shop Now
+                    Shop Now <ChevronRight size={18} className="inline ml-2" />
                 </motion.button>
             </div>
         </div>
@@ -157,30 +172,36 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.8 }}
-        className="py-16 px-4 mt-16 rounded-3xl bg-black/70 backdrop-blur-lg shadow-2xl ring-1 ring-white/10"
+        className="py-20 px-6 mt-20 rounded-3xl bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-xl shadow-3xl ring-1 ring-red-500/20"
     >
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <motion.div 
                 initial={{ opacity: 0, x: -50 }} 
                 whileInView={{ opacity: 1, x: 0 }} 
                 viewport={{ once: true }} 
                 transition={{ duration: 0.8, delay: 0.2 }}
             >
-                <h2 className="text-4xl font-bold text-white">{title}</h2>
-                <p className="mt-2 text-red-400 font-semibold italic">{subtitle}</p>
-                <p className="mt-4 text-gray-300">{description}</p>
-                <div className="mt-8 space-y-6">
-                    {/* This is where the error was happening. It checks if features is an array before mapping. */}
+                <h2 className="text-5xl font-extrabold text-white leading-tight">{title}</h2>
+                <p className="mt-3 text-red-400 font-semibold italic text-xl">{subtitle}</p>
+                <p className="mt-6 text-gray-200 text-lg leading-relaxed">{description}</p>
+                <div className="mt-10 space-y-8">
                     {Array.isArray(features) && features.map((feature, index) => (
-                        <div key={index} className="flex items-start">
-                            <div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                                {React.cloneElement(feature.icon, { size: 24 })}
+                        <motion.div 
+                            key={index} 
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: index * 0.1 }}
+                            className="flex items-start gap-4"
+                        >
+                            <div className="flex-shrink-0 w-14 h-14 bg-red-100/80 rounded-full flex items-center justify-center shadow-md">
+                                {React.cloneElement(feature.icon, { size: 28 })}
                             </div>
-                            <div className="ml-4">
-                                <h4 className="font-bold text-lg text-white">{feature.title}</h4>
-                                <p className="mt-1 text-gray-300">{feature.text}</p>
+                            <div>
+                                <h4 className="font-bold text-xl text-white">{feature.title}</h4>
+                                <p className="mt-2 text-gray-300">{feature.text}</p>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
             </motion.div>
@@ -189,9 +210,10 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                 whileInView={{ opacity: 1, scale: 1 }} 
                 viewport={{ once: true }} 
                 transition={{ duration: 0.8, delay: 0.4 }} 
-                className="relative h-80 lg:h-full rounded-2xl shadow-2xl"
+                className="relative h-96 lg:h-full rounded-3xl shadow-2xl overflow-hidden"
             >
-                <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-2xl" />
+                <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-3xl filter brightness-90" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
             </motion.div>
         </div>
     </motion.section>
@@ -205,20 +227,24 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
 
     return (
         <motion.div 
-            variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }} 
-            className="bg-black/70 backdrop-blur-lg rounded-2xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 flex flex-col group"
+            variants={{ hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1 } }} 
+            className="bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-lg rounded-3xl shadow-xl overflow-hidden transform hover:scale-105 hover:shadow-2xl transition-all duration-300 flex flex-col group"
+            whileHover={{ y: -5 }}
         >
-            <div className="w-full aspect-[4/3] overflow-hidden">
+            <div className="w-full aspect-[4/3] overflow-hidden relative">
                 <img 
                     src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} 
                     alt={product.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
+                <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-md">
+                    New
+                </div>
             </div>
-            <div className="p-4 flex flex-col flex-grow">
-                <h3 className="font-bold text-lg text-white">{product.name}</h3>
-                <p className="text-sm text-gray-300 mt-1 flex-grow">{product.description}</p>
-                <div className="mt-3 mb-2 min-h-[34px]">
+            <div className="p-5 flex flex-col flex-grow">
+                <h3 className="font-bold text-xl text-white mb-2">{product.name}</h3>
+                <p className="text-sm text-gray-300 mb-4 flex-grow line-clamp-3">{product.description}</p>
+                <div className="mb-4 min-h-[40px]">
                     {hasVariants && (
                         <div className="flex items-center gap-2 flex-wrap">
                             {product.variants.map(variant => {
@@ -227,10 +253,10 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                                     <button 
                                         key={variant.id} 
                                         onClick={() => handleVariantChange(product.id, variant.id)} 
-                                        className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all duration-200 ${
+                                        className={`px-4 py-1.5 text-sm font-semibold rounded-full border-2 transition-all duration-300 ${
                                             isSelected 
-                                            ? 'bg-red-600 border-red-700 text-white shadow-md' 
-                                            : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500'
+                                            ? 'bg-red-600 border-red-700 text-white shadow-lg' 
+                                            : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:shadow-md'
                                         }`}
                                     >
                                         {variant.label}
@@ -240,20 +266,20 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                         </div>
                     )}
                 </div>
-                <div className="flex justify-between items-center mt-auto pt-2">
+                <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-700">
                     {hasVariants ? (
                         <>
-                            <span className="text-xl font-bold text-red-400">₹{currentPrice}</span>
+                            <span className="text-2xl font-bold text-red-400">₹{currentPrice}</span>
                             <button 
                                 onClick={(e) => handleAddToCart({ ...product, selectedVariant: currentVariant }, e)} 
-                                className="text-white px-3 py-2 text-sm font-semibold rounded-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 transition-colors shadow-md hover:shadow-lg" 
+                                className="flex items-center gap-2 text-white px-4 py-2 text-sm font-semibold rounded-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 disabled:bg-gray-400 transition-all shadow-lg hover:shadow-xl" 
                                 disabled={!currentVariant}
                             >
-                                Add to Cart
+                                <ShoppingCart size={16} /> Add to Cart
                             </button>
                         </>
                     ) : (
-                        <span className="text-sm font-semibold text-gray-400 w-full text-center">Currently Unavailable</span>
+                        <span className="text-sm font-semibold text-gray-400 w-full text-center">Coming Soon</span>
                     )}
                 </div>
             </div>
@@ -262,22 +288,22 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
 };
 
 const SkeletonCard = () => (
-    <div className="bg-black/70 backdrop-blur-lg rounded-2xl shadow-lg overflow-hidden animate-pulse">
-        <div className="w-full aspect-[4/3] bg-gray-600"></div>
-        <div className="p-4">
-            <div className="h-5 bg-gray-600 rounded w-3/4 mb-2"></div>
-            <div className="h-3 bg-gray-600 rounded w-full mb-4"></div>
-            <div className="h-3 bg-gray-600 rounded w-1/2 mb-4"></div>
+    <div className="bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-lg rounded-3xl shadow-xl overflow-hidden animate-pulse">
+        <div className="w-full aspect-[4/3] bg-gray-700"></div>
+        <div className="p-5">
+            <div className="h-6 bg-gray-700 rounded w-4/5 mb-3"></div>
+            <div className="h-4 bg-gray-700 rounded w-full mb-5"></div>
+            <div className="h-4 bg-gray-700 rounded w-3/5 mb-5"></div>
             <div className="flex justify-between items-center">
-                <div className="h-6 bg-gray-600 rounded w-1/4"></div>
-                <div className="h-8 bg-gray-600 rounded-full w-1/3"></div>
+                <div className="h-7 bg-gray-700 rounded w-1/4"></div>
+                <div className="h-10 bg-gray-700 rounded-full w-2/5"></div>
             </div>
         </div>
     </div>
 );
 
 export default function HomePage({ handleAddToCart }) {
-    // --- STATE MANAGEMENT ---
+    // --- Enhanced STATE MANAGEMENT for Better UX ---
     const [products, setProducts] = useState([]); 
     const [categories, setCategories] = useState(CATEGORY_ORDER);
     const [selectedCategory, setSelectedCategory] = useState(CATEGORY_ORDER[0]);
@@ -287,6 +313,7 @@ export default function HomePage({ handleAddToCart }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const BANNER_POSITION = 4;
 
@@ -304,7 +331,7 @@ export default function HomePage({ handleAddToCart }) {
         if (!selectedCategory) return;
         const fetchProducts = async () => {
             setProductsLoading(true);
-            setError(''); // Clear previous errors
+            setError('');
             try {
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?page=${currentPage}&limit=12&category=${selectedCategory}`);
                 if (res.data && Array.isArray(res.data.products)) {
@@ -343,27 +370,31 @@ export default function HomePage({ handleAddToCart }) {
     const goToNextPage = () => {
         if (currentPage < totalPages) {
             setCurrentPage(currentPage + 1);
-            window.scrollTo(0, 0);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
     const goToPreviousPage = () => {
         if (currentPage > 1) {
             setCurrentPage(currentPage - 1);
-            window.scrollTo(0, 0);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
     const productGridVariants = {
-        visible: { transition: { staggerChildren: 0.05 } },
+        visible: { transition: { staggerChildren: 0.08 } },
         hidden: {}
     };
 
     const currentBannerData = categoryBanners[selectedCategory];
     const currentFeatureData = categoryFeatures[selectedCategory];
 
-    const productsBeforeBanner = currentPage === 1 ? products.slice(0, BANNER_POSITION) : products;
-    const productsAfterBanner = currentPage === 1 ? products.slice(BANNER_POSITION) : [];
+    const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const productsBeforeBanner = currentPage === 1 ? filteredProducts.slice(0, BANNER_POSITION) : filteredProducts;
+    const productsAfterBanner = currentPage === 1 ? filteredProducts.slice(BANNER_POSITION) : [];
 
     const sidebarVariants = {
         open: { x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
@@ -371,10 +402,15 @@ export default function HomePage({ handleAddToCart }) {
     };
 
     return (
-        <div className="relative min-h-screen">
-            <style>{`.text-shadow { text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7); }`}</style>
+        <div className="relative min-h-screen overflow-hidden">
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+                body { font-family: 'Poppins', sans-serif; }
+                .text-shadow { text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7); }
+                .shadow-3xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+            `}</style>
 
-            {/* Full-Screen Video Background */}
+            {/* Enhanced Full-Screen Video Background with Overlay */}
             <AnimatePresence>
                 {categoryVideos[selectedCategory] && (
                     <motion.video 
@@ -383,18 +419,18 @@ export default function HomePage({ handleAddToCart }) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 1, ease: 'easeInOut' }}
+                        transition={{ duration: 1.2, ease: 'easeInOut' }}
                         autoPlay 
                         loop 
                         muted 
                         playsInline 
-                        className="fixed inset-0 w-full h-full object-cover -z-20"
+                        className="fixed inset-0 w-full h-full object-cover -z-20 filter blur-sm scale-105"
                     />
                 )}
             </AnimatePresence>
-            <div className="fixed inset-0 bg-black/50 -z-10"></div>
+            <div className="fixed inset-0 bg-gradient-to-b from-black/60 to-black/80 -z-10"></div>
 
-            {/* Sidebar Menu */}
+            {/* Sidebar Menu with Enhanced Styling */}
             <AnimatePresence>
                 {isSidebarOpen && (
                     <>
@@ -403,54 +439,54 @@ export default function HomePage({ handleAddToCart }) {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsSidebarOpen(false)}
-                            className="fixed inset-0 bg-black/60 z-40"
+                            className="fixed inset-0 bg-black/70 z-40 backdrop-blur-sm"
                         />
                         <motion.div
                             variants={sidebarVariants}
                             initial="closed"
                             animate="open"
                             exit="closed"
-                            className="fixed top-0 left-0 h-full w-72 bg-black/70 backdrop-blur-lg shadow-2xl z-50 p-6 flex flex-col"
+                            className="fixed top-0 left-0 h-full w-80 bg-gradient-to-b from-black/90 to-black/70 backdrop-blur-xl shadow-2xl z-50 p-8 flex flex-col"
                         >
-                            <div className="flex justify-between items-center mb-8">
-                                <img src={logoIcon} alt="Sresta Mart Logo" className="h-12 w-auto"/>
-                                <button onClick={() => setIsSidebarOpen(false)} className="p-1">
-                                    <X className="text-gray-300" />
+                            <div className="flex justify-between items-center mb-10">
+                                <img src={logoIcon} alt="Sresta Mart Logo" className="h-14 w-auto"/>
+                                <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-gray-800/50 rounded-full">
+                                    <X className="text-gray-200" size={24} />
                                 </button>
                             </div>
                             <nav className="flex-grow">
-                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Product Filters</h3>
-                                <ul className="space-y-2">
+                                <h3 className="text-base font-bold text-gray-300 uppercase tracking-widest mb-4">Discover Categories</h3>
+                                <ul className="space-y-3">
                                     {categories.map(category => (
                                         <li key={category}>
                                             <button 
                                                 onClick={() => handleFilterChange(category)}
-                                                className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-md font-medium transition-colors ${
+                                                className={`w-full flex items-center justify-between text-left px-4 py-3 rounded-xl text-lg font-semibold transition-all duration-300 ${
                                                     selectedCategory === category 
-                                                    ? 'bg-red-100 text-red-700' 
-                                                    : 'text-gray-300 hover:bg-gray-800'
+                                                    ? 'bg-red-600/80 text-white shadow-md' 
+                                                    : 'text-gray-200 hover:bg-gray-800/80 hover:shadow-sm'
                                                 }`}
                                             >
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-4">
                                                     {categoryIcons[category]}
                                                     {category.charAt(0).toUpperCase() + category.slice(1)}
                                                 </div>
-                                                <ChevronRight size={18} />
+                                                <ChevronRight size={20} />
                                             </button>
                                         </li>
                                     ))}
                                 </ul>
-                                <hr className="my-6 border-gray-600" />
-                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Portals</h3>
-                                <ul className="space-y-2">
+                                <hr className="my-8 border-gray-700" />
+                                <h3 className="text-base font-bold text-gray-300 uppercase tracking-widest mb-4">Quick Access</h3>
+                                <ul className="space-y-3">
                                     <li>
-                                        <a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-md font-medium text-gray-300 hover:bg-gray-800">
-                                            <User size={18} /> Vendor
+                                        <a href="/vendor" className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-lg font-semibold text-gray-200 hover:bg-gray-800/80 transition-all">
+                                            <User size={20} /> Vendor Portal
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-md font-medium text-gray-300 hover:bg-gray-800">
-                                            <Truck size={18} /> Delivery
+                                        <a href="/delivery/login" className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-lg font-semibold text-gray-200 hover:bg-gray-800/80 transition-all">
+                                            <Truck size={20} /> Delivery Hub
                                         </a>
                                     </li>
                                 </ul>
@@ -461,44 +497,44 @@ export default function HomePage({ handleAddToCart }) {
             </AnimatePresence>
 
             <div className="relative z-10">
-                <div className="pt-8 sm:pt-12 pb-6 bg-black/70 backdrop-blur-lg">
-                    <div className="flex flex-row items-center justify-center mb-8 relative px-4">
+                <div className="pt-10 sm:pt-16 pb-8 bg-gradient-to-b from-black/80 to-transparent">
+                    <div className="flex flex-row items-center justify-center mb-10 relative px-6">
                         <button 
                             onClick={() => setIsSidebarOpen(true)}
-                            className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 p-2 bg-black/50 rounded-full backdrop-blur-sm"
+                            className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-black/60 rounded-full backdrop-blur-md shadow-md hover:bg-black/80 transition-all"
                         >
-                            <Menu className="text-white"/>
+                            <Menu className="text-white" size={24}/>
                         </button>
-                        <div className="flex items-center">
+                        <div className="flex items-center gap-4">
                             <motion.div 
                                 initial={{ opacity: 0, scale: 0.8 }} 
                                 animate={{ opacity: 1, scale: 1 }} 
-                                transition={{ duration: 0.6, ease: "easeOut" }} 
-                                className="mr-4 hidden sm:block"
+                                transition={{ duration: 0.8, ease: "easeOut" }} 
+                                className="hidden sm:block"
                             >
-                                <img src={logoIcon} alt="Sresta Mart Logo" className="h-20 md:h-24 w-auto"/>
+                                <img src={logoIcon} alt="Sresta Mart Logo" className="h-24 md:h-28 w-auto shadow-lg rounded-full"/>
                             </motion.div>
                             <motion.h2 
-                                initial={{opacity: 0, y: -20}} 
+                                initial={{opacity: 0, y: -30}} 
                                 animate={{opacity: 1, y: 0}} 
-                                transition={{ delay: 0.2 }} 
-                                className="text-4xl sm:text-5xl font-bold text-white text-shadow text-center"
+                                transition={{ delay: 0.3, duration: 0.8 }} 
+                                className="text-5xl sm:text-6xl font-extrabold text-white text-shadow text-center tracking-tight"
                             >
-                                Explore Our Collection
+                                Discover Our Premium Collection
                             </motion.h2>
                         </div>
                     </div>
-                    <div className="mt-8 hidden sm:flex justify-center flex-wrap gap-3 px-4">
+                    <div className="mt-10 hidden sm:flex justify-center flex-wrap gap-4 px-6">
                         {categories.map(category => (
                             <motion.button 
                                 key={category} 
                                 onClick={() => handleFilterChange(category)}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-colors duration-200 ${
+                                whileHover={{ scale: 1.08, boxShadow: '0 0 15px rgba(255,0,0,0.3)' }}
+                                whileTap={{ scale: 0.92 }}
+                                className={`px-5 py-3 rounded-full flex items-center gap-3 text-base font-semibold transition-all duration-300 shadow-md ${
                                     selectedCategory === category
-                                        ? 'bg-red-600 text-white shadow-md'
-                                        : 'bg-gray-800/70 text-gray-200 hover:bg-gray-700/70 backdrop-blur-sm'
+                                        ? 'bg-gradient-to-r from-red-600 to-red-800 text-white'
+                                        : 'bg-gray-800/80 text-gray-100 hover:bg-gray-700/80 backdrop-blur-md'
                                 }`}
                             >
                                 {categoryIcons[category]}
@@ -506,27 +542,40 @@ export default function HomePage({ handleAddToCart }) {
                             </motion.button>
                         ))}
                     </div>
+                    {/* Added Search Bar for Better UX */}
+                    <div className="mt-8 max-w-2xl mx-auto px-6">
+                        <div className="relative">
+                            <input 
+                                type="text" 
+                                placeholder="Search products..." 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full py-4 px-6 pr-12 rounded-full bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-md backdrop-blur-sm"
+                            />
+                            <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        </div>
+                    </div>
                 </div>
 
-                {/* Main Content */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                {/* Main Content with Enhanced Layout */}
+                <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-16">
                     {error && (
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-red-100/90 backdrop-blur-sm text-red-700 p-4 rounded-lg mb-8 text-center"
+                            className="bg-red-600/20 backdrop-blur-md text-red-300 p-5 rounded-xl mb-10 text-center shadow-md"
                         >
                             {error}
                         </motion.div>
                     )}
 
-                    {/* Product Grid and Banner */}
+                    {/* Product Grid and Banner with Improved Animations */}
                     <motion.div
-                        key={selectedCategory} // Add key to force re-render on category change
+                        key={selectedCategory + searchQuery} // Key for re-render on changes
                         variants={productGridVariants}
                         initial="hidden"
                         animate="visible"
-                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
                     >
                         {productsLoading
                             ? Array.from({ length: 12 }).map((_, index) => <SkeletonCard key={index} />)
@@ -559,30 +608,30 @@ export default function HomePage({ handleAddToCart }) {
                             ))}
                     </motion.div>
 
-                    {/* Pagination */}
+                    {/* Enhanced Pagination */}
                     {!productsLoading && totalPages > 1 && (
-                        <div className="mt-12 flex justify-center items-center gap-4">
+                        <div className="mt-16 flex justify-center items-center gap-6">
                             <button
                                 onClick={goToPreviousPage}
                                 disabled={currentPage === 1}
-                                className="px-4 py-2 bg-gray-800/70 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700/70 backdrop-blur-sm transition-colors"
+                                className="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-900 hover:to-black shadow-md hover:shadow-lg transition-all"
                             >
                                 Previous
                             </button>
-                            <span className="px-4 py-2 text-white text-shadow">
-                                Page {currentPage} of {totalPages}
+                            <span className="px-6 py-3 text-white text-shadow bg-black/50 rounded-full shadow-md">
+                                Page {currentPage} / {totalPages}
                             </span>
                             <button
                                 onClick={goToNextPage}
                                 disabled={currentPage === totalPages}
-                                className="px-4 py-2 bg-gray-800/70 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700/70 backdrop-blur-sm transition-colors"
+                                className="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-900 hover:to-black shadow-md hover:shadow-lg transition-all"
                             >
                                 Next
                             </button>
                         </div>
                     )}
 
-                    {/* Category Features Section */}
+                    {/* Category Features Section with Added Effects */}
                     {currentFeatureData && (
                         <CategoryFeatureSection
                             title={currentFeatureData.title}
