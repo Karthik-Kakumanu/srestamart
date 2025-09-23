@@ -119,7 +119,7 @@ const categoryFeatures = {
         title: "The Timeless Supergrain Revolution",
         subtitle: `"Wholesome ancient power for modern living."`,
         description: "Gluten-free, fiber-rich millets offer a low-GI alternative to staples, ideal for sustained health and energy.",
-        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTsUCfJOmuHsF_FNrRaSTIE96Q9ToAH9sGF7Q&s",
+        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:GcTsUCfJOmuHsF_FNrRaSTIE96Q9ToAH9sGF7Q&s",
         features: [
             { icon: <Wheat className="text-red-500"/>, title: "Fiber-Rich Delight", text: "Aids digestion, weight control, and satiety." },
             { icon: <Vegan className="text-red-500"/>, title: "Gluten-Free Naturally", text: "Perfect for gluten sensitivities or celiac needs." },
@@ -149,7 +149,7 @@ const CategoryBanner = ({ title, text, imageUrl }) => (
         className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-8 rounded-3xl shadow-2xl overflow-hidden relative transform hover:scale-102 transition-transform duration-300"
     >
         <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover -z-10 filter brightness-75" />
-        <div className="bg-gradient-to-r from-black/80 via-black/60 to-transparent w-full h-full p-8 sm:p-12 flex items-center">
+        <div className="bg-gradient-to-r from-black/50 via-black/30 to-transparent w-full h-full p-8 sm:p-12 flex items-center">
             <div className="max-w-3xl">
                 <h3 className="text-white text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.7)' }}>{title}</h3>
                 <p className="mt-4 text-lg sm:text-xl text-gray-100 leading-relaxed" dangerouslySetInnerHTML={{ __html: text }} />
@@ -172,7 +172,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.8 }}
-        className="py-20 px-6 mt-20 rounded-3xl bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-xl shadow-3xl ring-1 ring-red-500/20"
+        className="py-20 px-6 mt-20 rounded-3xl bg-gradient-to-b from-black/50 to-black/30 backdrop-blur-xl shadow-3xl ring-1 ring-red-500/20"
     >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <motion.div 
@@ -194,7 +194,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                             transition={{ duration: 0.5, delay: index * 0.1 }}
                             className="flex items-start gap-4"
                         >
-                            <div className="flex-shrink-0 w-14 h-14 bg-red-100/80 rounded-full flex items-center justify-center shadow-md">
+                            <div className="flex-shrink-0 w-14 h-14 bg-red-100/50 rounded-full flex items-center justify-center shadow-md">
                                 {React.cloneElement(feature.icon, { size: 28 })}
                             </div>
                             <div>
@@ -213,7 +213,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                 className="relative h-96 lg:h-full rounded-3xl shadow-2xl overflow-hidden"
             >
                 <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-3xl filter brightness-90" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
             </motion.div>
         </div>
     </motion.section>
@@ -228,7 +228,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     return (
         <motion.div 
             variants={{ hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1 } }} 
-            className="bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-lg rounded-3xl shadow-xl overflow-hidden transform hover:scale-105 hover:shadow-2xl transition-all duration-300 flex flex-col group"
+            className="bg-gradient-to-b from-black/50 to-black/30 backdrop-blur-lg rounded-3xl shadow-xl overflow-hidden transform hover:scale-105 hover:shadow-2xl transition-all duration-300 flex flex-col group"
             whileHover={{ y: -5 }}
         >
             <div className="w-full aspect-[4/3] overflow-hidden relative">
@@ -256,7 +256,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                                         className={`px-4 py-1.5 text-sm font-semibold rounded-full border-2 transition-all duration-300 ${
                                             isSelected 
                                             ? 'bg-red-600 border-red-700 text-white shadow-lg' 
-                                            : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:shadow-md'
+                                            : 'bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:border-gray-500 hover:shadow-md'
                                         }`}
                                     >
                                         {variant.label}
@@ -288,7 +288,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
 };
 
 const SkeletonCard = () => (
-    <div className="bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-lg rounded-3xl shadow-xl overflow-hidden animate-pulse">
+    <div className="bg-gradient-to-b from-black/50 to-black/30 backdrop-blur-lg rounded-3xl shadow-xl overflow-hidden animate-pulse">
         <div className="w-full aspect-[4/3] bg-gray-700"></div>
         <div className="p-5">
             <div className="h-6 bg-gray-700 rounded w-4/5 mb-3"></div>
@@ -428,7 +428,7 @@ export default function HomePage({ handleAddToCart }) {
                     />
                 )}
             </AnimatePresence>
-            <div className="fixed inset-0 bg-gradient-to-b from-black/60 to-black/80 -z-10"></div>
+            <div className="fixed inset-0 bg-gradient-to-b from-black/40 to-black/60 -z-10"></div>
 
             {/* Sidebar Menu with Enhanced Styling */}
             <AnimatePresence>
@@ -439,14 +439,14 @@ export default function HomePage({ handleAddToCart }) {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsSidebarOpen(false)}
-                            className="fixed inset-0 bg-black/70 z-40 backdrop-blur-sm"
+                            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
                         />
                         <motion.div
                             variants={sidebarVariants}
                             initial="closed"
                             animate="open"
                             exit="closed"
-                            className="fixed top-0 left-0 h-full w-80 bg-gradient-to-b from-black/90 to-black/70 backdrop-blur-xl shadow-2xl z-50 p-8 flex flex-col"
+                            className="fixed top-0 left-0 h-full w-80 bg-gradient-to-b from-black/50 to-black/30 backdrop-blur-xl shadow-2xl z-50 p-8 flex flex-col"
                         >
                             <div className="flex justify-between items-center mb-10">
                                 <img src={logoIcon} alt="Sresta Mart Logo" className="h-14 w-auto"/>
@@ -464,7 +464,7 @@ export default function HomePage({ handleAddToCart }) {
                                                 className={`w-full flex items-center justify-between text-left px-4 py-3 rounded-xl text-lg font-semibold transition-all duration-300 ${
                                                     selectedCategory === category 
                                                     ? 'bg-red-600/80 text-white shadow-md' 
-                                                    : 'text-gray-200 hover:bg-gray-800/80 hover:shadow-sm'
+                                                    : 'text-gray-200 hover:bg-gray-800/50 hover:shadow-sm'
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-4">
@@ -480,12 +480,12 @@ export default function HomePage({ handleAddToCart }) {
                                 <h3 className="text-base font-bold text-gray-300 uppercase tracking-widest mb-4">Quick Access</h3>
                                 <ul className="space-y-3">
                                     <li>
-                                        <a href="/vendor" className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-lg font-semibold text-gray-200 hover:bg-gray-800/80 transition-all">
+                                        <a href="/vendor" className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-lg font-semibold text-gray-200 hover:bg-gray-800/50 transition-all">
                                             <User size={20} /> Vendor Portal
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="/delivery/login" className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-lg font-semibold text-gray-200 hover:bg-gray-800/80 transition-all">
+                                        <a href="/delivery/login" className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-lg font-semibold text-gray-200 hover:bg-gray-800/50 transition-all">
                                             <Truck size={20} /> Delivery Hub
                                         </a>
                                     </li>
@@ -497,11 +497,11 @@ export default function HomePage({ handleAddToCart }) {
             </AnimatePresence>
 
             <div className="relative z-10">
-                <div className="pt-10 sm:pt-16 pb-8 bg-gradient-to-b from-black/80 to-transparent">
+                <div className="pt-10 sm:pt-16 pb-8 bg-gradient-to-b from-black/50 to-transparent">
                     <div className="flex flex-row items-center justify-center mb-10 relative px-6">
                         <button 
                             onClick={() => setIsSidebarOpen(true)}
-                            className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-black/60 rounded-full backdrop-blur-md shadow-md hover:bg-black/80 transition-all"
+                            className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-black/50 rounded-full backdrop-blur-md shadow-md hover:bg-black/60 transition-all"
                         >
                             <Menu className="text-white" size={24}/>
                         </button>
@@ -534,7 +534,7 @@ export default function HomePage({ handleAddToCart }) {
                                 className={`px-5 py-3 rounded-full flex items-center gap-3 text-base font-semibold transition-all duration-300 shadow-md ${
                                     selectedCategory === category
                                         ? 'bg-gradient-to-r from-red-600 to-red-800 text-white'
-                                        : 'bg-gray-800/80 text-gray-100 hover:bg-gray-700/80 backdrop-blur-md'
+                                        : 'bg-gray-800/50 text-gray-100 hover:bg-gray-700/50 backdrop-blur-md'
                                 }`}
                             >
                                 {categoryIcons[category]}
@@ -550,7 +550,7 @@ export default function HomePage({ handleAddToCart }) {
                                 placeholder="Search products..." 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full py-4 px-6 pr-12 rounded-full bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-md backdrop-blur-sm"
+                                className="w-full py-4 px-6 pr-12 rounded-full bg-gray-800/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-md backdrop-blur-sm"
                             />
                             <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                         </div>
@@ -614,17 +614,17 @@ export default function HomePage({ handleAddToCart }) {
                             <button
                                 onClick={goToPreviousPage}
                                 disabled={currentPage === 1}
-                                className="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-900 hover:to-black shadow-md hover:shadow-lg transition-all"
+                                className="px-6 py-3 bg-gradient-to-r from-gray-800/50 to-gray-900/50 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-900/50 hover:to-black/50 shadow-md hover:shadow-lg transition-all"
                             >
                                 Previous
                             </button>
-                            <span className="px-6 py-3 text-white text-shadow bg-black/50 rounded-full shadow-md">
+                            <span className="px-6 py-3 text-white text-shadow bg-black/30 rounded-full shadow-md">
                                 Page {currentPage} / {totalPages}
                             </span>
                             <button
                                 onClick={goToNextPage}
                                 disabled={currentPage === totalPages}
-                                className="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-900 hover:to-black shadow-md hover:shadow-lg transition-all"
+                                className="px-6 py-3 bg-gradient-to-r from-gray-800/50 to-gray-900/50 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-900/50 hover:to-black/50 shadow-md hover:shadow-lg transition-all"
                             >
                                 Next
                             </button>
