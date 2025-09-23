@@ -8,194 +8,251 @@ import {
 } from 'lucide-react';
 import logoIcon from '../../images/icon.png';
 
-// --- Enhanced Constants, Icons, and Banners for More Attractiveness ---
+// --- Constants, Icons, and Banners with Enhanced Visuals ---
 const CATEGORY_ORDER = ['livebirds', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets', 'meat'];
 
 const categoryIcons = {
-    livebirds: <Egg size={18} className="text-yellow-400" />,
-    pickles: <CookingPot size={18} className="text-orange-500" />,
-    dairy: <Milk size={18} className="text-blue-300" />,
-    dryfruits: <Leaf size={18} className="text-green-500" />,
-    oils: <Leaf size={18} className="text-amber-600" />,
-    millets: <Wheat size={18} className="text-yellow-600" />,
-    meat: <Beef size={18} className="text-red-600" />,
+    livebirds: <Egg size={20} className="text-amber-400" />,
+    pickles: <CookingPot size={20} className="text-orange-500" />,
+    dairy: <Milk size={20} className="text-blue-300" />,
+    dryfruits: <Leaf size={20} className="text-green-500" />,
+    oils: <Leaf size={20} className="text-amber-600" />,
+    millets: <Wheat size={20} className="text-yellow-600" />,
+    meat: <Beef size={20} className="text-red-600" />,
 };
 
 const categoryBanners = {
     livebirds: {
-        title: "Nature’s Ultimate Power Pack for Women",
-        text: "Our <strong>Natu Kodi Eggs</strong> embody a true commitment to wellness, packed with Omega-3 fatty acids & essential nutrients to harmonize hormones, sharpen memory, and skyrocket energy levels.",
+        title: "Empower Wellness with Natu Kodi Eggs",
+        text: "Sourced from free-range farms, our <strong>Natu Kodi Eggs</strong> are packed with Omega-3s and nutrients to boost energy, balance hormones, and enhance memory.",
         imageUrl: "https://images.pexels.com/photos/235648/pexels-photo-235648.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
     },
     pickles: {
-        title: "Timeless Tradition in Every Exquisite Jar",
-        text: "Meticulously handcrafted with heirloom recipes and the freshest seasonal ingredients, our pickles deliver an explosion of tangy, spicy, and utterly irresistible flavors straight from home kitchens.",
+        title: "Savor Tradition in Every Jar",
+        text: "Crafted with love using ancestral recipes, our pickles deliver bold, tangy flavors with the finest natural ingredients.",
         imageUrl: "https://images.pexels.com/photos/4198233/pexels-photo-4198233.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
     },
     dairy: {
-        title: "Ultra-Pure, Freshly Delivered Daily",
-        text: "From velvety yogurts to luxurious, golden ghee, our dairy delights are sourced from pristine local farms, guaranteeing unmatched freshness and superior nutritional benefits for your loved ones.",
+        title: "Pure Bliss from Local Farms",
+        text: "Indulge in creamy yogurts and rich ghee, crafted daily from the freshest A2 milk for unparalleled quality.",
         imageUrl: "https://images.pexels.com/photos/248412/pexels-photo-248412.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
     },
     dryfruits: {
-        title: "Nature's Premium Superfood Treasures",
-        text: "Brimming with vitality and pure goodness, our elite assortment of dry fruits and nuts serves as the ultimate healthy indulgence for any moment of your day.",
+        title: "Nature’s Finest Superfood Gems",
+        text: "Our premium dry fruits and nuts are nutrient-dense snacks, perfect for a healthy boost any time of day.",
         imageUrl: "https://images.pexels.com/photos/4198020/pexels-photo-4198020.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
     },
     oils: {
-        title: "Exquisite Cold-Pressed Purity",
-        text: "Savor the genuine essence and profound health advantages of our artisan cold-pressed oils. Unrefined, authentic, and ideal for elevating your wholesome culinary creations.",
+        title: "Cold-Pressed Essence of Purity",
+        text: "Experience the rich flavor and health benefits of our traditionally extracted, unrefined oils.",
         imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRLXazaU1EBSkr4Hctcq7lWC3nXZDdtaVLz2w&s"
     },
     millets: {
-        title: "Ancient Grains for Contemporary Vitality",
-        text: "Reignite your passion for millets. Our curated selection of heritage grains is loaded with fiber and vital nutrients, crafting the perfect foundation for a vibrant, balanced lifestyle.",
+        title: "Ancient Grains, Modern Vitality",
+        text: "Our fiber-rich millets are gluten-free, low-GI supergrains, perfect for a balanced, healthy lifestyle.",
         imageUrl: "https://images.pexels.com/photos/8992769/pexels-photo-8992769.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
     },
     meat: {
-        title: "Premium Fresh Meats for Gourmet Delights",
-        text: "Sourced from ethical farms, our high-quality meats offer rich flavors and essential proteins, perfect for creating mouthwatering dishes that nourish and satisfy.",
+        title: "Premium Meats for Culinary Excellence",
+        text: "Ethically sourced, our meats offer rich flavors and high protein for gourmet dishes that delight.",
         imageUrl: "https://images.pexels.com/photos/65175/pexels-photo-65175.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
     },
 };
 
 const categoryFeatures = {
     livebirds: {
-        title: "Unlock the Power of Natu Kodi Eggs",
-        subtitle: `"Health is the true wealth for our girl child, girls, and women."`,
-        description: "Our Natu Kodi eggs are nutritional dynamos, carefully selected for their extraordinary benefits that empower wellness at every life stage.",
+        title: "Natu Kodi Eggs: A Nutritional Powerhouse",
+        subtitle: `"Fueling health for women and girls."`,
+        description: "Handpicked for their exceptional nutritional profile, our eggs support vitality at every stage.",
         imageUrl: "https://images.pexels.com/photos/162712/egg-white-food-protein-162712.jpeg?auto=compress&cs=tinysrgb&w=600",
         features: [
-            { icon: <Heart className="text-red-500"/>, title: "Hormonal Harmony", text: "Abundant in Omega fatty acids, crucial for balancing hormones in girls and women." },
-            { icon: <Bone className="text-red-500"/>, title: "Superior Calcium Boost", text: "Naturally loaded with calcium to fortify bones throughout life." },
-            { icon: <BrainCircuit className="text-red-500"/>, title: "Memory Enhancement", text: "A prime source of Vitamin B12, enhancing cognitive sharpness and memory in kids." }
+            { icon: <Heart className="text-red-500"/>, title: "Hormonal Balance", text: "Omega-3s support hormonal health for women." },
+            { icon: <Bone className="text-red-500"/>, title: "Bone Strength", text: "Rich in calcium for robust bones." },
+            { icon: <BrainCircuit className="text-red-500"/>, title: "Cognitive Boost", text: "Vitamin B12 enhances memory and focus." }
         ]
     },
     pickles: {
-        title: "Exquisite Homemade Flavor Symphony",
-        subtitle: `"Tradition's taste in every delightful bite."`,
-        description: "Crafted with cherished family recipes and natural fermentation, each jar bursts with authentic, healthful flavors that elevate every meal.",
+        title: "Authentic Pickle Perfection",
+        subtitle: `"A burst of heritage in every bite."`,
+        description: "Made with traditional methods, our pickles are a probiotic-rich delight for your palate.",
         imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT8m41uJaxOcN9ZVxI78lDW_OFxL6g6E-mTig&s",
         features: [
-            { icon: <Microscope className="text-red-500"/>, title: "Probiotic Powerhouse", text: "Fermented naturally for gut-healthy probiotics that enhance digestion." },
-            { icon: <Leaf className="text-red-500"/>, title: "Pure Natural Essence", text: "Sun-dried ingredients and premium oils, sans artificial additives." },
-            { icon: <Shield className="text-red-500"/>, title: "Immunity Fortifier", text: "Packed with antioxidants and Vitamin K for robust immune support." }
+            { icon: <Microscope className="text-red-500"/>, title: "Probiotic Boost", text: "Supports gut health with natural fermentation." },
+            { icon: <Leaf className="text-red-500"/>, title: "Pure Ingredients", text: "No artificial preservatives, only nature’s best." },
+            { icon: <Shield className="text-red-500"/>, title: "Immunity Support", text: "Antioxidants and vitamins strengthen immunity." }
         ]
     },
     dairy: {
-        title: "Exquisite Farm-Fresh Indulgence",
-        subtitle: `"Pure, creamy delights straight from local farms."`,
-        description: "Indulge in the superior quality of our dairy range, from A2 milk to opulent ghee, vital for nourishing daily vitality.",
+        title: "Fresh Dairy, Crafted with Care",
+        subtitle: `"From farm to table, pure and simple."`,
+        description: "Our dairy products, from A2 milk to ghee, are crafted to nourish and delight daily.",
         imageUrl: "https://images.pexels.com/photos/799273/pexels-photo-799273.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
         features: [
-            { icon: <Bone className="text-red-500"/>, title: "Protein & Calcium Rich", text: "Key for strong bones, teeth, and muscle growth." },
-            { icon: <Sun className="text-red-500"/>, title: "Vitamin D Source", text: "Aids calcium absorption and bolsters immunity." },
-            { icon: <Droplets className="text-red-500"/>, title: "Unadulterated Purity", text: "No hormones or preservatives—just natural excellence." }
+            { icon: <Bone className="text-red-500"/>, title: "Protein & Calcium", text: "Supports strong bones and muscles." },
+            { icon: <Sun className="text-red-500"/>, title: "Vitamin D", text: "Enhances calcium absorption and immunity." },
+            { icon: <Droplets className="text-red-500"/>, title: "Pure Quality", text: "No hormones, just natural goodness." }
         ]
     },
     dryfruits: {
-        title: "Nature's Elite Nutrient-Packed Snacks",
-        subtitle: `"Daily energy and wellness in every handful."`,
-        description: "Our premium dry fruits and nuts are vitamin-rich treasures, offering healthy fats for guilt-free snacking anytime.",
+        title: "Premium Dry Fruits & Nuts",
+        subtitle: `"Nature’s energy-packed snacks."`,
+        description: "Hand-selected for quality, our dry fruits are perfect for healthy, on-the-go snacking.",
         imageUrl: "https://images.pexels.com/photos/2983141/pexels-photo-2983141.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
         features: [
-            { icon: <Heart className="text-red-500"/>, title: "Heart-Protective", text: "Full of healthy fats, fiber, and antioxidants for cardiovascular wellness." },
-            { icon: <BatteryCharging className="text-red-500"/>, title: "Instant Energy Surge", text: "Natural boost for workouts or midday slumps." },
-            { icon: <Sparkles className="text-red-500"/>, title: "Vitamin & Mineral Haven", text: "Essential nutrients like potassium, magnesium, and iron." }
+            { icon: <Heart className="text-red-500"/>, title: "Heart Health", text: "Healthy fats and antioxidants for your heart." },
+            { icon: <BatteryCharging className="text-red-500"/>, title: "Energy Boost", text: "Quick energy for active lifestyles." },
+            { icon: <Sparkles className="text-red-500"/>, title: "Nutrient-Rich", text: "Packed with vitamins and minerals." }
         ]
     },
     oils: {
-        title: "Luxurious Cold-Pressed Liquid Gold",
-        subtitle: `"Purity distilled in every drop."`,
-        description: "Traditionally cold-pressed to preserve nutrients, flavor, and aroma, transforming your cooking into a healthful art.",
+        title: "Cold-Pressed Oils of Distinction",
+        subtitle: `"Pure essence for healthy cooking."`,
+        description: "Our oils retain natural flavors and nutrients, elevating your meals with purity.",
         imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlD8qSZ1Qpf6F_pTnhy_snOlaPyGqLEB3YbQ&s",
         features: [
-            { icon: <TestTube className="text-red-500"/>, title: "Nutrient Preservation", text: "Vitamins and antioxidants intact, superior to refined alternatives." },
-            { icon: <Heart className="text-red-500"/>, title: "Healthy Fat Abundance", text: "Monounsaturated and polyunsaturated fats for heart health." },
-            { icon: <FilterX className="text-red-500"/>, title: "Chemical-Free Assurance", text: "No solvents or chemicals—pure extraction mastery." }
+            { icon: <TestTube className="text-red-500"/>, title: "Nutrient-Rich", text: "Preserves vitamins and antioxidants." },
+            { icon: <Heart className="text-red-500"/>, title: "Healthy Fats", text: "Supports heart health with good fats." },
+            { icon: <FilterX className="text-red-500"/>, title: "Chemical-Free", text: "Pure, unrefined extraction process." }
         ]
     },
     millets: {
-        title: "The Timeless Supergrain Revolution",
-        subtitle: `"Wholesome ancient power for modern living."`,
-        description: "Gluten-free, fiber-rich millets offer a low-GI alternative to staples, ideal for sustained health and energy.",
+        title: "Millets: The Supergrain Revival",
+        subtitle: `"Ancient wisdom for modern health."`,
+        description: "Gluten-free and nutrient-dense, our millets are perfect for a balanced diet.",
         imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTsUCfJOmuHsF_FNrRaSTIE96Q9ToAH9sGF7Q&s",
         features: [
-            { icon: <Wheat className="text-red-500"/>, title: "Fiber-Rich Delight", text: "Aids digestion, weight control, and satiety." },
-            { icon: <Vegan className="text-red-500"/>, title: "Gluten-Free Naturally", text: "Perfect for gluten sensitivities or celiac needs." },
-            { icon: <Activity className="text-red-500"/>, title: "Blood Sugar Stabilizer", text: "Low GI prevents sugar spikes effectively." }
+            { icon: <Wheat className="text-red-500"/>, title: "High Fiber", text: "Aids digestion and weight management." },
+            { icon: <Vegan className="text-red-500"/>, title: "Gluten-Free", text: "Ideal for gluten-sensitive diets." },
+            { icon: <Activity className="text-red-500"/>, title: "Blood Sugar Control", text: "Low GI for stable energy." }
         ]
     },
     meat: {
-        title: "Premium Ethical Meats",
-        subtitle: `"Fresh, flavorful, and responsibly sourced."`,
-        description: "Our meats are from sustainable farms, providing high-protein options with rich taste for gourmet cooking.",
+        title: "Ethically Sourced Premium Meats",
+        subtitle: `"Flavorful cuts for gourmet meals."`,
+        description: "Our meats are sourced responsibly, offering rich taste and nutrition for your dishes.",
         imageUrl: "https://images.pexels.com/photos/618681/pexels-photo-618681.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
         features: [
-            { icon: <Beef className="text-red-500"/>, title: "Protein Powerhouse", text: "Essential for muscle repair and growth." },
-            { icon: <Shield className="text-red-500"/>, title: "Ethical Sourcing", text: "From farms prioritizing animal welfare." },
-            { icon: <Sparkles className="text-red-500"/>, title: "Flavorful Variety", text: "Cuts perfect for diverse cuisines." }
+            { icon: <Beef className="text-red-500"/>, title: "High Protein", text: "Supports muscle growth and repair." },
+            { icon: <Shield className="text-red-500"/>, title: "Ethical Sourcing", text: "From farms prioritizing welfare." },
+            { icon: <Sparkles className="text-red-500"/>, title: "Rich Flavor", text: "Perfect for diverse cuisines." }
         ]
     }
 };
 
+// --- Hero Section with Tagline Rotator ---
+const HeroSection = () => {
+    const taglines = [
+        "Discover Nature’s Finest",
+        "Pure, Fresh, and Wholesome",
+        "Crafted for Your Wellness",
+        "Taste the Tradition"
+    ];
+    const [currentTagline, setCurrentTagline] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentTagline((prev) => (prev + 1) % taglines.length);
+        }, 4000);
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <motion.div 
+            className="relative py-16 sm:py-24 bg-gradient-to-b from-black/80 to-transparent text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+        >
+            <img src={logoIcon} alt="Sresta Mart Logo" className="h-20 sm:h-28 mx-auto mb-6 rounded-full shadow-lg"/>
+            <AnimatePresence mode="wait">
+                <motion.h1
+                    key={currentTagline}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-white text-shadow"
+                >
+                    {taglines[currentTagline]}
+                </motion.h1>
+            </AnimatePresence>
+            <p className="mt-4 text-lg sm:text-xl text-gray-200 max-w-2xl mx-auto">
+                Explore our premium collection of farm-fresh, organic, and artisanal products crafted for your health and happiness.
+            </p>
+            <motion.button
+                whileHover={{ scale: 1.1, boxShadow: '0 0 20px rgba(255,0,0,0.5)' }}
+                whileTap={{ scale: 0.95 }}
+                className="mt-8 bg-gradient-to-r from-red-600 to-red-800 text-white font-bold py-3 px-8 rounded-full shadow-xl"
+            >
+                Shop Now
+            </motion.button>
+        </motion.div>
+    );
+};
+
+// --- Category Banner with Parallax Effect ---
 const CategoryBanner = ({ title, text, imageUrl }) => (
     <motion.div 
-        layout 
-        initial={{ opacity: 0, y: 50, scale: 0.95 }} 
-        animate={{ opacity: 1, y: 0, scale: 1 }} 
-        exit={{ opacity: 0, y: -50 }} 
-        transition={{ duration: 0.6, ease: 'easeOut' }} 
-        className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-8 rounded-3xl shadow-2xl overflow-hidden relative transform hover:scale-102 transition-transform duration-300"
+        className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-10 rounded-3xl shadow-2xl overflow-hidden relative"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
     >
-        <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover -z-10 filter brightness-75" />
-        <div className="bg-gradient-to-r from-black/80 via-black/60 to-transparent w-full h-full p-8 sm:p-12 flex items-center">
+        <motion.img 
+            src={imageUrl} 
+            alt={title} 
+            className="absolute w-full h-full object-cover -z-10"
+            whileInView={{ scale: 1.1 }}
+            transition={{ duration: 5, ease: 'easeOut' }}
+        />
+        <div className="bg-gradient-to-r from-black/70 to-transparent p-8 sm:p-12 flex items-center">
             <div className="max-w-3xl">
-                <h3 className="text-white text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight" style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.7)' }}>{title}</h3>
-                <p className="mt-4 text-lg sm:text-xl text-gray-100 leading-relaxed" dangerouslySetInnerHTML={{ __html: text }} />
+                <h3 className="text-white text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-shadow">{title}</h3>
+                <p className="mt-4 text-lg sm:text-xl text-gray-100" dangerouslySetInnerHTML={{ __html: text }} />
                 <motion.button 
-                    whileHover={{ scale: 1.08, boxShadow: '0 0 15px rgba(255,0,0,0.5)' }} 
-                    whileTap={{ scale: 0.92 }} 
-                    className="mt-6 bg-gradient-to-r from-red-600 to-red-800 text-white font-bold py-3 px-8 rounded-full hover:from-red-700 hover:to-red-900 transition-all shadow-xl"
+                    whileHover={{ scale: 1.1, boxShadow: '0 0 20px rgba(255,0,0,0.5)' }}
+                    whileTap={{ scale: 0.95 }}
+                    className="mt-6 bg-gradient-to-r from-red-600 to-red-800 text-white font-bold py-3 px-8 rounded-full shadow-xl"
                 >
-                    Shop Now <ChevronRight size={18} className="inline ml-2" />
+                    Shop Now <ChevronRight size={20} className="inline ml-2" />
                 </motion.button>
             </div>
         </div>
     </motion.div>
 );
 
+// --- Category Feature Section with Enhanced Visuals ---
 const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, features }) => (
     <motion.section 
-        key={title}
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0 }}
+        className="py-20 px-6 mt-16 rounded-3xl bg-gradient-to-b from-black/70 to-black/50 backdrop-blur-xl shadow-2xl"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
         transition={{ duration: 0.8 }}
-        className="py-20 px-6 mt-20 rounded-3xl bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-xl shadow-3xl ring-1 ring-red-500/20"
     >
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div 
-                initial={{ opacity: 0, x: -50 }} 
-                whileInView={{ opacity: 1, x: 0 }} 
-                viewport={{ once: true }} 
-                transition={{ duration: 0.8, delay: 0.2 }}
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
             >
-                <h2 className="text-5xl font-extrabold text-white leading-tight">{title}</h2>
-                <p className="mt-3 text-red-400 font-semibold italic text-xl">{subtitle}</p>
-                <p className="mt-6 text-gray-200 text-lg leading-relaxed">{description}</p>
+                <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight">{title}</h2>
+                <p className="mt-3 text-red-400 text-lg italic">{subtitle}</p>
+                <p className="mt-6 text-gray-200 text-lg">{description}</p>
                 <div className="mt-10 space-y-8">
                     {Array.isArray(features) && features.map((feature, index) => (
                         <motion.div 
-                            key={index} 
+                            key={index}
                             initial={{ opacity: 0, x: -20 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: index * 0.1 }}
                             className="flex items-start gap-4"
                         >
-                            <div className="flex-shrink-0 w-14 h-14 bg-red-100/80 rounded-full flex items-center justify-center shadow-md">
-                                {React.cloneElement(feature.icon, { size: 28 })}
+                            <div className="flex-shrink-0 w-12 h-12 bg-red-100/80 rounded-full flex items-center justify-center shadow-md">
+                                {React.cloneElement(feature.icon, { size: 24 })}
                             </div>
                             <div>
                                 <h4 className="font-bold text-xl text-white">{feature.title}</h4>
@@ -206,19 +263,20 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                 </div>
             </motion.div>
             <motion.div 
-                initial={{ opacity: 0, scale: 0.8 }} 
-                whileInView={{ opacity: 1, scale: 1 }} 
-                viewport={{ once: true }} 
-                transition={{ duration: 0.8, delay: 0.4 }} 
-                className="relative h-96 lg:h-full rounded-3xl shadow-2xl overflow-hidden"
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="relative h-80 lg:h-full rounded-3xl shadow-2xl overflow-hidden"
             >
-                <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-3xl filter brightness-90" />
+                <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-3xl" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
             </motion.div>
         </div>
     </motion.section>
 );
 
+// --- Product Card with Enhanced Hover Effects ---
 const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAddToCart }) => {
     const hasVariants = product.variants && product.variants.length > 0;
     const selectedVariantId = selectedVariants[product.id] || (hasVariants ? product.variants[0].id : null);
@@ -227,22 +285,23 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
 
     return (
         <motion.div 
-            variants={{ hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1 } }} 
-            className="bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-lg rounded-3xl shadow-xl overflow-hidden transform hover:scale-105 hover:shadow-2xl transition-all duration-300 flex flex-col group"
-            whileHover={{ y: -5 }}
+            variants={{ hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
+            whileHover={{ y: -10, rotate: 1, boxShadow: '0 15px 30px rgba(255,0,0,0.2)' }}
+            className="bg-gradient-to-b from-black/70 to-black/50 backdrop-blur-lg rounded-3xl shadow-xl overflow-hidden flex flex-col group"
         >
             <div className="w-full aspect-[4/3] overflow-hidden relative">
                 <img 
                     src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} 
                     alt={product.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                    loading="lazy"
                 />
-                <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-md">
+                <div className="absolute top-3 right-3 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-md">
                     New
                 </div>
             </div>
-            <div className="p-5 flex flex-col flex-grow">
-                <h3 className="font-bold text-xl text-white mb-2">{product.name}</h3>
+            <div className="p-6 flex flex-col flex-grow">
+                <h3 className="font-bold text-xl text-white mb-3">{product.name}</h3>
                 <p className="text-sm text-gray-300 mb-4 flex-grow line-clamp-3">{product.description}</p>
                 <div className="mb-4 min-h-[40px]">
                     {hasVariants && (
@@ -255,8 +314,8 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                                         onClick={() => handleVariantChange(product.id, variant.id)} 
                                         className={`px-4 py-1.5 text-sm font-semibold rounded-full border-2 transition-all duration-300 ${
                                             isSelected 
-                                            ? 'bg-red-600 border-red-700 text-white shadow-lg' 
-                                            : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500 hover:shadow-md'
+                                            ? 'bg-red-600 border-red-700 text-white shadow-md' 
+                                            : 'bg-gray-800/80 border-gray-600 text-gray-300 hover:bg-gray-700/80 hover:shadow-sm'
                                         }`}
                                     >
                                         {variant.label}
@@ -266,17 +325,19 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                         </div>
                     )}
                 </div>
-                <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-700">
+                <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-700/50">
                     {hasVariants ? (
                         <>
                             <span className="text-2xl font-bold text-red-400">₹{currentPrice}</span>
-                            <button 
+                            <motion.button 
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
                                 onClick={(e) => handleAddToCart({ ...product, selectedVariant: currentVariant }, e)} 
-                                className="flex items-center gap-2 text-white px-4 py-2 text-sm font-semibold rounded-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 disabled:bg-gray-400 transition-all shadow-lg hover:shadow-xl" 
+                                className="flex items-center gap-2 text-white px-4 py-2 text-sm font-semibold rounded-full bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 disabled:bg-gray-400 shadow-md transition-all"
                                 disabled={!currentVariant}
                             >
                                 <ShoppingCart size={16} /> Add to Cart
-                            </button>
+                            </motion.button>
                         </>
                     ) : (
                         <span className="text-sm font-semibold text-gray-400 w-full text-center">Coming Soon</span>
@@ -287,10 +348,11 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     );
 };
 
+// --- Skeleton Card for Loading ---
 const SkeletonCard = () => (
-    <div className="bg-gradient-to-b from-black/80 to-black/60 backdrop-blur-lg rounded-3xl shadow-xl overflow-hidden animate-pulse">
+    <div className="bg-gradient-to-b from-black/70 to-black/50 backdrop-blur-lg rounded-3xl shadow-xl overflow-hidden animate-pulse">
         <div className="w-full aspect-[4/3] bg-gray-700"></div>
-        <div className="p-5">
+        <div className="p-6">
             <div className="h-6 bg-gray-700 rounded w-4/5 mb-3"></div>
             <div className="h-4 bg-gray-700 rounded w-full mb-5"></div>
             <div className="h-4 bg-gray-700 rounded w-3/5 mb-5"></div>
@@ -302,8 +364,43 @@ const SkeletonCard = () => (
     </div>
 );
 
+// --- Testimonial Carousel ---
+const Testimonials = () => {
+    const testimonials = [
+        { name: "Priya S.", text: "The Natu Kodi eggs are a game-changer! My family loves their rich taste and nutritional benefits." },
+        { name: "Arjun M.", text: "These pickles bring back childhood memories. Authentic and delicious!" },
+        { name: "Sneha R.", text: "The dairy products are so fresh and pure. Perfect for my kids!" }
+    ];
+
+    return (
+        <motion.div 
+            className="py-16 px-6 bg-gradient-to-b from-black/60 to-black/40 rounded-3xl shadow-2xl"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+        >
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white text-center mb-10">What Our Customers Say</h2>
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-4">
+                {testimonials.map((testimonial, index) => (
+                    <motion.div
+                        key={index}
+                        className="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 snap-center bg-black/50 backdrop-blur-lg rounded-2xl p-6 shadow-md"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: index * 0.2 }}
+                    >
+                        <p className="text-gray-200 italic">"{testimonial.text}"</p>
+                        <p className="mt-4 font-semibold text-white">{testimonial.name}</p>
+                    </motion.div>
+                ))}
+            </div>
+        </motion.div>
+    );
+};
+
 export default function HomePage({ handleAddToCart }) {
-    // --- Enhanced STATE MANAGEMENT for Better UX ---
     const [products, setProducts] = useState([]); 
     const [categories, setCategories] = useState(CATEGORY_ORDER);
     const [selectedCategory, setSelectedCategory] = useState(CATEGORY_ORDER[0]);
@@ -346,7 +443,7 @@ export default function HomePage({ handleAddToCart }) {
                     });
                     setSelectedVariants(prev => ({ ...prev, ...initialVariants }));
                 } else {
-                    setError('Failed to load products. Unexpected data format received.');
+                    setError('Failed to load products. Unexpected data format.');
                 }
             } catch (err) {
                 setError('Failed to load products. ' + (err.message || ''));
@@ -382,7 +479,7 @@ export default function HomePage({ handleAddToCart }) {
     };
 
     const productGridVariants = {
-        visible: { transition: { staggerChildren: 0.08 } },
+        visible: { transition: { staggerChildren: 0.1 } },
         hidden: {}
     };
 
@@ -397,40 +494,82 @@ export default function HomePage({ handleAddToCart }) {
     const productsAfterBanner = currentPage === 1 ? filteredProducts.slice(BANNER_POSITION) : [];
 
     const sidebarVariants = {
-        open: { x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
-        closed: { x: "-100%", transition: { type: "spring", stiffness: 300, damping: 30 } }
+        open: { x: 0, transition: { type: 'spring', stiffness: 300, damping: 30 } },
+        closed: { x: '-100%', transition: { type: 'spring', stiffness: 300, damping: 30 } }
     };
 
     return (
         <div className="relative min-h-screen overflow-hidden">
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
-                body { font-family: 'Poppins', sans-serif; }
-                .text-shadow { text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7); }
-                .shadow-3xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@700&display=swap');
+                body { font-family: 'Inter', sans-serif; }
+                .text-shadow { text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8); }
+                .shadow-3xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); }
+                .particle-bg {
+                    background: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+                    background-size: 20px 20px;
+                    position: fixed;
+                    inset: 0;
+                    z-index: -15;
+                    opacity: 0.3;
+                }
             `}</style>
 
-            {/* Enhanced Full-Screen Video Background with Overlay */}
+            {/* Particle Background */}
+            <div className="particle-bg"></div>
+
+            {/* Video Background with New Animation */}
             <AnimatePresence>
                 {categoryVideos[selectedCategory] && (
                     <motion.video 
                         key={selectedCategory} 
                         src={categoryVideos[selectedCategory]} 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 1.2, ease: 'easeInOut' }}
+                        initial={{ opacity: 0, scale: 1.2 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 1.2 }}
+                        transition={{ duration: 1.5, ease: 'easeInOut' }}
                         autoPlay 
                         loop 
                         muted 
                         playsInline 
-                        className="fixed inset-0 w-full h-full object-cover -z-20 filter blur-sm scale-105"
+                        className="fixed inset-0 w-full h-full object-cover -z-20 filter brightness-75"
                     />
                 )}
             </AnimatePresence>
-            <div className="fixed inset-0 bg-gradient-to-b from-black/60 to-black/80 -z-10"></div>
+            <div className="fixed inset-0 bg-black/40 -z-10"></div>
 
-            {/* Sidebar Menu with Enhanced Styling */}
+            {/* Sticky Header */}
+            <motion.header 
+                className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md shadow-md"
+                initial={{ y: -100 }}
+                animate={{ y: 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between py-4">
+                    <button 
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="p-2 bg-black/60 rounded-full shadow-md"
+                    >
+                        <Menu className="text-white" size={24}/>
+                    </button>
+                    <img src={logoIcon} alt="Sresta Mart Logo" className="h-12 sm:h-16"/>
+                    <motion.div 
+                        className="relative hidden sm:block"
+                        whileHover={{ scale: 1.05 }}
+                    >
+                        <input 
+                            type="text" 
+                            placeholder="Search products..." 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="py-2 px-4 pr-10 rounded-full bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-md"
+                        />
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    </motion.div>
+                </div>
+            </motion.header>
+
+            {/* Sidebar Menu */}
             <AnimatePresence>
                 {isSidebarOpen && (
                     <>
@@ -455,16 +594,16 @@ export default function HomePage({ handleAddToCart }) {
                                 </button>
                             </div>
                             <nav className="flex-grow">
-                                <h3 className="text-base font-bold text-gray-300 uppercase tracking-widest mb-4">Discover Categories</h3>
+                                <h3 className="text-base font-bold text-gray-300 uppercase tracking-widest mb-4">Categories</h3>
                                 <ul className="space-y-3">
                                     {categories.map(category => (
                                         <li key={category}>
                                             <button 
                                                 onClick={() => handleFilterChange(category)}
-                                                className={`w-full flex items-center justify-between text-left px-4 py-3 rounded-xl text-lg font-semibold transition-all duration-300 ${
+                                                className={`w-full flex items-center justify-between text-left px-4 py-3 rounded-xl text-lg font-semibold transition-all ${
                                                     selectedCategory === category 
                                                     ? 'bg-red-600/80 text-white shadow-md' 
-                                                    : 'text-gray-200 hover:bg-gray-800/80 hover:shadow-sm'
+                                                    : 'text-gray-200 hover:bg-gray-800/80'
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-4">
@@ -477,15 +616,15 @@ export default function HomePage({ handleAddToCart }) {
                                     ))}
                                 </ul>
                                 <hr className="my-8 border-gray-700" />
-                                <h3 className="text-base font-bold text-gray-300 uppercase tracking-widest mb-4">Quick Access</h3>
+                                <h3 className="text-base font-bold text-gray-300 uppercase tracking-widest mb-4">Quick Links</h3>
                                 <ul className="space-y-3">
                                     <li>
-                                        <a href="/vendor" className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-lg font-semibold text-gray-200 hover:bg-gray-800/80 transition-all">
+                                        <a href="/vendor" className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-lg font-semibold text-gray-200 hover:bg-gray-800/80">
                                             <User size={20} /> Vendor Portal
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="/delivery/login" className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-lg font-semibold text-gray-200 hover:bg-gray-800/80 transition-all">
+                                        <a href="/delivery/login" className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-lg font-semibold text-gray-200 hover:bg-gray-800/80">
                                             <Truck size={20} /> Delivery Hub
                                         </a>
                                     </li>
@@ -496,45 +635,23 @@ export default function HomePage({ handleAddToCart }) {
                 )}
             </AnimatePresence>
 
-            <div className="relative z-10">
-                <div className="pt-10 sm:pt-16 pb-8 bg-gradient-to-b from-black/80 to-transparent">
-                    <div className="flex flex-row items-center justify-center mb-10 relative px-6">
-                        <button 
-                            onClick={() => setIsSidebarOpen(true)}
-                            className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-black/60 rounded-full backdrop-blur-md shadow-md hover:bg-black/80 transition-all"
-                        >
-                            <Menu className="text-white" size={24}/>
-                        </button>
-                        <div className="flex items-center gap-4">
-                            <motion.div 
-                                initial={{ opacity: 0, scale: 0.8 }} 
-                                animate={{ opacity: 1, scale: 1 }} 
-                                transition={{ duration: 0.8, ease: "easeOut" }} 
-                                className="hidden sm:block"
-                            >
-                                <img src={logoIcon} alt="Sresta Mart Logo" className="h-24 md:h-28 w-auto shadow-lg rounded-full"/>
-                            </motion.div>
-                            <motion.h2 
-                                initial={{opacity: 0, y: -30}} 
-                                animate={{opacity: 1, y: 0}} 
-                                transition={{ delay: 0.3, duration: 0.8 }} 
-                                className="text-5xl sm:text-6xl font-extrabold text-white text-shadow text-center tracking-tight"
-                            >
-                                Discover Our Premium Collection
-                            </motion.h2>
-                        </div>
-                    </div>
-                    <div className="mt-10 hidden sm:flex justify-center flex-wrap gap-4 px-6">
+            <div className="relative z-10 pt-20 sm:pt-24">
+                {/* Hero Section */}
+                <HeroSection />
+
+                {/* Category Filters for Mobile */}
+                <div className="sm:hidden px-4 mb-8">
+                    <div className="flex overflow-x-auto gap-3 pb-4 snap-x snap-mandatory">
                         {categories.map(category => (
                             <motion.button 
                                 key={category} 
                                 onClick={() => handleFilterChange(category)}
-                                whileHover={{ scale: 1.08, boxShadow: '0 0 15px rgba(255,0,0,0.3)' }}
-                                whileTap={{ scale: 0.92 }}
-                                className={`px-5 py-3 rounded-full flex items-center gap-3 text-base font-semibold transition-all duration-300 shadow-md ${
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className={`flex-shrink-0 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-semibold transition-all ${
                                     selectedCategory === category
-                                        ? 'bg-gradient-to-r from-red-600 to-red-800 text-white'
-                                        : 'bg-gray-800/80 text-gray-100 hover:bg-gray-700/80 backdrop-blur-md'
+                                        ? 'bg-gradient-to-r from-red-600 to-red-800 text-white shadow-md'
+                                        : 'bg-gray-800/80 text-gray-200 hover:bg-gray-700/80'
                                 }`}
                             >
                                 {categoryIcons[category]}
@@ -542,40 +659,27 @@ export default function HomePage({ handleAddToCart }) {
                             </motion.button>
                         ))}
                     </div>
-                    {/* Added Search Bar for Better UX */}
-                    <div className="mt-8 max-w-2xl mx-auto px-6">
-                        <div className="relative">
-                            <input 
-                                type="text" 
-                                placeholder="Search products..." 
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full py-4 px-6 pr-12 rounded-full bg-gray-800/80 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-md backdrop-blur-sm"
-                            />
-                            <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                        </div>
-                    </div>
                 </div>
 
-                {/* Main Content with Enhanced Layout */}
-                <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-16">
+                {/* Main Content */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     {error && (
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-red-600/20 backdrop-blur-md text-red-300 p-5 rounded-xl mb-10 text-center shadow-md"
+                            className="bg-red-600/20 text-red-300 p-4 rounded-xl mb-8 text-center shadow-md"
                         >
                             {error}
                         </motion.div>
                     )}
 
-                    {/* Product Grid and Banner with Improved Animations */}
+                    {/* Product Grid */}
                     <motion.div
-                        key={selectedCategory + searchQuery} // Key for re-render on changes
+                        key={selectedCategory + searchQuery}
                         variants={productGridVariants}
                         initial="hidden"
                         animate="visible"
-                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
+                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8"
                     >
                         {productsLoading
                             ? Array.from({ length: 12 }).map((_, index) => <SkeletonCard key={index} />)
@@ -608,30 +712,37 @@ export default function HomePage({ handleAddToCart }) {
                             ))}
                     </motion.div>
 
-                    {/* Enhanced Pagination */}
+                    {/* Pagination */}
                     {!productsLoading && totalPages > 1 && (
-                        <div className="mt-16 flex justify-center items-center gap-6">
-                            <button
+                        <div className="mt-12 flex justify-center items-center gap-4">
+                            <motion.button
                                 onClick={goToPreviousPage}
                                 disabled={currentPage === 1}
-                                className="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-900 hover:to-black shadow-md hover:shadow-lg transition-all"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                             >
                                 Previous
-                            </button>
-                            <span className="px-6 py-3 text-white text-shadow bg-black/50 rounded-full shadow-md">
+                            </motion.button>
+                            <span className="px-6 py-3 text-white text-shadow bg-black/50 rounded-full">
                                 Page {currentPage} / {totalPages}
                             </span>
-                            <button
+                            <motion.button
                                 onClick={goToNextPage}
                                 disabled={currentPage === totalPages}
-                                className="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-900 hover:to-black shadow-md hover:shadow-lg transition-all"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                             >
                                 Next
-                            </button>
+                            </motion.button>
                         </div>
                     )}
 
-                    {/* Category Features Section with Added Effects */}
+                    {/* Testimonials */}
+                    <Testimonials />
+
+                    {/* Category Features */}
                     {currentFeatureData && (
                         <CategoryFeatureSection
                             title={currentFeatureData.title}
@@ -642,6 +753,17 @@ export default function HomePage({ handleAddToCart }) {
                         />
                     )}
                 </div>
+
+                {/* Floating Cart Icon for Mobile */}
+                <motion.div
+                    className="fixed bottom-6 right-6 sm:hidden"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    <button className="p-4 bg-red-600 text-white rounded-full shadow-lg">
+                        <ShoppingCart size={24} />
+                    </button>
+                </motion.div>
             </div>
         </div>
     );
