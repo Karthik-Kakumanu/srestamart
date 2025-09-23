@@ -139,7 +139,7 @@ const categoryFeatures = {
     }
 };
 
-// --- Hero Section with Tagline Rotator ---
+// --- Hero Section with Tagline Rotator (Fixed Tag Mismatch) ---
 const HeroSection = () => {
     const taglines = [
         "Discover Nature’s Finest",
@@ -174,7 +174,7 @@ const HeroSection = () => {
                     className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white text-shadow font-playfair"
                 >
                     {taglines[currentTagline]}
-                </h1>
+                </motion.h1>
             </AnimatePresence>
             <p className="mt-4 text-base sm:text-lg text-gray-200 max-w-xl mx-auto">
                 Explore our premium collection of farm-fresh, organic, and artisanal products crafted for your health and happiness.
