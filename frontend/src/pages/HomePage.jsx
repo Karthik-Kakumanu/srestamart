@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Heart, BrainCircuit, Bone, Egg, Leaf, Milk, Wheat, CookingPot, Beef,
     Microscope, Shield, Sun, Droplets, BatteryCharging, Sparkles, TestTube, FilterX, Vegan, Activity,
-    Menu, X, ChevronRight, User, Truck, Search, ShoppingCart
+    Menu, X, ChevronRight, User, Truck, Search, ShoppingCart, Building
 } from 'lucide-react';
-import logoIcon from '../../images/icon.png';
+import logoIcon from '../images/icon.png';
 
 // --- Enhanced Constants, Icons, and Banners for More Attractiveness ---
 const CATEGORY_ORDER = ['livebirds', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets', 'meat'];
@@ -108,7 +108,7 @@ const categoryFeatures = {
         title: "Luxurious Cold-Pressed Liquid Gold",
         subtitle: `"Purity distilled in every drop."`,
         description: "Traditionally cold-pressed to preserve nutrients, flavor, and aroma, transforming your cooking into a healthful art.",
-        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:GcTlD8qSZ1Qpf6F_pTnhy_snOlaPyGqLEB3YbQ&s",
+        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlD8qSZ1Qpf6F_pTnhy_snOlaPyGqLEB3YbQ&s",
         features: [
             { icon: <TestTube className="text-red-500"/>, title: "Nutrient Preservation", text: "Vitamins and antioxidants intact, superior to refined alternatives." },
             { icon: <Heart className="text-red-500"/>, title: "Healthy Fat Abundance", text: "Monounsaturated and polyunsaturated fats for heart health." },
@@ -119,7 +119,7 @@ const categoryFeatures = {
         title: "The Timeless Supergrain Revolution",
         subtitle: `"Wholesome ancient power for modern living."`,
         description: "Gluten-free, fiber-rich millets offer a low-GI alternative to staples, ideal for sustained health and energy.",
-        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:GcTsUCfJOmuHsF_FNrRaSTIE96Q9ToAH9sGF7Q&s",
+        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTsUCfJOmuHsF_FNrRaSTIE96Q9ToAH9sGF7Q&s",
         features: [
             { icon: <Wheat className="text-red-500"/>, title: "Fiber-Rich Delight", text: "Aids digestion, weight control, and satiety." },
             { icon: <Vegan className="text-red-500"/>, title: "Gluten-Free Naturally", text: "Perfect for gluten sensitivities or celiac needs." },
@@ -149,7 +149,7 @@ const CategoryBanner = ({ title, text, imageUrl }) => (
         className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-6 rounded-2xl shadow-lg overflow-hidden relative transform hover:scale-102 transition-transform duration-300"
     >
         <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover -z-10 filter brightness-75" />
-        <div className="bg-gradient-to-r from-white/20 via-white/10 to-transparent w-full h-full p-4 sm:p-8 flex items-center">
+        <div className="bg-gradient-to-r from-black/60 via-black/40 to-transparent w-full h-full p-4 sm:p-8 flex items-center">
             <div className="max-w-2xl">
                 <h3 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold leading-tight" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.5)' }}>{title}</h3>
                 <p className="mt-3 text-sm sm:text-base text-gray-100 leading-relaxed" dangerouslySetInnerHTML={{ __html: text }} />
@@ -172,7 +172,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.8 }}
-        className="py-12 px-4 sm:px-6 mt-12 rounded-2xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-lg shadow-lg ring-1 ring-red-400/10"
+        className="py-12 px-4 sm:px-6 mt-12 rounded-2xl bg-gradient-to-b from-gray-900/10 to-gray-800/10 backdrop-blur-lg shadow-lg ring-1 ring-white/10"
     >
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <motion.div 
@@ -194,7 +194,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                             transition={{ duration: 0.5, delay: index * 0.1 }}
                             className="flex items-start gap-3"
                         >
-                            <div className="flex-shrink-0 w-12 h-12 bg-red-100/30 rounded-full flex items-center justify-center shadow-sm">
+                            <div className="flex-shrink-0 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center shadow-sm">
                                 {React.cloneElement(feature.icon, { size: 24 })}
                             </div>
                             <div>
@@ -213,7 +213,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                 className="relative h-80 md:h-96 rounded-2xl shadow-lg overflow-hidden"
             >
                 <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-2xl filter brightness-90" />
-                <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
             </motion.div>
         </div>
     </motion.section>
@@ -303,7 +303,6 @@ const SkeletonCard = () => (
 );
 
 export default function HomePage({ handleAddToCart }) {
-    // --- Enhanced STATE MANAGEMENT for Better UX ---
     const [products, setProducts] = useState([]); 
     const [categories, setCategories] = useState(CATEGORY_ORDER);
     const [selectedCategory, setSelectedCategory] = useState(CATEGORY_ORDER[0]);
@@ -402,44 +401,14 @@ export default function HomePage({ handleAddToCart }) {
     };
 
     return (
-        <div className="relative min-h-screen overflow-hidden">
+        <div className="relative min-h-screen overflow-hidden bg-gray-900">
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
                 body { font-family: 'Poppins', sans-serif; }
                 .text-shadow { text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); }
                 .shadow-3xl { box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.2); }
-                @media (max-width: 640px) {
-                    .container { padding-left: 12px; padding-right: 12px; }
-                    .text-5xl { font-size: 2rem; }
-                    .text-4xl { font-size: 1.75rem; }
-                    .text-3xl { font-size: 1.5rem; }
-                    .text-2xl { font-size: 1.25rem; }
-                    .text-xl { font-size: 1rem; }
-                    .text-lg { font-size: 0.875rem; }
-                    .text-base { font-size: 0.75rem; }
-                    .text-sm { font-size: 0.7rem; }
-                    .text-xs { font-size: 0.65rem; }
-                    .h-96 { height: 16rem; }
-                    .h-80 { height: 14rem; }
-                    .py-20 { padding-top: 3rem; padding-bottom: 3rem; }
-                    .mt-20 { margin-top: 2rem; }
-                    .mt-16 { margin-top: 1.5rem; }
-                    .mt-10 { margin-top: 1rem; }
-                    .mt-8 { margin-top: 0.75rem; }
-                    .mt-6 { margin-top: 0.5rem; }
-                    .gap-16 { gap: 1rem; }
-                    .gap-8 { gap: 0.75rem; }
-                    .gap-6 { gap: 0.5rem; }
-                    .gap-4 { gap: 0.375rem; }
-                    .px-8 { padding-left: 0.75rem; padding-right: 0.75rem; }
-                    .px-6 { padding-left: 0.5rem; padding-right: 0.5rem; }
-                    .py-4 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-                    .py-3 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
-                    .text-shadow { text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4); }
-                }
             `}</style>
 
-            {/* Adjusted Full-Screen Video Background with Lighter Overlay */}
             <AnimatePresence>
                 {categoryVideos[selectedCategory] && (
                     <motion.video 
@@ -449,33 +418,24 @@ export default function HomePage({ handleAddToCart }) {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 1, ease: 'easeInOut' }}
-                        autoPlay 
-                        loop 
-                        muted 
-                        playsInline 
+                        autoPlay loop muted playsInline 
                         className="fixed inset-0 w-full h-full object-cover -z-20 filter blur-sm scale-105"
                     />
                 )}
             </AnimatePresence>
-            <div className="fixed inset-0 bg-gradient-to-b from-white/30 to-white/20 -z-10"></div>
+            <div className="fixed inset-0 bg-black/50 -z-10"></div>
 
-            {/* Sidebar Menu with Mobile-Friendly Styling */}
             <AnimatePresence>
                 {isSidebarOpen && (
                     <>
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             onClick={() => setIsSidebarOpen(false)}
-                            className="fixed inset-0 bg-white/30 z-40 backdrop-blur-sm"
+                            className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
                         />
                         <motion.div
-                            variants={sidebarVariants}
-                            initial="closed"
-                            animate="open"
-                            exit="closed"
-                            className="fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-white/20 to-white/10 backdrop-blur-lg shadow-lg z-50 p-6 flex flex-col"
+                            variants={sidebarVariants} initial="closed" animate="open" exit="closed"
+                            className="fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-gray-900/80 to-gray-800/80 backdrop-blur-lg shadow-lg z-50 p-6 flex flex-col"
                         >
                             <div className="flex justify-between items-center mb-8">
                                 <img src={logoIcon} alt="Sresta Mart Logo" className="h-12 w-auto"/>
@@ -484,7 +444,7 @@ export default function HomePage({ handleAddToCart }) {
                                 </button>
                             </div>
                             <nav className="flex-grow">
-                                <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Discover Categories</h3>
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Discover Categories</h3>
                                 <ul className="space-y-2">
                                     {categories.map(category => (
                                         <li key={category}>
@@ -493,7 +453,7 @@ export default function HomePage({ handleAddToCart }) {
                                                 className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-base font-medium transition-all duration-300 ${
                                                     selectedCategory === category 
                                                     ? 'bg-red-500/80 text-white shadow-sm' 
-                                                    : 'text-gray-200 hover:bg-gray-700/30 hover:shadow-sm'
+                                                    : 'text-gray-200 hover:bg-gray-700/50 hover:shadow-sm'
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-3">
@@ -506,16 +466,21 @@ export default function HomePage({ handleAddToCart }) {
                                     ))}
                                 </ul>
                                 <hr className="my-6 border-gray-600" />
-                                <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Quick Access</h3>
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Portals</h3>
                                 <ul className="space-y-2">
                                     <li>
-                                        <a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/30 transition-all">
-                                            <User size={16} /> Vendor Portal
+                                        <a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-all">
+                                            <Truck size={16} /> Vendor Portal
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/30 transition-all">
-                                            <Truck size={16} /> Delivery Hub
+                                        <a href="/franchise" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-all">
+                                            <Building size={16} /> Franchise Portal
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/50 transition-all">
+                                            <User size={16} /> Delivery Hub
                                         </a>
                                     </li>
                                 </ul>
@@ -526,34 +491,27 @@ export default function HomePage({ handleAddToCart }) {
             </AnimatePresence>
 
             <div className="relative z-10">
-                <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-white/20 to-transparent">
-                    <div className="flex flex-row items-center justify-center mb-8 relative px-4 sm:px-6">
+                <div className="pt-6 sm:pt-8 pb-6 bg-gradient-to-b from-black/30 to-transparent">
+                    <div className="flex flex-row items-center justify-center mb-6 relative px-4 sm:px-6">
                         <button 
                             onClick={() => setIsSidebarOpen(true)}
                             className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-sm hover:bg-white/30 transition-all"
                         >
                             <Menu className="text-white" size={20}/>
                         </button>
-                        <div className="flex items-center gap-3">
-                            <motion.div 
-                                initial={{ opacity: 0, scale: 0.8 }} 
-                                animate={{ opacity: 1, scale: 1 }} 
-                                transition={{ duration: 0.8, ease: "easeOut" }} 
-                                className="hidden sm:block"
-                            >
-                                <img src={logoIcon} alt="Sresta Mart Logo" className="h-20 md:h-24 w-auto shadow-md rounded-full"/>
-                            </motion.div>
-                            <motion.h2 
-                                initial={{opacity: 0, y: -30}} 
-                                animate={{opacity: 1, y: 0}} 
-                                transition={{ delay: 0.3, duration: 0.8 }} 
-                                className="text-4xl sm:text-5xl font-bold text-white text-shadow text-center tracking-tight"
-                            >
-                                Discover Our Premium Collection
-                            </motion.h2>
-                        </div>
+                        <motion.div 
+                            initial={{opacity: 0, y: -30}} 
+                            animate={{opacity: 1, y: 0}} 
+                            transition={{ delay: 0.1, duration: 0.8 }} 
+                            className="text-center"
+                        >
+                            <img src={logoIcon} alt="Sresta Mart Logo" className="h-16 w-16 mx-auto shadow-md rounded-full mb-2"/>
+                            <h2 className="text-3xl sm:text-4xl font-bold text-white text-shadow tracking-tight">
+                                Premium Collection
+                            </h2>
+                        </motion.div>
                     </div>
-                    <div className="mt-6 hidden sm:flex justify-center flex-wrap gap-3 px-4 sm:px-6">
+                    <div className="mt-4 flex justify-center flex-wrap gap-3 px-4 sm:px-6">
                         {categories.map(category => (
                             <motion.button 
                                 key={category} 
@@ -562,8 +520,8 @@ export default function HomePage({ handleAddToCart }) {
                                 whileTap={{ scale: 0.92 }}
                                 className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-sm ${
                                     selectedCategory === category
-                                        ? 'bg-gradient-to-r from-red-500 to-red-700 text-white'
-                                        : 'bg-gray-700/30 text-gray-100 hover:bg-gray-600/30 backdrop-blur-sm'
+                                    ? 'bg-gradient-to-r from-red-500 to-red-700 text-white'
+                                    : 'bg-gray-700/30 text-gray-100 hover:bg-gray-600/30 backdrop-blur-sm'
                                 }`}
                             >
                                 {categoryIcons[category]}
@@ -571,7 +529,6 @@ export default function HomePage({ handleAddToCart }) {
                             </motion.button>
                         ))}
                     </div>
-                    {/* Search Bar Optimized for Mobile */}
                     <div className="mt-6 max-w-xl mx-auto px-4 sm:px-6">
                         <div className="relative">
                             <input 
@@ -586,8 +543,7 @@ export default function HomePage({ handleAddToCart }) {
                     </div>
                 </div>
 
-                {/* Main Content with Mobile-Friendly Layout */}
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     {error && (
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}
@@ -598,7 +554,6 @@ export default function HomePage({ handleAddToCart }) {
                         </motion.div>
                     )}
 
-                    {/* Product Grid and Banner with Responsive Adjustments */}
                     <motion.div
                         key={selectedCategory + searchQuery}
                         variants={productGridVariants}
@@ -637,7 +592,6 @@ export default function HomePage({ handleAddToCart }) {
                             ))}
                     </motion.div>
 
-                    {/* Pagination Optimized for Mobile */}
                     {!productsLoading && totalPages > 1 && (
                         <div className="mt-12 flex justify-center items-center gap-4 flex-wrap">
                             <button
@@ -660,7 +614,6 @@ export default function HomePage({ handleAddToCart }) {
                         </div>
                     )}
 
-                    {/* Category Features Section with Mobile Adjustments */}
                     {currentFeatureData && (
                         <CategoryFeatureSection
                             title={currentFeatureData.title}
