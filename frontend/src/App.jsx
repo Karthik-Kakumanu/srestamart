@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
-import ReactGA from 'react-ga';
 
 // Import Pages and Components
 import Layout from './components/Layout.jsx';
@@ -42,11 +41,6 @@ export default function App() {
   const [cartMessage, setCartMessage] = useState('');
 
   useEffect(() => {
-    ReactGA.initialize('UA-XXXXX-Y'); // Replace with your tracking ID
-    ReactGA.pageview(window.location.pathname + window.location.search);
-  }, []);
-
-  useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem('token');
       if (loggedInUser && token) {
@@ -74,11 +68,6 @@ export default function App() {
   }, [loggedInUser]);
 
   const handleAddToCart = (product, event) => {
-      ReactGA.event({
-        category: 'Product',
-        action: 'Add to Cart',
-        label: product.name
-      });
       setCartItems(prevItems => {
           const itemExists = prevItems.find(item => item.id === product.selectedVariant.id);
           if (itemExists) {
