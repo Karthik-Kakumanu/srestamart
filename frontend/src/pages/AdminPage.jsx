@@ -15,7 +15,8 @@ export default function AdminPage() {
     const [orders, setOrders] = useState([]);
     const [deliveryPartners, setDeliveryPartners] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = state('');
+    // --- THIS IS THE CORRECTED LINE ---
+    const [error, setError] = useState('');
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
