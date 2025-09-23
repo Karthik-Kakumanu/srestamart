@@ -19,7 +19,7 @@ const categoryIcons = {
   meat: <Beef size={18} className="text-red-600" />,
 };
 const categoryBanners = {
-  livebirds: { title: "Nature’s Ultimate Power Pack for Women", text: "Our <strong>Natu Kodi Eggs</strong> are packed with Omega-3 fatty acids & nutrients for hormonal balance, memory, and energy.", imageUrl: "https://images.pexels.com/photos/235648/pexels-photo-235648.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
+  livebirds: { title: "Ultimate Power Pack for Women", text: "Our Natu Kodi Eggs are packed with Omega-3 fatty acids & nutrients for hormonal balance, memory, and energy.", imageUrl: "https://via.placeholder.com/1260x750?text=Livebirds+Banner" }, // Replace with uploaded image URL if available
   pickles: { title: "Timeless Tradition in Every Jar", text: "Handcrafted with fresh ingredients, our pickles offer tangy, spicy flavors.", imageUrl: "https://images.pexels.com/photos/4198233/pexels-photo-4198233.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
   dairy: { title: "Ultra-Pure Fresh Dairy", text: "From yogurt to ghee, sourced from pristine farms for unmatched freshness.", imageUrl: "https://images.pexels.com/photos/248412/pexels-photo-248412.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
   dryfruits: { title: "Premium Superfood Treasures", text: "Vitamin-rich dry fruits for healthy snacking.", imageUrl: "https://images.pexels.com/photos/4198020/pexels-photo-4198020.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
@@ -56,10 +56,10 @@ const CategoryBanner = ({ title, text, imageUrl }) => (
     className="w-full sm:w-3/4 mx-auto rounded-3xl overflow-hidden shadow-2xl relative transform hover:scale-102 transition-transform duration-300"
   >
     <img src={imageUrl} alt={title} className="w-full h-64 sm:h-80 object-cover" />
-    <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-black/20 to-transparent p-6 sm:p-8 flex items-center">
+    <div className="absolute inset-0 bg-white/30 p-6 sm:p-8 flex items-center">
       <div>
-        <h3 className="text-white text-2xl sm:text-3xl font-bold">{title}</h3>
-        <p className="mt-2 text-sm sm:text-base text-gray-100" dangerouslySetInnerHTML={{ __html: text }} />
+        <h3 className="text-black text-2xl sm:text-3xl font-bold">{title}</h3>
+        <p className="mt-2 text-sm sm:text-base text-gray-800" dangerouslySetInnerHTML={{ __html: text }} />
         <motion.button
           whileHover={{ scale: 1.08, boxShadow: '0 0 15px rgba(255,0,0,0.5)' }}
           whileTap={{ scale: 0.92 }}
