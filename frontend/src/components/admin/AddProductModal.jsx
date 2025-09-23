@@ -9,13 +9,14 @@ export default function AddProductModal({ onClose, onSave }) {
         name: '',
         description: '',
         category: '',
-        image_url: ''
+        // image_url is no longer needed here, as we get it after upload
     });
     const [variant, setVariant] = useState({
         label: '',
         price: ''
     });
     
+    const [selectedFile, setSelectedFile] = useState(null); // <-- CHANGED: New state for the image file
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -27,9 +28,15 @@ export default function AddProductModal({ onClose, onSave }) {
         setVariant(prev => ({...prev, [e.target.name]: e.target.value }));
     };
 
+    // <-- CHANGED: New handler for the file input
+    const handleFileChange = (e) => {
+        setSelectedFile(e.target.files[0]);
+    };
+
     const handleCreateProduct = async () => {
-        if (!product.name || !product.category) {
-            setError('Product Name and Category are required.');
+        // <-- CHANGED: Check for selectedFile instead of image_url
+        if (!product.name || !product.category || !selectedFile) {
+            setError('Product Name, Category, and an Image are required.');
             return;
         }
         setIsSaving(true);
@@ -44,15 +51,34 @@ export default function AddProductModal({ onClose, onSave }) {
         
         const config = { headers: { 'x-admin-token': token } };
 
-        const payload = {
-            product,
-            variant: (variant.label && variant.price) ? variant : null
-        };
-
         try {
-            // <<< --- THIS IS THE CORRECTED LINE --- >>>
+            // <-- CHANGED: Two-step process starts here
+            // 1. Upload the image file first
+            const formData = new FormData();
+            formData.append('productImage', selectedFile);
+
+            const uploadConfig = { 
+                headers: { 
+                    'x-admin-token': token,
+                    'Content-Type': 'multipart/form-data',
+                } 
+            };
+            
+            const uploadResponse = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/upload`, formData, uploadConfig);
+            const { imageUrl } = uploadResponse.data; // Get the URL from the backend
+
+            // 2. Now create the product with the received image URL
+            const payload = {
+                product: {
+                    ...product,
+                    image_url: imageUrl // Use the new URL
+                },
+                variant: (variant.label && variant.price) ? variant : null
+            };
+
             await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/products`, payload, config);
-            onSave();
+            onSave(); // This calls fetchData() on the parent AdminPage
+
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to create product.');
         } finally {
@@ -105,39 +131,41 @@ export default function AddProductModal({ onClose, onSave }) {
                             />
                         </div>
                         
+                        {/* <-- CHANGED: This is now a file input --> */}
                         <div>
-                            <label htmlFor="image_url" className="block text-sm font-medium text-gray-700">Image URL</label>
+                            <label htmlFor="image_file" className="block text-sm font-medium text-gray-700">Product Image*</label>
                             <input
-                                id="image_url" type="text" name="image_url"
-                                value={product.image_url}
-                                onChange={handleProductChange}
-                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                                id="image_file"
+                                type="file"
+                                name="image_file"
+                                onChange={handleFileChange}
+                                className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-4 border-t pt-6">
-                         <h3 className="font-semibold text-gray-700">First Variant (Optional)</h3>
-                         <div className="grid grid-cols-2 gap-4">
-                             <div>
-                                 <label htmlFor="label" className="block text-sm font-medium text-gray-700">Label (e.g., 250g)</label>
-                                 <input
-                                     id="label" type="text" name="label"
-                                     value={variant.label}
-                                     onChange={handleVariantChange}
-                                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                                 />
-                             </div>
-                             <div>
-                                 <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price (₹)</label>
-                                 <input
-                                     id="price" type="number" name="price"
-                                     value={variant.price}
-                                     onChange={handleVariantChange}
-                                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                                 />
-                             </div>
-                          </div>
+                        <h3 className="font-semibold text-gray-700">First Variant (Optional)</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="label" className="block text-sm font-medium text-gray-700">Label (e.g., 250g)</label>
+                                <input
+                                    id="label" type="text" name="label"
+                                    value={variant.label}
+                                    onChange={handleVariantChange}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price (₹)</label>
+                                <input
+                                    id="price" type="number" name="price"
+                                    value={variant.price}
+                                    onChange={handleVariantChange}
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {error && <p className="text-sm text-red-600 text-center">{error}</p>}

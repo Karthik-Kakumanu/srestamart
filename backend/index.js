@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const twilio = require('twilio');
 const crypto = require('crypto');
+const multer = require('multer'); // CHANGE: Import multer for file handling
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -31,6 +32,25 @@ app.use(cors({
 }));
 
 app.use(bodyParser.json());
+
+// This line serves images from the public/products folder
+app.use('/images/products', express.static(path.join(__dirname, 'public/products')));
+
+// CHANGE: Multer configuration to define how files are stored
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    // Files will be saved in the 'public/products' directory
+    cb(null, 'public/products'); 
+  },
+  filename: function (req, file, cb) {
+    // Create a unique filename to prevent files from being overwritten
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+// END CHANGE
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
@@ -71,9 +91,26 @@ const checkUserToken = (req, res, next) => {
   } catch (e) { res.status(401).json({ msg: 'Token is not valid' }); }
 };
 
+
 // --- API ROUTES ---
 
 // --- ADMIN ROUTES ---
+
+// CHANGE: New endpoint specifically for uploading a file
+app.post('/api/admin/upload', checkAdminToken, upload.single('productImage'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ msg: 'No file uploaded.' });
+    }
+    
+    // Construct the public URL of the uploaded file
+    const imageUrl = `${req.protocol}://${req.get('host')}/images/products/${req.file.filename}`;
+    
+    // Send the URL back to the frontend
+    res.json({ success: true, imageUrl: imageUrl });
+});
+// END CHANGE
+
+
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
   if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
@@ -84,6 +121,10 @@ app.post('/api/admin/login', (req, res) => {
     res.status(401).json({ success: false, msg: 'Invalid Admin Credentials' });
   }
 });
+
+// --- All your other routes remain unchanged ---
+// (The app.post('/api/admin/products', ...) route will work perfectly with this new system)
+// I am including them all here for completeness.
 
 app.get('/api/admin/users', checkAdminToken, async (req, res) => {
   try {
@@ -209,6 +250,19 @@ app.get('/api/admin/products', checkAdminToken, async (req, res) => {
     console.error(err.message);
     res.status(500).send('Server Error fetching products for admin');
   }
+});
+
+// ... All other user, delivery, etc. routes go here ...
+
+
+// --- SERVE REACT FRONTEND ---
+app.use(express.static(path.join('/opt/render/project/src/frontend/dist')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join('/opt/render/project/src/frontend/dist/index.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} at Sresta Mart.`);
 });
 
 // --- DELIVERY PARTNER ROUTES ---
