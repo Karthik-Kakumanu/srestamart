@@ -1,6 +1,9 @@
+// frontend/src/components/admin/AddProductModal.jsx (Full and Final Corrected Code)
+
 import React, { useState } from 'react';
 import axios from 'axios';
 import { X } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const getAuthToken = () => localStorage.getItem('adminToken');
 
@@ -8,15 +11,14 @@ export default function AddProductModal({ onClose, onSave }) {
     const [product, setProduct] = useState({
         name: '',
         description: '',
-        category: '',
-        // image_url is no longer needed here, as we get it after upload
+        category: 'livebirds', // Set a default category to prevent errors
     });
     const [variant, setVariant] = useState({
         label: '',
         price: ''
     });
     
-    const [selectedFile, setSelectedFile] = useState(null); // <-- CHANGED: New state for the image file
+    const [selectedFile, setSelectedFile] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -28,13 +30,11 @@ export default function AddProductModal({ onClose, onSave }) {
         setVariant(prev => ({...prev, [e.target.name]: e.target.value }));
     };
 
-    // <-- CHANGED: New handler for the file input
     const handleFileChange = (e) => {
         setSelectedFile(e.target.files[0]);
     };
 
     const handleCreateProduct = async () => {
-        // <-- CHANGED: Check for selectedFile instead of image_url
         if (!product.name || !product.category || !selectedFile) {
             setError('Product Name, Category, and an Image are required.');
             return;
@@ -49,11 +49,8 @@ export default function AddProductModal({ onClose, onSave }) {
             return;
         }
         
-        const config = { headers: { 'x-admin-token': token } };
-
         try {
-            // <-- CHANGED: Two-step process starts here
-            // 1. Upload the image file first
+            // Step 1: Upload the image file first
             const formData = new FormData();
             formData.append('productImage', selectedFile);
 
@@ -65,19 +62,22 @@ export default function AddProductModal({ onClose, onSave }) {
             };
             
             const uploadResponse = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/upload`, formData, uploadConfig);
-            const { imageUrl } = uploadResponse.data; // Get the URL from the backend
+            const { imageUrl } = uploadResponse.data;
 
-            // 2. Now create the product with the received image URL
+            // Step 2: Now create the product with the received image URL
             const payload = {
                 product: {
                     ...product,
-                    image_url: imageUrl // Use the new URL
+                    image_url: imageUrl
                 },
                 variant: (variant.label && variant.price) ? variant : null
             };
 
+            const config = { headers: { 'x-admin-token': token } };
             await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/products`, payload, config);
-            onSave(); // This calls fetchData() on the parent AdminPage
+            
+            onSave(); // Refreshes the product list on the main admin page
+            onClose(); // Closes the modal after a successful save
 
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to create product.');
@@ -88,7 +88,11 @@ export default function AddProductModal({ onClose, onSave }) {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            >
                 <div className="p-6 border-b sticky top-0 bg-white z-10">
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold text-gray-800">Add New Product</h2>
@@ -121,17 +125,25 @@ export default function AddProductModal({ onClose, onSave }) {
                             ></textarea>
                         </div>
                         
+                        {/* --- THIS IS THE CORRECTED CATEGORY DROPDOWN --- */}
                         <div>
-                            <label htmlFor="category" className="block text-sm font-medium text-gray-700">Category*</label>
-                            <input
-                                id="category" type="text" name="category"
-                                value={product.category}
-                                onChange={handleProductChange}
-                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                            />
-                        </div>
+                             <label htmlFor="category" className="block text-sm font-medium text-gray-700">Category*</label>
+                             <select
+                                 id="category" name="category"
+                                 value={product.category}
+                                 onChange={handleProductChange}
+                                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                             >
+                                <option value="livebirds">Live Birds</option>
+                                <option value="pickles">Pickles</option>
+                                <option value="dairy">Dairy</option>
+                                <option value="dryfruits">Dry Fruits</option>
+                                <option value="oils">Oils</option>
+                                <option value="millets">Millets</option>
+                                <option value="meat">Meat</option>
+                             </select>
+                         </div>
                         
-                        {/* <-- CHANGED: This is now a file input --> */}
                         <div>
                             <label htmlFor="image_file" className="block text-sm font-medium text-gray-700">Product Image*</label>
                             <input
@@ -179,7 +191,7 @@ export default function AddProductModal({ onClose, onSave }) {
                         </button>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 }
