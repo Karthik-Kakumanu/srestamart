@@ -10,7 +10,8 @@ export default function Layout({ loggedInUser, handleLogout, cartItems }) {
   const activeLinkStyle = { color: '#dc2626' };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    // THE FIX: 'bg-slate-50' has been removed from this line.
+    <div className="min-h-screen flex flex-col">
       <header className="bg-white/80 backdrop-blur-sm shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center space-x-3">
           <img src={logoUrl} alt="Sresta Mart Logo" className="h-10 w-auto" />
@@ -22,9 +23,10 @@ export default function Layout({ loggedInUser, handleLogout, cartItems }) {
         </div>
       </header>
 
-      <div className="flex-grow">
+      {/* The flex-grow class makes sure the main content area expands to fill available space */}
+      <main className="flex-grow">
         <Outlet />
-      </div>
+      </main>
 
       <footer className="sticky bottom-0 left-0 w-full bg-white/90 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.05)] p-2 z-40">
         <div className="max-w-md mx-auto grid grid-cols-4 gap-2">
