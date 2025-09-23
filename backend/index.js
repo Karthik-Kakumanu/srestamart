@@ -214,6 +214,63 @@ app.delete('/api/admin/products/:id', checkAdminToken, async (req, res) => {
   }
 });
 
+// ... after app.delete('/api/admin/products/:id', ...)
+
+// --- ADD THESE THREE NEW ROUTES FOR VARIANTS ---
+
+// 1. CREATE a new variant
+app.post('/api/admin/variants', checkAdminToken, async (req, res) => {
+    const { product_id, label, price } = req.body;
+    if (!product_id || !label || price === undefined) {
+        return res.status(400).json({ msg: 'Product ID, label, and price are required.' });
+    }
+    try {
+        const newVariant = await pool.query(
+            'INSERT INTO product_variants (product_id, label, price) VALUES ($1, $2, $3) RETURNING *',
+            [product_id, label, price]
+        );
+        res.status(201).json(newVariant.rows[0]);
+    } catch (err) {
+        console.error('Error creating variant:', err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// 2. UPDATE an existing variant
+app.put('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
+    const { label, price } = req.body;
+    if (label === undefined || price === undefined) {
+        return res.status(400).json({ msg: 'Label and price are required.' });
+    }
+    try {
+        const updatedVariant = await pool.query(
+            'UPDATE product_variants SET label = $1, price = $2 WHERE id = $3 RETURNING *',
+            [label, price, req.params.id]
+        );
+        if (updatedVariant.rows.length === 0) {
+            return res.status(404).json({ msg: 'Variant not found' });
+        }
+        res.json(updatedVariant.rows[0]);
+    } catch (err) {
+        console.error('Error updating variant:', err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// 3. DELETE a variant
+app.delete('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
+    try {
+        const deletedVariant = await pool.query('DELETE FROM product_variants WHERE id = $1 RETURNING *', [req.params.id]);
+        if (deletedVariant.rows.length === 0) {
+            return res.status(404).json({ msg: 'Variant not found' });
+        }
+        res.json({ msg: 'Variant deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting variant:', err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 app.get('/api/admin/products', checkAdminToken, async (req, res) => {
   try {
     const query = `
