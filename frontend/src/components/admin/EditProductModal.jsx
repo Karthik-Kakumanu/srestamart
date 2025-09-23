@@ -6,28 +6,36 @@ const getAuthToken = () => localStorage.getItem('adminToken');
 
 export default function EditProductModal({ product, onClose, onSave }) {
     const [productData, setProductData] = useState({ ...product });
-    const [variants, setVariants] = useState(product.variants ? [...product.variants] : []);
+    const [variants, setVariants] = useState(product.variants ? [...product.variants.filter(v => v.id != null)] : []);
+    const [selectedFile, setSelectedFile] = useState(null); // For new image upload
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
 
     const handleProductChange = (e) => {
         setProductData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
+    
+    const handleFileChange = (e) => {
+        setSelectedFile(e.target.files[0]);
+    };
+
     const handleVariantChange = (index, e) => {
         const newVariants = [...variants];
         newVariants[index] = { ...newVariants[index], [e.target.name]: e.target.value };
         setVariants(newVariants);
     };
+
     const handleAddVariant = () => {
         setVariants([...variants, { product_id: product.id, label: '', price: '', isNew: true }]);
     };
+    
     const handleRemoveVariant = (index) => {
-        if (!variants[index].isNew) {
-            const newVariants = [...variants];
-            newVariants[index].isDeleted = true;
-            setVariants(newVariants);
-        } else {
+        const variantToRemove = variants[index];
+        if (variantToRemove.isNew) {
              setVariants(variants.filter((_, i) => i !== index));
+        } else {
+            const newVariants = variants.map((v, i) => i === index ? { ...v, isDeleted: true } : v);
+            setVariants(newVariants);
         }
     };
 
@@ -43,27 +51,35 @@ export default function EditProductModal({ product, onClose, onSave }) {
         }
 
         const config = { headers: { 'x-admin-token': token } };
+        let updatedProductData = { ...productData };
 
         try {
-            // Update main product details
-            // <<< --- FIX #1 --- >>>
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/products/${product.id}`, productData, config);
+            // Step 1: If a new image is selected, upload it first
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append('productImage', selectedFile);
+                const uploadConfig = { headers: { ...config.headers, 'Content-Type': 'multipart/form-data' } };
+                const uploadRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/upload`, formData, uploadConfig);
+                updatedProductData.image_url = uploadRes.data.imageUrl; // Update the image_url
+            }
+
+            // Step 2: Update main product details (with new or old image_url)
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/products/${product.id}`, updatedProductData, config);
             
-            // Process all variant changes
+            // Step 3: Process all variant changes
             for (const variant of variants) {
                 if (variant.isDeleted && variant.id) {
-                    // <<< --- FIX #2 --- >>>
                     await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/variants/${variant.id}`, config);
-                } else if (variant.isNew) {
-                    // <<< --- FIX #3 --- >>>
+                } else if (variant.isNew && !variant.isDeleted) {
                     await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/variants`, { product_id: product.id, label: variant.label, price: variant.price }, config);
-                } else if (variant.id && !variant.isDeleted) {
-                    // <<< --- FIX #4 --- >>>
+                } else if (variant.id && !variant.isNew && !variant.isDeleted) {
                     await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/variants/${variant.id}`, { label: variant.label, price: variant.price }, config);
                 }
             }
             onSave();
+            onClose();
         } catch (err) {
+            console.error(err);
             setError(err.response?.data?.msg || 'Failed to save changes.');
         } finally {
             setIsSaving(false);
@@ -73,7 +89,7 @@ export default function EditProductModal({ product, onClose, onSave }) {
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b sticky top-0 bg-white">
+                <div className="p-6 border-b sticky top-0 bg-white z-10">
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold text-gray-800">Edit Product</h2>
                         <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X /></button>
@@ -96,8 +112,10 @@ export default function EditProductModal({ product, onClose, onSave }) {
                             <input type="text" name="category" value={productData.category} onChange={handleProductChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Image URL</label>
-                            <input type="text" name="image_url" value={productData.image_url} onChange={handleProductChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                            <label className="block text-sm font-medium text-gray-700">Current Image</label>
+                            <img src={productData.image_url} alt="Current product" className="mt-1 h-20 w-20 object-cover rounded-md" />
+                            <label className="block text-sm font-medium text-gray-700 mt-2">Upload New Image (Optional)</label>
+                            <input type="file" name="image_file" onChange={handleFileChange} className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100" />
                         </div>
                     </div>
                     <div className="space-y-4">
@@ -125,11 +143,11 @@ export default function EditProductModal({ product, onClose, onSave }) {
                             ))}
                         </div>
                     </div>
-                    {error && <p className="text-sm text-red-600">{error}</p>}
+                    {error && <p className="text-sm text-red-600 text-center">{error}</p>}
                 </div>
-                <div className="p-6 bg-gray-50 border-t sticky bottom-0">
+                <div className="p-6 bg-gray-50 border-t sticky bottom-0 z-10">
                     <div className="flex justify-end gap-3">
-                        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
                         <button onClick={handleSaveChanges} disabled={isSaving} className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 disabled:bg-red-300">
                             {isSaving ? 'Saving...' : 'Save Changes'}
                         </button>
