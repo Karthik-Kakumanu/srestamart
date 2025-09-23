@@ -10,7 +10,7 @@ const crypto = require('crypto');
 const multer = require('multer'); // CHANGE: Import multer for file handling
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT;
 const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 
 const allowedOrigins = [
