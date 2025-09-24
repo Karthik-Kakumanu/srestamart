@@ -39,7 +39,6 @@ export default function OrderSuccessPage() {
         setConfetti(newConfetti);
     }, []);
 
-    // Get current date for "Booked on"
     const orderDate = new Date().toLocaleString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -56,7 +55,8 @@ export default function OrderSuccessPage() {
             <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, ease: [0.6, 0.01, -0.05, 0.9] }}
+                // ✅ --- FIX --- Corrected the cubic-bezier value from -0.05 to 0.05
+                transition={{ duration: 0.6, ease: [0.6, 0.01, 0.05, 0.9] }}
                 className="max-w-3xl w-full mx-auto bg-white p-8 sm:p-12 rounded-2xl shadow-2xl text-center ring-1 ring-red-100"
             >
                 <CheckCircle className="mx-auto text-green-500 h-20 w-20 animate-pulse" strokeWidth={1.5} />
