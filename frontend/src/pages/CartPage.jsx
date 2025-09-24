@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Info, X, Leaf, Target, BarChart, Heart } from 'lucide-react'; // Added more icons
+import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Info, X, Leaf, BarChart, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// --- MODIFIED: The Modal is now much more powerful ---
+// This is the fully corrected and safe version of the modal component.
 const ProductDetailModal = ({ product, onClose }) => {
     if (!product) return null;
 
-    // Check if the detailed information exists on the product object
+    // The optional chaining operator (?.) safely checks if `product.details` exists.
     const hasDetails = product.details && (product.details.nutrition || product.details.benefits);
 
     return (
@@ -45,8 +45,8 @@ const ProductDetailModal = ({ product, onClose }) => {
 
                     {hasDetails ? (
                         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Nutrition Section */}
-                            {product.details.nutrition && (
+                            {/* Safely checks for nutrition data */}
+                            {product.details?.nutrition && (
                                 <div className="bg-white p-4 rounded-lg border">
                                     <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2 mb-3">
                                         <BarChart size={20} className="text-red-500"/>
@@ -63,8 +63,8 @@ const ProductDetailModal = ({ product, onClose }) => {
                                 </div>
                             )}
 
-                            {/* Benefits Section */}
-                            {product.details.benefits && (
+                            {/* Safely checks for benefits data */}
+                            {product.details?.benefits && (
                                 <div className="bg-white p-4 rounded-lg border">
                                     <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2 mb-3">
                                         <Heart size={20} className="text-red-500"/>
@@ -87,7 +87,8 @@ const ProductDetailModal = ({ product, onClose }) => {
                          </div>
                     )}
                     
-                    {product.details.cooking_tips && (
+                    {/* Safely checks for cooking tips */}
+                    {product.details?.cooking_tips && (
                          <div className="mt-6 bg-red-50 border border-red-200 p-4 rounded-lg">
                              <h3 className="font-bold text-lg text-red-800 mb-2">Cooking Tips</h3>
                              <p className="text-sm text-red-700">{product.details.cooking_tips}</p>
@@ -99,8 +100,6 @@ const ProductDetailModal = ({ product, onClose }) => {
     );
 };
 
-// The rest of your CartPage.js component remains the same...
-// No other changes are needed below this line.
 
 export default function CartPage({ cartItems, handleQuantityChange, handleRemoveFromCart, setCheckoutDetails }) {
   const navigate = useNavigate();
@@ -108,7 +107,11 @@ export default function CartPage({ cartItems, handleQuantityChange, handleRemove
   const [selectedProductDetails, setSelectedProductDetails] = useState(null);
 
   const handleProceedToCheckout = () => {
-    setCheckoutDetails({ items: cartItems, totalAmount: cartSubtotal, shippingAddress: null });
+    setCheckoutDetails({
+      items: cartItems,
+      totalAmount: cartSubtotal,
+      shippingAddress: null
+    });
     navigate('/checkout');
   };
 
@@ -126,8 +129,11 @@ export default function CartPage({ cartItems, handleQuantityChange, handleRemove
     return (
       <div className="flex-grow bg-slate-50 flex items-center justify-center p-4">
         <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}
-            className="text-center bg-white p-12 rounded-2xl shadow-xl max-w-lg mx-auto" >
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-center bg-white p-12 rounded-2xl shadow-xl max-w-lg mx-auto"
+        >
           <ShoppingBag className="mx-auto text-red-200 h-24 w-24" strokeWidth={1} />
           <h2 className="mt-6 text-2xl font-bold text-gray-800">Your Cart is a Blank Canvas</h2>
           <p className="text-gray-500 mt-2">Looks like you haven't added anything yet. Let's find something amazing for you!</p>
@@ -145,11 +151,19 @@ export default function CartPage({ cartItems, handleQuantityChange, handleRemove
     <>
         <div className="flex-grow bg-slate-50 p-4 sm:p-8">
             <div className="max-w-6xl mx-auto">
-                <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-bold text-gray-800 mb-8">
+                <motion.h1 
+                    initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+                    className="text-4xl font-bold text-gray-800 mb-8"
+                >
                     Your Shopping Cart
                 </motion.h1>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="lg:col-span-2 space-y-4">
+                    <motion.div 
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="lg:col-span-2 space-y-4"
+                    >
                         {cartItems.map((item) => (
                             <motion.div key={item.id} variants={itemVariants} className="flex items-center bg-white p-4 rounded-2xl shadow-lg">
                                 <img src={item.image_url || 'https://placehold.co/100x100'} alt={item.name} className="h-24 w-24 object-cover rounded-xl" />
@@ -157,7 +171,11 @@ export default function CartPage({ cartItems, handleQuantityChange, handleRemove
                                     <h3 className="font-bold text-lg text-gray-800">{item.name}</h3>
                                     <p className="text-sm text-gray-500">{item.variantLabel}</p>
                                     <p className="text-md text-red-600 font-semibold mt-1">₹{item.price.toFixed(2)}</p>
-                                    <button onClick={() => setSelectedProductDetails(item)} className="mt-2 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-semibold transition-colors">
+                                    
+                                    <button 
+                                        onClick={() => setSelectedProductDetails(item)}
+                                        className="mt-2 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-semibold transition-colors"
+                                    >
                                         <Info size={14} /> View Details
                                     </button>
                                 </div>
@@ -171,7 +189,12 @@ export default function CartPage({ cartItems, handleQuantityChange, handleRemove
                             </motion.div>
                         ))}
                     </motion.div>
-                    <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="lg:col-span-1">
+                    <motion.div 
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                        className="lg:col-span-1"
+                    >
                         <div className="bg-white p-6 rounded-2xl shadow-xl sticky top-28">
                             <h3 className="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-4">Order Summary</h3>
                             <div className="space-y-4 my-6 text-lg">
@@ -179,7 +202,12 @@ export default function CartPage({ cartItems, handleQuantityChange, handleRemove
                                 <div className="flex justify-between font-bold text-2xl text-gray-800 pt-4 border-t border-gray-200"><span>Total</span><span>₹{cartSubtotal.toFixed(2)}</span></div>
                             </div>
                             <p className="text-xs text-center text-gray-400 mb-4">Shipping and discounts will be calculated at checkout.</p>
-                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleProceedToCheckout} className="w-full flex items-center justify-center gap-2 mt-6 bg-red-600 text-white font-bold py-4 rounded-lg hover:bg-red-700 transition-all text-lg shadow-lg hover:shadow-xl">
+                            <motion.button 
+                                whileHover={{ scale: 1.05 }} 
+                                whileTap={{ scale: 0.95 }}
+                                onClick={handleProceedToCheckout} 
+                                className="w-full flex items-center justify-center gap-2 mt-6 bg-red-600 text-white font-bold py-4 rounded-lg hover:bg-red-700 transition-all text-lg shadow-lg hover:shadow-xl"
+                            >
                                 Proceed to Checkout <ArrowRight size={20} />
                             </motion.button>
                         </div>
@@ -187,6 +215,7 @@ export default function CartPage({ cartItems, handleQuantityChange, handleRemove
                 </div>
             </div>
         </div>
+
         <AnimatePresence>
             {selectedProductDetails && (
                 <ProductDetailModal 
