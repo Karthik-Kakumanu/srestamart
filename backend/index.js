@@ -642,11 +642,14 @@ app.get('/api/delivery/orders', checkPartnerToken, async (req, res) => {
 });
 
 // ✅ --- NEW ROUTE --- Accept an Assigned Order
+// CORRECTED CODE
 app.put('/api/delivery/orders/:orderId/accept', checkPartnerToken, async (req, res) => {
     const { orderId } = req.params;
     try {
         const result = await pool.query(
-            `UPDATE orders SET delivery_status = 'Out for Delivery' 
+            // ✅ This now updates BOTH status fields for consistency
+            `UPDATE orders 
+             SET delivery_status = 'Out for Delivery', status = 'Out for Delivery' 
              WHERE id = $1 AND assigned_to_id = $2 AND delivery_status = 'Assigned'
              RETURNING *`,
             [orderId, req.partner.id]
