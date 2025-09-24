@@ -565,31 +565,27 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
 });
 
 // ===========================================
-// --- 🚚 DELIVERY PARTNER API ROUTES (NEW) ---
+// --- 🚚 DELIVERY PARTNER API ROUTES ---
 // ===========================================
 
-// 1. Partner Login
+// Partner Login
 app.post('/api/delivery/login', async (req, res) => {
   const { phone, password } = req.body;
   if (!phone || !password) {
     return res.status(400).json({ success: false, msg: 'Please provide phone and password.' });
   }
-
   try {
     const partnerResult = await pool.query('SELECT * FROM delivery_partners WHERE phone = $1', [phone]);
     if (partnerResult.rows.length === 0) {
       return res.status(400).json({ success: false, msg: 'Invalid credentials.' });
     }
-
     const partner = partnerResult.rows[0];
     const isMatch = await bcrypt.compare(password, partner.password);
     if (!isMatch) {
       return res.status(400).json({ success: false, msg: 'Invalid credentials.' });
     }
-
     const payload = { id: partner.id, name: partner.name, role: 'partner' };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
-
     res.json({
       success: true,
       token,
@@ -601,10 +597,32 @@ app.post('/api/delivery/login', async (req, res) => {
   }
 });
 
-// 2. Get Assigned Orders for a Partner
+// ✅ --- NEW ROUTE --- Update Partner's Location
+app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
+    const { latitude, longitude } = req.body;
+    if (latitude === undefined || longitude === undefined) {
+        return res.status(400).json({ msg: 'Latitude and longitude are required.' });
+    }
+    try {
+        // NOTE: Assumes your `delivery_partners` table has a `last_known_location` column (jsonb type recommended)
+        // and `location_updated_at` (timestamptz type recommended).
+        const locationJson = JSON.stringify({ latitude, longitude });
+        await pool.query(
+            'UPDATE delivery_partners SET last_known_location = $1, location_updated_at = NOW() WHERE id = $2',
+            [locationJson, req.partner.id]
+        );
+        res.json({ success: true, msg: 'Location updated.' });
+    } catch (err) {
+        console.error('Error updating partner location:', err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+// Get Assigned Orders for a Partner
 app.get('/api/delivery/orders', checkPartnerToken, async (req, res) => {
   try {
-    const partnerId = req.partner.id; // Get ID from the verified token
+    const partnerId = req.partner.id;
     const query = `
       SELECT 
         o.id, o.total_amount, o.delivery_status, o.created_at, o.items,
@@ -623,37 +641,45 @@ app.get('/api/delivery/orders', checkPartnerToken, async (req, res) => {
   }
 });
 
-// 3. Update Order Status
-app.put('/api/delivery/orders/:orderId/status', checkPartnerToken, async (req, res) => {
-  const { status } = req.body;
-  const { orderId } = req.params;
-  const partnerId = req.partner.id;
-
-  if (!status) {
-    return res.status(400).json({ msg: 'New status is required.' });
-  }
-
-  try {
-    // Verify the order is actually assigned to this partner before updating
-    const updateQuery = `
-      UPDATE orders 
-      SET delivery_status = $1 
-      WHERE id = $2 AND assigned_to_id = $3
-      RETURNING *;
-    `;
-    const { rows } = await pool.query(updateQuery, [status, orderId, partnerId]);
-
-    if (rows.length === 0) {
-      return res.status(404).json({ msg: 'Order not found or you are not authorized to update it.' });
+// ✅ --- NEW ROUTE --- Accept an Assigned Order
+app.put('/api/delivery/orders/:orderId/accept', checkPartnerToken, async (req, res) => {
+    const { orderId } = req.params;
+    try {
+        const result = await pool.query(
+            `UPDATE orders SET delivery_status = 'Out for Delivery' 
+             WHERE id = $1 AND assigned_to_id = $2 AND delivery_status = 'Assigned'
+             RETURNING *`,
+            [orderId, req.partner.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ msg: 'Order not found or cannot be accepted at this time.' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error accepting order:', err.message);
+        res.status(500).send('Server Error');
     }
-
-    res.json(rows[0]);
-  } catch (err) {
-    console.error('Error updating order status:', err.message);
-    res.status(500).send('Server Error');
-  }
 });
 
+// ✅ --- NEW ROUTE --- Complete a Delivery
+app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req, res) => {
+    const { orderId } = req.params;
+    try {
+        const result = await pool.query(
+            `UPDATE orders SET delivery_status = 'Delivered' 
+             WHERE id = $1 AND assigned_to_id = $2 AND delivery_status = 'Out for Delivery'
+             RETURNING *`,
+            [orderId, req.partner.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ msg: 'Order not found or cannot be completed at this time.' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error completing order:', err.message);
+        res.status(500).send('Server Error');
+    }
+});
 // ===================================
 // --- 🖥️ SERVE FRONTEND & START SERVER ---
 // ===================================
