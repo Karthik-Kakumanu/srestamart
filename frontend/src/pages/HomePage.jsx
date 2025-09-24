@@ -165,8 +165,6 @@ const CategoryBanner = ({ title, text, imageUrl }) => (
     </motion.div>
 );
 
-// NOTE: CategoryFeatureSection remains largely the same, but now it will be placed on a more vibrant background.
-// The text color (white/gray-200) will have better contrast now.
 const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, features }) => (
     <motion.section 
         key={title}
@@ -230,7 +228,6 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     return (
         <motion.div 
             variants={{ hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1 } }} 
-            // --- CHANGE: Light glassmorphic background with border and enhanced shadow ---
             className="bg-white/40 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col group"
             whileHover={{ y: -8 }}
         >
@@ -245,9 +242,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                 </div>
             </div>
             <div className="p-4 flex flex-col flex-grow">
-                {/* --- CHANGE: Product name text color is now dark gray --- */}
                 <h3 className="font-semibold text-base sm:text-lg text-gray-900 mb-2">{product.name}</h3>
-                {/* --- CHANGE: Product description text color is now a lighter dark gray --- */}
                 <p className="text-xs text-gray-700 mb-3 flex-grow line-clamp-3">{product.description}</p>
                 <div className="mb-3 min-h-[32px]">
                     {hasVariants && (
@@ -258,7 +253,6 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                                     <button 
                                         key={variant.id} 
                                         onClick={() => handleVariantChange(product.id, variant.id)} 
-                                        // --- CHANGE: Variant buttons updated for a light background ---
                                         className={`px-3 py-1 text-xs font-medium rounded-full border transition-all duration-300 ${
                                             isSelected 
                                             ? 'bg-red-600 border-red-700 text-white shadow-md' 
@@ -272,11 +266,9 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                         </div>
                     )}
                 </div>
-                {/* --- CHANGE: Border color updated to be subtle on a light background --- */}
                 <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-300/70">
                     {hasVariants ? (
                         <>
-                            {/* --- CHANGE: Price color is now a darker, more vibrant red --- */}
                             <span className="text-lg font-bold text-red-600">₹{currentPrice}</span>
                             <button 
                                 onClick={(e) => handleAddToCart({ ...product, selectedVariant: currentVariant }, e)} 
@@ -287,7 +279,6 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                             </button>
                         </>
                     ) : (
-                        // --- CHANGE: "Coming Soon" text color updated ---
                         <span className="text-xs font-medium text-gray-600 w-full text-center">Coming Soon</span>
                     )}
                 </div>
@@ -296,7 +287,6 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     );
 };
 
-// --- CHANGE: Skeleton card updated to a light theme to match new product cards ---
 const SkeletonCard = () => (
     <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg overflow-hidden animate-pulse">
         <div className="w-full aspect-[4/3] bg-gray-300"></div>
@@ -418,9 +408,17 @@ export default function HomePage({ handleAddToCart }) {
                 body { font-family: 'Poppins', sans-serif; }
                 .text-shadow { text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); }
                 .shadow-3xl { box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.2); }
+                
+                /* CSS for cleaner scrolling on filter bar */
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .no-scrollbar {
+                    -ms-overflow-style: none;  /* IE and Edge */
+                    scrollbar-width: none;  /* Firefox */
+                }
             `}</style>
 
-            {/* Video Background */}
             <AnimatePresence>
                 {categoryVideos[selectedCategory] && (
                     <motion.video 
@@ -435,10 +433,8 @@ export default function HomePage({ handleAddToCart }) {
                     />
                 )}
             </AnimatePresence>
-            {/* --- CHANGE: Enhanced background overlay for better contrast --- */}
             <div className="fixed inset-0 bg-gradient-radial from-red-900/10 via-slate-900/20 to-slate-900/40 -z-10"></div>
 
-            {/* Sidebar Menu */}
             <AnimatePresence>
                 {isSidebarOpen && (
                     <>
@@ -519,24 +515,26 @@ export default function HomePage({ handleAddToCart }) {
                             </motion.h2>
                         </div>
                     </div>
-                    <div className="mt-6 hidden sm:flex justify-center flex-wrap gap-3 px-4 sm:px-6">
+
+                    <div className="mt-6 flex overflow-x-auto sm:justify-center gap-3 px-4 sm:px-6 no-scrollbar">
                         {categories.map(category => (
                             <motion.button 
                                 key={category} 
                                 onClick={() => handleFilterChange(category)}
                                 whileHover={{ scale: 1.08, y: -2 }}
                                 whileTap={{ scale: 0.95 }}
-                                className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-md ${
+                                className={`flex-shrink-0 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-md ${
                                     selectedCategory === category
                                         ? 'bg-gradient-to-r from-red-500 to-red-700 text-white'
                                         : 'bg-white/60 text-gray-900 hover:bg-white/80 backdrop-blur-sm'
                                 }`}
                             >
                                 {categoryIcons[category]}
-                                {category.charAt(0).toUpperCase() + category.slice(1)}
+                                <span className="whitespace-nowrap">{category.charAt(0).toUpperCase() + category.slice(1)}</span>
                             </motion.button>
                         ))}
                     </div>
+
                     <div className="mt-6 max-w-xl mx-auto px-4 sm:px-6">
                         <div className="relative">
                             <input 
@@ -544,7 +542,6 @@ export default function HomePage({ handleAddToCart }) {
                                 placeholder="Search products..." 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                // --- CHANGE: Search bar style updated ---
                                 className="w-full py-3 px-5 pr-10 rounded-full bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-md backdrop-blur-sm text-sm"
                             />
                             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70" size={18} />
@@ -562,7 +559,6 @@ export default function HomePage({ handleAddToCart }) {
                         </motion.div>
                     )}
 
-                    {/* --- CHANGE: Grid updated to be 2 columns on mobile (grid-cols-2) and gap is adjusted --- */}
                     <motion.div
                         key={selectedCategory + searchQuery}
                         variants={productGridVariants}
