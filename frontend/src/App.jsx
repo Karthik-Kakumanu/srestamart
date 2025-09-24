@@ -15,6 +15,8 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
 import CheckoutPage from './pages/CheckoutPage.jsx';
 import PaymentPage from './pages/PaymentPage.jsx';
 import OrderSuccessPage from './pages/OrderSuccessPage.jsx';
+import VendorPage from './pages/VendorPage.jsx'; // Added Vendor Page
+import FranchisePage from './pages/FranchisePage.jsx'; // Added Franchise Page
 
 // Admin Imports
 import AdminLoginPage from './pages/AdminLoginPage.jsx';
@@ -92,7 +94,7 @@ export default function App() {
           )
       );
   };
-  
+ 
   const handleRemoveFromCart = (itemId) => {
       setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
   };
@@ -111,6 +113,7 @@ export default function App() {
     <>
       {cartMessage && <div className="fixed top-24 right-8 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-[60]">{cartMessage}</div>}
       <Routes>
+        {/* Standalone Admin, Delivery, and Auth Routes */}
         <Route path="/delivery/login" element={<DeliveryLoginPage />} />
         <Route 
             path="/delivery/dashboard" 
@@ -118,28 +121,31 @@ export default function App() {
         />
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route path="/admin" element={<AdminProtectedRoute><AdminPage /></AdminProtectedRoute>} />
+        <Route path="/auth" element={loggedInUser ? <Navigate to="/" /> : <AuthPage setLoggedInUser={setLoggedInUser} />} />
         
-        {loggedInUser ? (
-          <Route path="/" element={<Layout loggedInUser={loggedInUser} handleLogout={handleLogout} cartItems={cartItems} />}>
+        {/* Main Application Layout */}
+        <Route path="/" element={<Layout loggedInUser={loggedInUser} handleLogout={handleLogout} cartItems={cartItems} />}>
+            {/* Publicly Accessible Routes */}
             <Route index element={<HomePage handleAddToCart={handleAddToCart} />} />
-            <Route path="cart" element={<CartPage cartItems={cartItems} handleQuantityChange={handleQuantityChange} handleRemoveFromCart={handleRemoveFromCart} setCheckoutDetails={setCheckoutDetails} />} />
+            <Route path="vendor" element={<VendorPage />} />
+            <Route path="franchise" element={<FranchisePage />} />
             <Route path="coupons" element={<CouponsPage isFirstOrder={isFirstOrder} />} />
-            <Route path="account" element={<AccountPage loggedInUser={loggedInUser} orders={orders} ordersLoading={ordersLoading} handleLogout={handleLogout} />} />
-            <Route path="/account/addresses" element={<ManageAddressPage addresses={addresses} setAddresses={setAddresses} />} />
-            <Route path="/help" element={<HelpCenterPage />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/checkout" element={<CheckoutPage user={loggedInUser} addresses={addresses} setAddresses={setAddresses} setCheckoutDetails={setCheckoutDetails} cartItems={cartItems} />} />
-            <Route path="/payment" element={<PaymentPage user={loggedInUser} checkoutDetails={checkoutDetails} handleClearCart={handleClearCart} isFirstOrder={isFirstOrder} />} />
-            <Route path="/order-success" element={<OrderSuccessPage />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Route>
-        ) : (
-          <>
-            <Route path="/auth" element={<AuthPage setLoggedInUser={setLoggedInUser} />} />
-            <Route path="*" element={<Navigate to="/auth" />} />
-          </>
-        )}
+            <Route path="help" element={<HelpCenterPage />} />
+            <Route path="privacy" element={<PrivacyPolicyPage />} />
+
+            {/* Protected Routes - Require Login */}
+            <Route path="cart" element={loggedInUser ? <CartPage cartItems={cartItems} handleQuantityChange={handleQuantityChange} handleRemoveFromCart={handleRemoveFromCart} setCheckoutDetails={setCheckoutDetails} /> : <Navigate to="/auth" replace />} />
+            <Route path="account" element={loggedInUser ? <AccountPage loggedInUser={loggedInUser} orders={orders} ordersLoading={ordersLoading} handleLogout={handleLogout} /> : <Navigate to="/auth" replace />} />
+            <Route path="/account/addresses" element={loggedInUser ? <ManageAddressPage addresses={addresses} setAddresses={setAddresses} /> : <Navigate to="/auth" replace />} />
+            <Route path="/checkout" element={loggedInUser ? <CheckoutPage user={loggedInUser} addresses={addresses} setAddresses={setAddresses} setCheckoutDetails={setCheckoutDetails} cartItems={cartItems} /> : <Navigate to="/auth" replace />} />
+            <Route path="/payment" element={loggedInUser ? <PaymentPage user={loggedInUser} checkoutDetails={checkoutDetails} handleClearCart={handleClearCart} isFirstOrder={isFirstOrder} /> : <Navigate to="/auth" replace />} />
+            <Route path="/order-success" element={loggedInUser ? <OrderSuccessPage /> : <Navigate to="/auth" replace />} />
+        </Route>
+
+        {/* Catch-all Route */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>
   );
 }
+
