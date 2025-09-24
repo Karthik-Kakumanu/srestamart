@@ -564,6 +564,96 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
   }
 });
 
+// ===========================================
+// --- 🚚 DELIVERY PARTNER API ROUTES (NEW) ---
+// ===========================================
+
+// 1. Partner Login
+app.post('/api/delivery/login', async (req, res) => {
+  const { phone, password } = req.body;
+  if (!phone || !password) {
+    return res.status(400).json({ success: false, msg: 'Please provide phone and password.' });
+  }
+
+  try {
+    const partnerResult = await pool.query('SELECT * FROM delivery_partners WHERE phone = $1', [phone]);
+    if (partnerResult.rows.length === 0) {
+      return res.status(400).json({ success: false, msg: 'Invalid credentials.' });
+    }
+
+    const partner = partnerResult.rows[0];
+    const isMatch = await bcrypt.compare(password, partner.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, msg: 'Invalid credentials.' });
+    }
+
+    const payload = { id: partner.id, name: partner.name, role: 'partner' };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
+
+    res.json({
+      success: true,
+      token,
+      partner: { id: partner.id, name: partner.name, phone: partner.phone }
+    });
+  } catch (err) {
+    console.error('Delivery partner login error:', err.message);
+    res.status(500).json({ success: false, msg: 'Server error during login.' });
+  }
+});
+
+// 2. Get Assigned Orders for a Partner
+app.get('/api/delivery/orders', checkPartnerToken, async (req, res) => {
+  try {
+    const partnerId = req.partner.id; // Get ID from the verified token
+    const query = `
+      SELECT 
+        o.id, o.total_amount, o.delivery_status, o.created_at, o.items,
+        o.shipping_address,
+        u.name as customer_name, u.phone as customer_phone
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      WHERE o.assigned_to_id = $1 AND o.delivery_status NOT IN ('Delivered', 'Cancelled')
+      ORDER BY o.created_at ASC;
+    `;
+    const { rows } = await pool.query(query, [partnerId]);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching assigned orders:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// 3. Update Order Status
+app.put('/api/delivery/orders/:orderId/status', checkPartnerToken, async (req, res) => {
+  const { status } = req.body;
+  const { orderId } = req.params;
+  const partnerId = req.partner.id;
+
+  if (!status) {
+    return res.status(400).json({ msg: 'New status is required.' });
+  }
+
+  try {
+    // Verify the order is actually assigned to this partner before updating
+    const updateQuery = `
+      UPDATE orders 
+      SET delivery_status = $1 
+      WHERE id = $2 AND assigned_to_id = $3
+      RETURNING *;
+    `;
+    const { rows } = await pool.query(updateQuery, [status, orderId, partnerId]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ msg: 'Order not found or you are not authorized to update it.' });
+    }
+
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Error updating order status:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 // ===================================
 // --- 🖥️ SERVE FRONTEND & START SERVER ---
 // ===================================
