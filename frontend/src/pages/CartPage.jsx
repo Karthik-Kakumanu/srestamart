@@ -1,11 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react'; // --- MODIFIED: Added useState ---
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Info, X } from 'lucide-react'; // --- MODIFIED: Added Info and X icons ---
+import { motion, AnimatePresence } from 'framer-motion'; // --- MODIFIED: Added AnimatePresence ---
+
+// --- NEW: Step 3 - Create the Product Detail Modal Component ---
+const ProductDetailModal = ({ product, onClose }) => {
+    if (!product) return null;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+            onClick={onClose}
+        >
+            <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="bg-white rounded-2xl shadow-2xl max-w-lg w-full relative overflow-hidden"
+                onClick={(e) => e.stopPropagation()} // Prevents modal from closing when clicking inside
+            >
+                <button 
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 transition-colors z-10"
+                >
+                    <X size={24} />
+                </button>
+                <img 
+                    src={product.image_url || 'https://placehold.co/600x400'} 
+                    alt={product.name}
+                    className="w-full h-56 object-cover"
+                />
+                <div className="p-6">
+                    <h2 className="text-2xl font-bold text-gray-900">{product.name}</h2>
+                    <p className="text-sm text-gray-500 mt-1">{product.variantLabel}</p>
+                    <hr className="my-4" />
+                    <p className="text-gray-700 leading-relaxed">{product.description}</p>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
 
 export default function CartPage({ cartItems, handleQuantityChange, handleRemoveFromCart, setCheckoutDetails }) {
   const navigate = useNavigate();
   const cartSubtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+  // --- NEW: Step 1 - Manage State for the Modal ---
+  const [selectedProductDetails, setSelectedProductDetails] = useState(null);
 
   const handleProceedToCheckout = () => {
     setCheckoutDetails({
@@ -49,65 +95,84 @@ export default function CartPage({ cartItems, handleQuantityChange, handleRemove
   }
   
   return (
-    <div className="flex-grow bg-slate-50 p-4 sm:p-8">
-        <div className="max-w-6xl mx-auto">
-            <motion.h1 
-                initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-                className="text-4xl font-bold text-gray-800 mb-8"
-            >
-                Your Shopping Cart
-            </motion.h1>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                <motion.div 
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="lg:col-span-2 space-y-4"
+    <> {/* Use a fragment to wrap the page and the modal */}
+        <div className="flex-grow bg-slate-50 p-4 sm:p-8">
+            <div className="max-w-6xl mx-auto">
+                <motion.h1 
+                    initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+                    className="text-4xl font-bold text-gray-800 mb-8"
                 >
-                    {cartItems.map((item) => (
-                        <motion.div key={item.id} variants={itemVariants} className="flex items-center bg-white p-4 rounded-2xl shadow-lg">
-                            <img src={item.image_url || 'https://placehold.co/100x100'} alt={item.name} className="h-24 w-24 object-cover rounded-xl" />
-                            <div className="flex-grow ml-5">
-                                <h3 className="font-bold text-lg text-gray-800">{item.name}</h3>
-                                <p className="text-sm text-gray-500">{item.variantLabel}</p>
-                                <p className="text-md text-red-600 font-semibold mt-1">₹{item.price.toFixed(2)}</p>
+                    Your Shopping Cart
+                </motion.h1>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    <motion.div 
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="lg:col-span-2 space-y-4"
+                    >
+                        {cartItems.map((item) => (
+                            <motion.div key={item.id} variants={itemVariants} className="flex items-center bg-white p-4 rounded-2xl shadow-lg">
+                                <img src={item.image_url || 'https://placehold.co/100x100'} alt={item.name} className="h-24 w-24 object-cover rounded-xl" />
+                                <div className="flex-grow ml-5">
+                                    <h3 className="font-bold text-lg text-gray-800">{item.name}</h3>
+                                    <p className="text-sm text-gray-500">{item.variantLabel}</p>
+                                    <p className="text-md text-red-600 font-semibold mt-1">₹{item.price.toFixed(2)}</p>
+                                    
+                                    {/* --- NEW: Step 2 - Add a "View Details" Trigger --- */}
+                                    <button 
+                                        onClick={() => setSelectedProductDetails(item)}
+                                        className="mt-2 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-semibold transition-colors"
+                                    >
+                                        <Info size={14} /> View Details
+                                    </button>
+                                </div>
+                                <div className="flex items-center space-x-3 bg-slate-100 p-2 rounded-lg">
+                                    <button onClick={() => handleQuantityChange(item.id, -1)} className="p-1.5 rounded-md hover:bg-slate-200 transition-colors"><Minus size={16} /></button>
+                                    <span className="font-semibold w-8 text-center text-lg">{item.quantity}</span>
+                                    <button onClick={() => handleQuantityChange(item.id, 1)} className="p-1.5 rounded-md hover:bg-slate-200 transition-colors"><Plus size={16} /></button>
+                                </div>
+                                <span className="font-bold text-xl text-gray-800 w-28 text-right hidden sm:block">₹{(item.price * item.quantity).toFixed(2)}</span>
+                                <button onClick={() => handleRemoveFromCart(item.id)} className="ml-4 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                    <motion.div 
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                        className="lg:col-span-1"
+                    >
+                        <div className="bg-white p-6 rounded-2xl shadow-xl sticky top-28">
+                            <h3 className="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-4">Order Summary</h3>
+                            <div className="space-y-4 my-6 text-lg">
+                                <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-medium text-gray-900">₹{cartSubtotal.toFixed(2)}</span></div>
+                                <div className="flex justify-between font-bold text-2xl text-gray-800 pt-4 border-t border-gray-200"><span>Total</span><span>₹{cartSubtotal.toFixed(2)}</span></div>
                             </div>
-                            <div className="flex items-center space-x-3 bg-slate-100 p-2 rounded-lg">
-                                <button onClick={() => handleQuantityChange(item.id, -1)} className="p-1.5 rounded-md hover:bg-slate-200 transition-colors"><Minus size={16} /></button>
-                                <span className="font-semibold w-8 text-center text-lg">{item.quantity}</span>
-                                <button onClick={() => handleQuantityChange(item.id, 1)} className="p-1.5 rounded-md hover:bg-slate-200 transition-colors"><Plus size={16} /></button>
-                            </div>
-                            <span className="font-bold text-xl text-gray-800 w-28 text-right hidden sm:block">₹{(item.price * item.quantity).toFixed(2)}</span>
-                            <button onClick={() => handleRemoveFromCart(item.id)} className="ml-4 text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
-                        </motion.div>
-                    ))}
-                </motion.div>
-                <motion.div 
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                    className="lg:col-span-1"
-                >
-                    <div className="bg-white p-6 rounded-2xl shadow-xl sticky top-28">
-                        <h3 className="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-4">Order Summary</h3>
-                        <div className="space-y-4 my-6 text-lg">
-                            <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-medium text-gray-900">₹{cartSubtotal.toFixed(2)}</span></div>
-                            {/* Shipping line removed from here */}
-                            <div className="flex justify-between font-bold text-2xl text-gray-800 pt-4 border-t border-gray-200"><span>Total</span><span>₹{cartSubtotal.toFixed(2)}</span></div>
+                            <p className="text-xs text-center text-gray-400 mb-4">Shipping and discounts will be calculated at checkout.</p>
+                            <motion.button 
+                                whileHover={{ scale: 1.05 }} 
+                                whileTap={{ scale: 0.95 }}
+                                onClick={handleProceedToCheckout} 
+                                className="w-full flex items-center justify-center gap-2 mt-6 bg-red-600 text-white font-bold py-4 rounded-lg hover:bg-red-700 transition-all text-lg shadow-lg hover:shadow-xl"
+                            >
+                                Proceed to Checkout <ArrowRight size={20} />
+                            </motion.button>
                         </div>
-                        <p className="text-xs text-center text-gray-400 mb-4">Shipping and discounts will be calculated at checkout.</p>
-                        <motion.button 
-                            whileHover={{ scale: 1.05 }} 
-                            whileTap={{ scale: 0.95 }}
-                            onClick={handleProceedToCheckout} 
-                            className="w-full flex items-center justify-center gap-2 mt-6 bg-red-600 text-white font-bold py-4 rounded-lg hover:bg-red-700 transition-all text-lg shadow-lg hover:shadow-xl"
-                        >
-                            Proceed to Checkout <ArrowRight size={20} />
-                        </motion.button>
-                    </div>
-                </motion.div>
+                    </motion.div>
+                </div>
             </div>
         </div>
-    </div>
+
+        {/* --- NEW: Step 4 - Render the Modal Conditionally --- */}
+        <AnimatePresence>
+            {selectedProductDetails && (
+                <ProductDetailModal 
+                    product={selectedProductDetails} 
+                    onClose={() => setSelectedProductDetails(null)} 
+                />
+            )}
+        </AnimatePresence>
+    </>
   );
 };
