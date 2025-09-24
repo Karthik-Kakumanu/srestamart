@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import logoUrl from '../../images/icon.png';
+import logoUrl from '../images/icon.png';
 import { Home, ShoppingCart, Tag, User } from 'lucide-react';
 
 export default function Layout({ loggedInUser, handleLogout, cartItems }) {
