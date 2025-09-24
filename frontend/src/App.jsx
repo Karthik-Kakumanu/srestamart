@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
 
-// Import Pages and Components
+// Import Pages and Components with correct paths
 import Layout from './components/Layout.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import HomePage from './pages/HomePage.jsx';
@@ -15,8 +15,8 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
 import CheckoutPage from './pages/CheckoutPage.jsx';
 import PaymentPage from './pages/PaymentPage.jsx';
 import OrderSuccessPage from './pages/OrderSuccessPage.jsx';
-import VendorPage from './pages/VendorPage.jsx'; // Added Vendor Page
-import FranchisePage from './pages/FranchisePage.jsx'; // Added Franchise Page
+import VendorPage from './pages/VendorPage.jsx';
+import FranchisePage from './pages/FranchisePage.jsx';
 
 // Admin Imports
 import AdminLoginPage from './pages/AdminLoginPage.jsx';
@@ -69,7 +69,7 @@ export default function App() {
     fetchUserData();
   }, [loggedInUser]);
 
-  const handleAddToCart = (product, event) => {
+    const handleAddToCart = (product) => {
       setCartItems(prevItems => {
           const itemExists = prevItems.find(item => item.id === product.selectedVariant.id);
           if (itemExists) {
