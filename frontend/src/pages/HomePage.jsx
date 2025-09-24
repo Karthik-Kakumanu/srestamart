@@ -182,7 +182,7 @@ export default function HomePage({ handleAddToCart }) {
             setError('');
             try {
                 // We fetch 'meatpoultry' products using the old 'meat' category slug if the API expects it. Adjust if needed.
-                const apiCategory = selectedCategory === 'meatpoultry' ? 'meat' : selectedCategory;
+                const apiCategory = selectedCategory === 'meatpoultry' ? 'livebirds' : selectedCategory;
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?page=${currentPage}&limit=12&category=${apiCategory}`);
                 
                 if (res.data && Array.isArray(res.data.products)) {
