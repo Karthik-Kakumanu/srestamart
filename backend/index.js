@@ -661,12 +661,14 @@ app.put('/api/delivery/orders/:orderId/accept', checkPartnerToken, async (req, r
     }
 });
 
-// ✅ --- NEW ROUTE --- Complete a Delivery
+// ✅ --- MODIFIED --- Complete a Delivery
 app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req, res) => {
     const { orderId } = req.params;
     try {
         const result = await pool.query(
-            `UPDATE orders SET delivery_status = 'Delivered' 
+            // This now updates BOTH the delivery status and the main order status
+            `UPDATE orders 
+             SET delivery_status = 'Delivered', status = 'Completed'
              WHERE id = $1 AND assigned_to_id = $2 AND delivery_status = 'Out for Delivery'
              RETURNING *`,
             [orderId, req.partner.id]
@@ -680,6 +682,7 @@ app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req,
         res.status(500).send('Server Error');
     }
 });
+
 // ===================================
 // --- 🖥️ SERVE FRONTEND & START SERVER ---
 // ===================================
