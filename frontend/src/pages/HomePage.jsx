@@ -167,7 +167,7 @@ export default function HomePage({ handleAddToCart }) {
 
     const categoryVideos = {
         eggs: "/videos/eggs.mp4", // Formerly 'livebirds'
-        meatpoultry: "/videos/meat.mp4", // Formerly 'meat'
+        meatpoultry: "/videos/eggs1.mp4", // Formerly 'meat'
         dryfruits: "/videos/dryfruits.mp4",
         dairy: "/videos/dairy.mp4",
         oils: "/videos/oils.mp4",
