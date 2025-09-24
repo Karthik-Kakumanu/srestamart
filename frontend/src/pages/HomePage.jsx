@@ -529,7 +529,7 @@ export default function HomePage({ handleAddToCart }) {
                                 className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-md ${
                                     selectedCategory === category
                                         ? 'bg-gradient-to-r from-red-500 to-red-700 text-white'
-                                        : 'bg-white/20 text-gray-100 hover:bg-white/30 backdrop-blur-sm'
+                                        : 'bg-white/60 text-gray-900 hover:bg-white/80 backdrop-blur-sm'
                                 }`}
                             >
                                 {categoryIcons[category]}
