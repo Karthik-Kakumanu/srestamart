@@ -7,7 +7,7 @@ import {
     Microscope, Shield, Sun, Droplets, BatteryCharging, Sparkles, TestTube, FilterX, Vegan, Activity,
     Menu, X, ChevronRight, User, Truck, Search, ShoppingCart, Building, Handshake
 } from 'lucide-react';
-import logoIcon from '/src/images/icon.png';
+// import logoIcon from '/src/images/icon.png';
 
 // --- UPDATE: Category structure reverted to 'livebirds' ---
 const CATEGORY_ORDER = ['livebirds', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets'];
