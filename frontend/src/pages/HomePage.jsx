@@ -108,7 +108,7 @@ const categoryFeatures = {
         title: "Luxurious Cold-Pressed Liquid Gold",
         subtitle: `"Purity distilled in every drop."`,
         description: "Traditionally cold-pressed to preserve nutrients, flavor, and aroma, transforming your cooking into a healthful art.",
-        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:GcTlD8qSZ1Qpf6F_pTnhy_snOlaPyGqLEB3YbQ&s",
+        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlD8qSZ1Qpf6F_pTnhy_snOlaPyGqLEB3YbQ&s",
         features: [
             { icon: <TestTube className="text-red-500"/>, title: "Nutrient Preservation", text: "Vitamins and antioxidants intact, superior to refined alternatives." },
             { icon: <Heart className="text-red-500"/>, title: "Healthy Fat Abundance", text: "Monounsaturated and polyunsaturated fats for heart health." },
@@ -119,7 +119,7 @@ const categoryFeatures = {
         title: "The Timeless Supergrain Revolution",
         subtitle: `"Wholesome ancient power for modern living."`,
         description: "Gluten-free, fiber-rich millets offer a low-GI alternative to staples, ideal for sustained health and energy.",
-        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:GcTsUCfJOmuHsF_FNrRaSTIE96Q9ToAH9sGF7Q&s",
+        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTsUCfJOmuHsF_FNrRaSTIE96Q9ToAH9sGF7Q&s",
         features: [
             { icon: <Wheat className="text-red-500"/>, title: "Fiber-Rich Delight", text: "Aids digestion, weight control, and satiety." },
             { icon: <Vegan className="text-red-500"/>, title: "Gluten-Free Naturally", text: "Perfect for gluten sensitivities or celiac needs." },
@@ -146,10 +146,10 @@ const CategoryBanner = ({ title, text, imageUrl }) => (
         animate={{ opacity: 1, y: 0, scale: 1 }} 
         exit={{ opacity: 0, y: -50 }} 
         transition={{ duration: 0.6, ease: 'easeOut' }} 
-        className="sm:col-span-2 md:col-span-3 lg:col-span-4 my-6 rounded-2xl shadow-lg overflow-hidden relative transform hover:scale-102 transition-transform duration-300"
+        className="col-span-2 md:col-span-3 lg:col-span-4 my-6 rounded-2xl shadow-lg overflow-hidden relative transform hover:scale-102 transition-transform duration-300"
     >
         <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover -z-10 filter brightness-75" />
-        <div className="bg-gradient-to-r from-white/20 via-white/10 to-transparent w-full h-full p-4 sm:p-8 flex items-center">
+        <div className="bg-gradient-to-r from-black/60 via-black/40 to-transparent w-full h-full p-4 sm:p-8 flex items-center">
             <div className="max-w-2xl">
                 <h3 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold leading-tight" style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.5)' }}>{title}</h3>
                 <p className="mt-3 text-sm sm:text-base text-gray-100 leading-relaxed" dangerouslySetInnerHTML={{ __html: text }} />
@@ -165,6 +165,8 @@ const CategoryBanner = ({ title, text, imageUrl }) => (
     </motion.div>
 );
 
+// NOTE: CategoryFeatureSection remains largely the same, but now it will be placed on a more vibrant background.
+// The text color (white/gray-200) will have better contrast now.
 const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, features }) => (
     <motion.section 
         key={title}
@@ -172,7 +174,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.8 }}
-        className="py-12 px-4 sm:px-6 mt-12 rounded-2xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-lg shadow-lg ring-1 ring-red-400/10"
+        className="py-12 px-4 sm:px-6 mt-12 rounded-2xl bg-black/20 backdrop-blur-lg shadow-lg ring-1 ring-white/10"
     >
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <motion.div 
@@ -194,7 +196,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                             transition={{ duration: 0.5, delay: index * 0.1 }}
                             className="flex items-start gap-3"
                         >
-                            <div className="flex-shrink-0 w-12 h-12 bg-red-100/30 rounded-full flex items-center justify-center shadow-sm">
+                            <div className="flex-shrink-0 w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center shadow-sm">
                                 {React.cloneElement(feature.icon, { size: 24 })}
                             </div>
                             <div>
@@ -213,7 +215,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                 className="relative h-80 md:h-96 rounded-2xl shadow-lg overflow-hidden"
             >
                 <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-2xl filter brightness-90" />
-                <div className="absolute inset-0 bg-gradient-to-t from-white/10 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
             </motion.div>
         </div>
     </motion.section>
@@ -228,8 +230,9 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     return (
         <motion.div 
             variants={{ hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1 } }} 
-            className="bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-lg rounded-2xl shadow-md overflow-hidden transform hover:scale-105 hover:shadow-lg transition-all duration-300 flex flex-col group"
-            whileHover={{ y: -5 }}
+            // --- CHANGE: Light glassmorphic background with border and enhanced shadow ---
+            className="bg-white/40 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col group"
+            whileHover={{ y: -8 }}
         >
             <div className="w-full aspect-[4/3] overflow-hidden relative">
                 <img 
@@ -237,13 +240,15 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                     alt={product.name} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute top-1 right-1 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm">
+                <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm">
                     New
                 </div>
             </div>
             <div className="p-4 flex flex-col flex-grow">
-                <h3 className="font-semibold text-lg text-white mb-2">{product.name}</h3>
-                <p className="text-xs text-gray-300 mb-3 flex-grow line-clamp-3">{product.description}</p>
+                {/* --- CHANGE: Product name text color is now dark gray --- */}
+                <h3 className="font-semibold text-base sm:text-lg text-gray-900 mb-2">{product.name}</h3>
+                {/* --- CHANGE: Product description text color is now a lighter dark gray --- */}
+                <p className="text-xs text-gray-700 mb-3 flex-grow line-clamp-3">{product.description}</p>
                 <div className="mb-3 min-h-[32px]">
                     {hasVariants && (
                         <div className="flex items-center gap-2 flex-wrap">
@@ -253,10 +258,11 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                                     <button 
                                         key={variant.id} 
                                         onClick={() => handleVariantChange(product.id, variant.id)} 
+                                        // --- CHANGE: Variant buttons updated for a light background ---
                                         className={`px-3 py-1 text-xs font-medium rounded-full border transition-all duration-300 ${
                                             isSelected 
-                                            ? 'bg-red-500 border-red-600 text-white shadow-sm' 
-                                            : 'bg-gray-700/30 border-gray-500 text-gray-300 hover:bg-gray-600/30 hover:shadow-sm'
+                                            ? 'bg-red-600 border-red-700 text-white shadow-md' 
+                                            : 'bg-white/60 border-gray-300 text-gray-800 hover:bg-white/90 hover:shadow-sm'
                                         }`}
                                     >
                                         {variant.label}
@@ -266,20 +272,23 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                         </div>
                     )}
                 </div>
-                <div className="flex justify-between items-center mt-auto pt-2 border-t border-gray-600">
+                {/* --- CHANGE: Border color updated to be subtle on a light background --- */}
+                <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-300/70">
                     {hasVariants ? (
                         <>
-                            <span className="text-lg font-semibold text-red-400">₹{currentPrice}</span>
+                            {/* --- CHANGE: Price color is now a darker, more vibrant red --- */}
+                            <span className="text-lg font-bold text-red-600">₹{currentPrice}</span>
                             <button 
                                 onClick={(e) => handleAddToCart({ ...product, selectedVariant: currentVariant }, e)} 
-                                className="flex items-center gap-1 text-white px-3 py-1.5 text-xs font-medium rounded-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 disabled:bg-gray-400 transition-all shadow-sm hover:shadow-md" 
+                                className="flex items-center gap-1.5 text-white px-3 py-1.5 text-xs font-semibold rounded-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 disabled:bg-gray-400 transition-all shadow-md hover:shadow-lg" 
                                 disabled={!currentVariant}
                             >
                                 <ShoppingCart size={14} /> Add
                             </button>
                         </>
                     ) : (
-                        <span className="text-xs font-medium text-gray-400 w-full text-center">Coming Soon</span>
+                        // --- CHANGE: "Coming Soon" text color updated ---
+                        <span className="text-xs font-medium text-gray-600 w-full text-center">Coming Soon</span>
                     )}
                 </div>
             </div>
@@ -287,23 +296,24 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     );
 };
 
+// --- CHANGE: Skeleton card updated to a light theme to match new product cards ---
 const SkeletonCard = () => (
-    <div className="bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-lg rounded-2xl shadow-md overflow-hidden animate-pulse">
-        <div className="w-full aspect-[4/3] bg-gray-600"></div>
+    <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg overflow-hidden animate-pulse">
+        <div className="w-full aspect-[4/3] bg-gray-300"></div>
         <div className="p-4">
-            <div className="h-5 bg-gray-600 rounded w-4/5 mb-2"></div>
-            <div className="h-3 bg-gray-600 rounded w-full mb-3"></div>
-            <div className="h-3 bg-gray-600 rounded w-3/5 mb-3"></div>
-            <div className="flex justify-between items-center">
-                <div className="h-6 bg-gray-600 rounded w-1/4"></div>
-                <div className="h-8 bg-gray-600 rounded-full w-2/5"></div>
+            <div className="h-5 bg-gray-300 rounded w-4/5 mb-2"></div>
+            <div className="h-3 bg-gray-300 rounded w-full mb-3"></div>
+            <div className="h-3 bg-gray-300 rounded w-3/5 mb-3"></div>
+            <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-300/70">
+                <div className="h-6 bg-gray-300 rounded w-1/4"></div>
+                <div className="h-8 bg-gray-300 rounded-full w-2/5"></div>
             </div>
         </div>
     </div>
 );
 
+
 export default function HomePage({ handleAddToCart }) {
-    // --- Enhanced STATE MANAGEMENT for Better UX ---
     const [products, setProducts] = useState([]); 
     const [categories, setCategories] = useState(CATEGORY_ORDER);
     const [selectedCategory, setSelectedCategory] = useState(CATEGORY_ORDER[0]);
@@ -402,44 +412,15 @@ export default function HomePage({ handleAddToCart }) {
     };
 
     return (
-        <div className="relative min-h-screen overflow-hidden">
+        <div className="relative min-h-screen overflow-x-hidden">
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
                 body { font-family: 'Poppins', sans-serif; }
                 .text-shadow { text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); }
                 .shadow-3xl { box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.2); }
-                @media (max-width: 640px) {
-                    .container { padding-left: 12px; padding-right: 12px; }
-                    .text-5xl { font-size: 2rem; }
-                    .text-4xl { font-size: 1.75rem; }
-                    .text-3xl { font-size: 1.5rem; }
-                    .text-2xl { font-size: 1.25rem; }
-                    .text-xl { font-size: 1rem; }
-                    .text-lg { font-size: 0.875rem; }
-                    .text-base { font-size: 0.75rem; }
-                    .text-sm { font-size: 0.7rem; }
-                    .text-xs { font-size: 0.65rem; }
-                    .h-96 { height: 16rem; }
-                    .h-80 { height: 14rem; }
-                    .py-20 { padding-top: 3rem; padding-bottom: 3rem; }
-                    .mt-20 { margin-top: 2rem; }
-                    .mt-16 { margin-top: 1.5rem; }
-                    .mt-10 { margin-top: 1rem; }
-                    .mt-8 { margin-top: 0.75rem; }
-                    .mt-6 { margin-top: 0.5rem; }
-                    .gap-16 { gap: 1rem; }
-                    .gap-8 { gap: 0.75rem; }
-                    .gap-6 { gap: 0.5rem; }
-                    .gap-4 { gap: 0.375rem; }
-                    .px-8 { padding-left: 0.75rem; padding-right: 0.75rem; }
-                    .px-6 { padding-left: 0.5rem; padding-right: 0.5rem; }
-                    .py-4 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-                    .py-3 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
-                    .text-shadow { text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4); }
-                }
             `}</style>
 
-            {/* Adjusted Full-Screen Video Background with Lighter Overlay */}
+            {/* Video Background */}
             <AnimatePresence>
                 {categoryVideos[selectedCategory] && (
                     <motion.video 
@@ -449,42 +430,35 @@ export default function HomePage({ handleAddToCart }) {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 1, ease: 'easeInOut' }}
-                        autoPlay 
-                        loop 
-                        muted 
-                        playsInline 
+                        autoPlay loop muted playsInline 
                         className="fixed inset-0 w-full h-full object-cover -z-20 filter blur-sm scale-105"
                     />
                 )}
             </AnimatePresence>
-            <div className="fixed inset-0 bg-gradient-to-b from-white/30 to-white/20 -z-10"></div>
+            {/* --- CHANGE: Enhanced background overlay for better contrast --- */}
+            <div className="fixed inset-0 bg-gradient-radial from-red-900/10 via-slate-900/20 to-slate-900/40 -z-10"></div>
 
-            {/* Sidebar Menu with Mobile-Friendly Styling */}
+            {/* Sidebar Menu */}
             <AnimatePresence>
                 {isSidebarOpen && (
                     <>
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             onClick={() => setIsSidebarOpen(false)}
-                            className="fixed inset-0 bg-white/30 z-40 backdrop-blur-sm"
+                            className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
                         />
                         <motion.div
-                            variants={sidebarVariants}
-                            initial="closed"
-                            animate="open"
-                            exit="closed"
-                            className="fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-white/20 to-white/10 backdrop-blur-lg shadow-lg z-50 p-6 flex flex-col"
+                            variants={sidebarVariants} initial="closed" animate="open" exit="closed"
+                            className="fixed top-0 left-0 h-full w-64 bg-slate-800/80 backdrop-blur-lg shadow-lg z-50 p-6 flex flex-col"
                         >
                             <div className="flex justify-between items-center mb-8">
                                 <img src={logoIcon} alt="Sresta Mart Logo" className="h-12 w-auto"/>
-                                <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-gray-700/30 rounded-full">
+                                <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-slate-700/50 rounded-full">
                                     <X className="text-gray-200" size={20} />
                                 </button>
                             </div>
                             <nav className="flex-grow">
-                                <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Discover Categories</h3>
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Discover Categories</h3>
                                 <ul className="space-y-2">
                                     {categories.map(category => (
                                         <li key={category}>
@@ -492,8 +466,8 @@ export default function HomePage({ handleAddToCart }) {
                                                 onClick={() => handleFilterChange(category)}
                                                 className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-base font-medium transition-all duration-300 ${
                                                     selectedCategory === category 
-                                                    ? 'bg-red-500/80 text-white shadow-sm' 
-                                                    : 'text-gray-200 hover:bg-gray-700/30 hover:shadow-sm'
+                                                    ? 'bg-red-600 text-white shadow-md' 
+                                                    : 'text-gray-200 hover:bg-slate-700/50'
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-3">
@@ -506,15 +480,15 @@ export default function HomePage({ handleAddToCart }) {
                                     ))}
                                 </ul>
                                 <hr className="my-6 border-gray-600" />
-                                <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">Quick Access</h3>
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Access</h3>
                                 <ul className="space-y-2">
                                     <li>
-                                        <a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/30 transition-all">
+                                        <a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all">
                                             <User size={16} /> Vendor Portal
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-gray-700/30 transition-all">
+                                        <a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all">
                                             <Truck size={16} /> Delivery Hub
                                         </a>
                                     </li>
@@ -526,7 +500,7 @@ export default function HomePage({ handleAddToCart }) {
             </AnimatePresence>
 
             <div className="relative z-10">
-                <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-white/20 to-transparent">
+                <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/20 to-transparent">
                     <div className="flex flex-row items-center justify-center mb-8 relative px-4 sm:px-6">
                         <button 
                             onClick={() => setIsSidebarOpen(true)}
@@ -535,19 +509,11 @@ export default function HomePage({ handleAddToCart }) {
                             <Menu className="text-white" size={20}/>
                         </button>
                         <div className="flex items-center gap-3">
-                            <motion.div 
-                                initial={{ opacity: 0, scale: 0.8 }} 
-                                animate={{ opacity: 1, scale: 1 }} 
-                                transition={{ duration: 0.8, ease: "easeOut" }} 
-                                className="hidden sm:block"
-                            >
-                                <img src={logoIcon} alt="Sresta Mart Logo" className="h-20 md:h-24 w-auto shadow-md rounded-full"/>
-                            </motion.div>
                             <motion.h2 
                                 initial={{opacity: 0, y: -30}} 
                                 animate={{opacity: 1, y: 0}} 
                                 transition={{ delay: 0.3, duration: 0.8 }} 
-                                className="text-4xl sm:text-5xl font-bold text-white text-shadow text-center tracking-tight"
+                                className="text-2xl sm:text-4xl font-bold text-white text-shadow text-center tracking-tight"
                             >
                                 Discover Our Premium Collection
                             </motion.h2>
@@ -558,12 +524,12 @@ export default function HomePage({ handleAddToCart }) {
                             <motion.button 
                                 key={category} 
                                 onClick={() => handleFilterChange(category)}
-                                whileHover={{ scale: 1.08, boxShadow: '0 0 10px rgba(255,0,0,0.3)' }}
-                                whileTap={{ scale: 0.92 }}
-                                className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-sm ${
+                                whileHover={{ scale: 1.08, y: -2 }}
+                                whileTap={{ scale: 0.95 }}
+                                className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-md ${
                                     selectedCategory === category
                                         ? 'bg-gradient-to-r from-red-500 to-red-700 text-white'
-                                        : 'bg-gray-700/30 text-gray-100 hover:bg-gray-600/30 backdrop-blur-sm'
+                                        : 'bg-white/20 text-gray-100 hover:bg-white/30 backdrop-blur-sm'
                                 }`}
                             >
                                 {categoryIcons[category]}
@@ -571,7 +537,6 @@ export default function HomePage({ handleAddToCart }) {
                             </motion.button>
                         ))}
                     </div>
-                    {/* Search Bar Optimized for Mobile */}
                     <div className="mt-6 max-w-xl mx-auto px-4 sm:px-6">
                         <div className="relative">
                             <input 
@@ -579,32 +544,31 @@ export default function HomePage({ handleAddToCart }) {
                                 placeholder="Search products..." 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full py-3 px-5 pr-10 rounded-full bg-gray-700/30 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-sm backdrop-blur-sm text-sm"
+                                // --- CHANGE: Search bar style updated ---
+                                className="w-full py-3 px-5 pr-10 rounded-full bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-md backdrop-blur-sm text-sm"
                             />
-                            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70" size={18} />
                         </div>
                     </div>
                 </div>
 
-                {/* Main Content with Mobile-Friendly Layout */}
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     {error && (
                         <motion.div
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
                             className="bg-red-500/20 backdrop-blur-sm text-red-300 p-4 rounded-lg mb-8 text-center shadow-sm text-sm"
                         >
                             {error}
                         </motion.div>
                     )}
 
-                    {/* Product Grid and Banner with Responsive Adjustments */}
+                    {/* --- CHANGE: Grid updated to be 2 columns on mobile (grid-cols-2) and gap is adjusted --- */}
                     <motion.div
                         key={selectedCategory + searchQuery}
                         variants={productGridVariants}
                         initial="hidden"
                         animate="visible"
-                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+                        className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
                     >
                         {productsLoading
                             ? Array.from({ length: 8 }).map((_, index) => <SkeletonCard key={index} />)
@@ -617,6 +581,7 @@ export default function HomePage({ handleAddToCart }) {
                                     handleAddToCart={handleAddToCart}
                                 />
                             ))}
+                        
                         {currentPage === 1 && currentBannerData && !productsLoading && (
                             <CategoryBanner
                                 title={currentBannerData.title}
@@ -624,6 +589,7 @@ export default function HomePage({ handleAddToCart }) {
                                 imageUrl={currentBannerData.imageUrl}
                             />
                         )}
+
                         {productsLoading
                             ? null
                             : productsAfterBanner.map(product => (
@@ -637,30 +603,26 @@ export default function HomePage({ handleAddToCart }) {
                             ))}
                     </motion.div>
 
-                    {/* Pagination Optimized for Mobile */}
                     {!productsLoading && totalPages > 1 && (
                         <div className="mt-12 flex justify-center items-center gap-4 flex-wrap">
                             <button
-                                onClick={goToPreviousPage}
-                                disabled={currentPage === 1}
-                                className="px-4 py-2 bg-gradient-to-r from-gray-700/30 to-gray-800/30 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-800/30 hover:to-gray-900/30 shadow-sm hover:shadow-md transition-all text-sm"
+                                onClick={goToPreviousPage} disabled={currentPage === 1}
+                                className="px-4 py-2 bg-black/20 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black/30 backdrop-blur-sm shadow-sm hover:shadow-md transition-all text-sm"
                             >
                                 Previous
                             </button>
-                            <span className="px-4 py-2 text-white text-shadow bg-gray-700/30 rounded-full shadow-sm text-sm">
+                            <span className="px-4 py-2 text-white text-shadow bg-black/20 rounded-full shadow-sm text-sm">
                                 Page {currentPage} / {totalPages}
                             </span>
                             <button
-                                onClick={goToNextPage}
-                                disabled={currentPage === totalPages}
-                                className="px-4 py-2 bg-gradient-to-r from-gray-700/30 to-gray-800/30 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:from-gray-800/30 hover:to-gray-900/30 shadow-sm hover:shadow-md transition-all text-sm"
+                                onClick={goToNextPage} disabled={currentPage === totalPages}
+                                className="px-4 py-2 bg-black/20 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black/30 backdrop-blur-sm shadow-sm hover:shadow-md transition-all text-sm"
                             >
                                 Next
                             </button>
                         </div>
                     )}
 
-                    {/* Category Features Section with Mobile Adjustments */}
                     {currentFeatureData && (
                         <CategoryFeatureSection
                             title={currentFeatureData.title}
