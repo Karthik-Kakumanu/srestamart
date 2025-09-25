@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios'; // Make sure to import axios
-import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, XCircle, UserCheck, RefreshCw } from 'lucide-react'; // Added RefreshCw icon
+import axios from 'axios';
+// --- THIS IS THE CORRECTED LINE ---
+import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, PackageCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AccountPage({ loggedInUser, orders, ordersLoading, handleLogout }) {
     const [activeTab, setActiveTab] = useState('orders');
-    const updateOrderInList = (updatedOrder) => {
-        // This function will be passed down to the OrderCard to update the UI instantly
-        // Note: This requires orders to be managed in the parent App.jsx component
-        // Since we are not passing a setter, we will rely on page refresh for now.
-        // For a more advanced setup, a 'setOrders' function would be passed from App.jsx
-        window.location.reload();
+
+    const updateOrderInList = () => {
+        // A simple page reload is the easiest way to see the updated status
+        window.location.reload(); 
     };
+
     return (
         <div className="flex-grow bg-slate-50">
             <main className="p-4 sm:p-8">
@@ -45,7 +45,7 @@ export default function AccountPage({ loggedInUser, orders, ordersLoading, handl
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3 }}
                         >
-                            {activeTab === 'orders' && <OrderHistoryView orders={orders} loading={ordersLoading} />}
+                            {activeTab === 'orders' && <OrderHistoryView orders={orders} loading={ordersLoading} onOrderUpdate={updateOrderInList} />}
                             {activeTab === 'settings' && <SettingsView handleLogout={handleLogout} />}
                         </motion.div>
                     </AnimatePresence>
@@ -72,7 +72,7 @@ const TabButton = ({ name, activeTab, setActiveTab, tabId }) => (
     </button>
 );
 
-const OrderHistoryView = ({ orders, loading }) => {
+const OrderHistoryView = ({ orders, loading, onOrderUpdate }) => {
     if (loading) {
         return <OrderSkeletonLoader />;
     }
@@ -90,7 +90,7 @@ const OrderHistoryView = ({ orders, loading }) => {
 
     return (
         <div className="space-y-4">
-            {orders.map(order => <OrderCard key={order.id} order={order} />)}
+            {orders.map(order => <OrderCard key={order.id} order={order} onOrderUpdate={onOrderUpdate} />)}
         </div>
     );
 };
@@ -116,7 +116,6 @@ const SettingsLink = ({ to, icon, text }) => (
     </Link>
 );
 
-// --- MODIFIED: OrderCard now includes the new delivery logic and user actions ---
 const OrderCard = ({ order, onOrderUpdate }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -143,7 +142,7 @@ const OrderCard = ({ order, onOrderUpdate }) => {
             await axios.put(`${import.meta.env.VITE_API_URL}/api/orders/${order.id}/mark-delivered`, {}, {
                 headers: { 'x-auth-token': token }
             });
-            onOrderUpdate(); // This will refresh the page to show the new status
+            onOrderUpdate();
         } catch (err) {
             setError(err.response?.data?.msg || "Failed to update status.");
         } finally {
