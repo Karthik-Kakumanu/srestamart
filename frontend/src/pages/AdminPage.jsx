@@ -40,7 +40,7 @@ export default function AdminPage() {
         const config = { headers: { 'x-admin-token': token } };
 
         try {
-            const [productsRes, usersRes, ordersRes, partnersRes] = await Promise.all([
+            const [productsRes, usersRes, ordersRes, partnersRes, couponsRes] = await Promise.all([
                 axios.get(`${import.meta.env.VITE_API_URL}/api/admin/products`, config),
                 axios.get(`${import.meta.env.VITE_API_URL}/api/admin/users`, config),
                 axios.get(`${import.meta.env.VITE_API_URL}/api/admin/orders`, config),
@@ -52,7 +52,7 @@ export default function AdminPage() {
             setUsers(usersRes.data);
             setOrders(ordersRes.data);
             setDeliveryPartners(partnersRes.data);
-             setCoupons(couponsRes.data);
+            setCoupons(couponsRes.data);
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to fetch admin data.');
         } finally {
