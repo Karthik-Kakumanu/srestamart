@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Users, Package, RefreshCw, PlusCircle, ShoppingCart, ChevronDown, DollarSign, BarChart2, UserCheck, Tag } from 'lucide-react';
+import { Users, Package, RefreshCw, PlusCircle, ShoppingCart, ChevronDown, DollarSign, BarChart2, UserCheck, Tag, Bot } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import EditProductModal from '../components/admin/EditProductModal.jsx';
@@ -378,6 +378,8 @@ const OrdersTable = ({ orders, onAssign }) => (
 const OrderRow = ({ order, onAssign }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
+    const isAutomated = order.delivery_type === 'automated';
+
     return (
         <>
             <tr className="hover:bg-slate-50">
@@ -387,18 +389,32 @@ const OrderRow = ({ order, onAssign }) => {
                 </td>
                 <td className="px-6 py-4">
                     <div className="text-sm text-gray-700">{order.delivery_status}</div>
-                    <div className="text-xs text-gray-500">{order.partner_name ? `by ${order.partner_name}` : 'Unassigned'}</div>
+                    {isAutomated ? (
+                        <div className="text-xs text-blue-500 flex items-center gap-1">
+                            <Bot size={12} /> Automated
+                        </div>
+                    ) : (
+                        <div className="text-xs text-gray-500">{order.partner_name ? `by ${order.partner_name}` : 'Unassigned'}</div>
+                    )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="font-semibold text-gray-800">₹{Number(order.total_amount).toFixed(2)}</div>
-                    <div className="text-xs text-gray-500">{new Date(order.created_at).toLocaleDateString()}</div>
+                    {order.expected_delivery_date ? (
+                        <div className="text-xs text-gray-500">Exp: {new Date(order.expected_delivery_date).toLocaleDateString()}</div>
+                    ) : (
+                        <div className="text-xs text-gray-500">On: {new Date(order.created_at).toLocaleDateString()}</div>
+                    )}
                 </td>
                 <td className="px-6 py-4 text-center">
-                    {order.delivery_status === 'Pending' && (
-                        <button onClick={() => onAssign(order)} className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600 transition-colors">
-                            Assign
-                        </button>
-                    )}
+                    {/* The Assign button is now disabled for automated orders */}
+                    <button 
+                        onClick={() => onAssign(order)} 
+                        disabled={isAutomated || order.delivery_status !== 'Pending'}
+                        className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                        title={isAutomated ? "This order is handled automatically" : ""}
+                    >
+                        Assign
+                    </button>
                 </td>
             </tr>
             {isExpanded && (

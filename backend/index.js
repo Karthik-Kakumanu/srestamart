@@ -596,16 +596,44 @@ app.post('/api/addresses', checkUserToken, async (req, res) => {
 });
 
 
-// --- Orders (User) ---
+// --- MODIFIED: Order Creation now has location-based logic ---
+
 app.post('/api/orders', checkUserToken, async (req, res) => {
   const { userId, cartItems, shippingAddress, totalAmount } = req.body;
   if (req.user.id !== userId) return res.status(403).json({ msg: 'User not authorized.' });
+
+  const addressString = shippingAddress.value.toLowerCase();
+  let deliveryStatus = 'Pending';
+  let deliveryType = 'manual';
+  let expectedDate = null;
+  let status = 'Processing';
+
+  if (addressString.includes('hyderabad')) {
+      // Rule A: Manual delivery for Hyderabad
+      deliveryType = 'manual';
+      deliveryStatus = 'Pending';
+  } else if (addressString.includes('telangana') || addressString.includes('andhra pradesh') || addressString.includes('a.p')) {
+      // Rule B: Automated 2-day delivery for Telangana (non-Hyd) and AP
+      deliveryType = 'automated';
+      deliveryStatus = 'Out for Delivery';
+      status = 'Out for Delivery';
+      expectedDate = new Date();
+      expectedDate.setDate(expectedDate.getDate() + 2);
+  } else {
+      // Rule C: Automated 4-day delivery for Rest of India
+      deliveryType = 'automated';
+      deliveryStatus = 'Out for Delivery';
+      status = 'Out for Delivery';
+      expectedDate = new Date();
+      expectedDate.setDate(expectedDate.getDate() + 4);
+  }
+
   try {
     const orderQuery = `
-      INSERT INTO orders (user_id, items, total_amount, shipping_address, status, delivery_status)
-      VALUES ($1, $2, $3, $4, 'Processing', 'Pending') RETURNING id;
+      INSERT INTO orders (user_id, items, total_amount, shipping_address, status, delivery_status, delivery_type, expected_delivery_date)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;
     `;
-    const orderResult = await pool.query(orderQuery, [userId, JSON.stringify(cartItems), totalAmount, shippingAddress]);
+    const orderResult = await pool.query(orderQuery, [userId, JSON.stringify(cartItems), totalAmount, shippingAddress, status, deliveryStatus, deliveryType, expectedDate]);
     res.status(201).json({ success: true, orderId: orderResult.rows[0].id, message: 'Order placed successfully!' });
   } catch (err) {
     console.error('Error creating order:', err.message);
@@ -613,9 +641,35 @@ app.post('/api/orders', checkUserToken, async (req, res) => {
   }
 });
 
+// --- NEW: Endpoint for user to mark their order as delivered ---
+app.put('/api/orders/:orderId/mark-delivered', checkUserToken, async (req, res) => {
+    const { orderId } = req.params;
+    const userId = req.user.id;
+
+    try {
+        const result = await pool.query(
+            `UPDATE orders 
+             SET delivery_status = 'Delivered', status = 'Completed'
+             WHERE id = $1 AND user_id = $2 AND delivery_type = 'automated'
+             RETURNING *`,
+            [orderId, userId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ msg: 'Order not found or cannot be updated at this time.' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error marking order as delivered:', err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
 app.get('/api/orders', checkUserToken, async (req, res) => {
   const userId = req.user.id;
   try {
+    // We already fetch all necessary columns, no change needed here.
     const query = `
       SELECT
         o.*,

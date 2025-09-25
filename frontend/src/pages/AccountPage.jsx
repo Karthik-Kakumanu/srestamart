@@ -6,7 +6,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AccountPage({ loggedInUser, orders, ordersLoading, handleLogout }) {
     const [activeTab, setActiveTab] = useState('orders');
-
+    const updateOrderInList = (updatedOrder) => {
+        // This function will be passed down to the OrderCard to update the UI instantly
+        // Note: This requires orders to be managed in the parent App.jsx component
+        // Since we are not passing a setter, we will rely on page refresh for now.
+        // For a more advanced setup, a 'setOrders' function would be passed from App.jsx
+        window.location.reload();
+    };
     return (
         <div className="flex-grow bg-slate-50">
             <main className="p-4 sm:p-8">
@@ -110,56 +116,56 @@ const SettingsLink = ({ to, icon, text }) => (
     </Link>
 );
 
-const OrderCard = ({ order }) => {
+// --- MODIFIED: OrderCard now includes the new delivery logic and user actions ---
+const OrderCard = ({ order, onOrderUpdate }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    // --- NEW: State to hold the order data that can be updated ---
-    const [currentOrder, setCurrentOrder] = useState(order);
-    const [isStatusLoading, setIsStatusLoading] = useState(false);
-    const [statusError, setStatusError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
     const statusInfo = {
         Processing: { color: "bg-yellow-100 text-yellow-700" },
         Assigned: { color: "bg-blue-100 text-blue-700" },
         'Out for Delivery': { color: "bg-cyan-100 text-cyan-700" },
         Delivered: { color: "bg-green-100 text-green-700" },
+        Completed: { color: "bg-green-100 text-green-700" },
         Cancelled: { color: "bg-red-100 text-red-700" },
         Pending: { color: "bg-gray-100 text-gray-700" }
     };
 
-    // --- NEW: Function to call the backend API ---
-    const handleRefreshStatus = async (e) => {
-        e.stopPropagation(); // Prevents the card from collapsing when the button is clicked
-        setIsStatusLoading(true);
-        setStatusError('');
+    const handleMarkAsDelivered = async (e) => {
+        e.stopPropagation();
+        if (!window.confirm("Are you sure you have received this order?")) return;
+        
+        setIsSubmitting(true);
+        setError('');
         try {
-            // This is the API call to your backend.
-            // Replace with your actual API URL from environment variables.
-            const response = await axios.get(`/api/orders/${currentOrder.id}/status`);
-            
-            // Update the order details with the fresh data from the database
-            setCurrentOrder(prevOrder => ({ ...prevOrder, ...response.data }));
-
-        } catch (error) {
-            console.error("Failed to refresh order status:", error);
-            setStatusError('Could not update status.');
+            const token = localStorage.getItem('token');
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/orders/${order.id}/mark-delivered`, {}, {
+                headers: { 'x-auth-token': token }
+            });
+            onOrderUpdate(); // This will refresh the page to show the new status
+        } catch (err) {
+            setError(err.response?.data?.msg || "Failed to update status.");
         } finally {
-            setIsStatusLoading(false);
+            setIsSubmitting(false);
         }
     };
 
-    const currentStatus = statusInfo[currentOrder.status] || statusInfo.Processing;
+    const currentStatusStyle = statusInfo[order.delivery_status] || statusInfo.Pending;
+    const isAutomated = order.delivery_type === 'automated';
+    const isDelivered = order.delivery_status === 'Delivered' || order.status === 'Completed';
 
     return (
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             <div className="p-4 sm:p-5 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setIsExpanded(!isExpanded)}>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <p className="font-bold text-lg text-red-700">Order #{currentOrder.id}</p>
-                        <p className="text-sm text-gray-500">Date: {new Date(currentOrder.created_at).toLocaleDateString()}</p>
+                        <p className="font-bold text-lg text-red-700">Order #{order.id}</p>
+                        <p className="text-sm text-gray-500">Date: {new Date(order.created_at).toLocaleDateString()}</p>
                     </div>
                     <div className="flex items-center mt-3 sm:mt-0">
-                        <span className={`px-3 py-1 text-xs font-bold rounded-full ${currentStatus.color}`}>
-                            {currentOrder.status}
+                        <span className={`px-3 py-1 text-xs font-bold rounded-full ${currentStatusStyle.color}`}>
+                            {order.delivery_status}
                         </span>
                         <ChevronDown className={`ml-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                     </div>
@@ -168,60 +174,56 @@ const OrderCard = ({ order }) => {
             
             <AnimatePresence>
                 {isExpanded && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                    >
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                         <div className="border-t border-gray-100 p-4 sm:p-5 bg-slate-50">
-                            {/* --- NEW: Refresh button and status message --- */}
-                            <div className="flex justify-between items-center mb-4">
-                                <h4 className="font-semibold text-gray-700">Order Details:</h4>
-                                <button 
-                                    onClick={handleRefreshStatus}
-                                    disabled={isStatusLoading}
-                                    className="flex items-center gap-2 text-sm text-red-600 font-semibold px-3 py-1 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-wait"
-                                >
-                                    <RefreshCw size={14} className={isStatusLoading ? 'animate-spin' : ''} />
-                                    {isStatusLoading ? 'Checking...' : 'Refresh Status'}
-                                </button>
-                            </div>
-                            {statusError && <p className="text-xs text-red-500 text-right mb-2">{statusError}</p>}
                             
                             <h4 className="font-semibold mb-2 text-gray-700">Items Ordered:</h4>
                             <ul className="text-sm text-gray-600 list-disc list-inside mb-4">
-                                {currentOrder.items?.map((item, index) => (
+                                {order.items?.map((item, index) => (
                                     <li key={index}>{item.name} ({item.variantLabel}) (x{item.quantity})</li>
                                 ))}
                             </ul>
                             
                             <h4 className="font-semibold mb-2 text-gray-700">Shipping Address:</h4>
-                            <p className="text-sm text-gray-600 mb-4">
-                                {currentOrder.shipping_address ? `${currentOrder.shipping_address.label}: ${currentOrder.shipping_address.value}` : 'No address provided.'}
-                            </p>
+                            <p className="text-sm text-gray-600 mb-4">{order.shipping_address?.value}</p>
 
-                            {currentOrder.partner_name && (
-                                <div className="mt-4 pt-4 border-t text-sm">
-                                    <p className="font-semibold text-gray-700">Delivery Partner:</p>
-                                    <div className="flex items-center gap-2 mt-1 text-gray-600">
-                                        <UserCheck size={16} />
-                                        <span>{currentOrder.partner_name}</span>
+                            <div className="mt-4 pt-4 border-t text-sm">
+                                {isAutomated && !isDelivered && (
+                                    <div className="mb-4">
+                                        <p className="font-semibold text-gray-700">Expected Delivery:</p>
+                                        <div className="flex items-center gap-2 mt-1 text-blue-600">
+                                            <Truck size={16} />
+                                            <span>By {new Date(order.expected_delivery_date).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                                
+                                {order.partner_name && (
+                                     <div className="mb-4">
+                                        <p className="font-semibold text-gray-700">Delivery Partner:</p>
+                                        <p className="text-gray-600 mt-1">{order.partner_name}</p>
+                                    </div>
+                                )}
 
-                            {currentOrder.delivery_status === 'Out for Delivery' && (
-                                <div className="mt-4 pt-4 border-t">
-                                    <h4 className="font-semibold text-gray-700">Live Tracking</h4>
-                                    <div className="mt-2 p-4 bg-blue-50 text-blue-800 rounded-lg">
-                                        <p>Your order is on the way! Live map tracking will be available here soon.</p>
+                                {isAutomated && !isDelivered && (
+                                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                        <h5 className="font-bold text-green-800">Have you received your order?</h5>
+                                        <p className="text-xs text-green-700 mb-3">Please click the button below to confirm delivery.</p>
+                                        <button 
+                                            onClick={handleMarkAsDelivered}
+                                            disabled={isSubmitting}
+                                            className="bg-green-600 text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 flex items-center gap-2"
+                                        >
+                                            <PackageCheck size={16} />
+                                            {isSubmitting ? 'Confirming...' : 'Mark as Delivered'}
+                                        </button>
+                                        {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
 
                             <div className="text-right font-bold text-gray-800 text-lg border-t pt-3 mt-3">
-                                Total: ₹{Number(currentOrder.total_amount).toFixed(2)}
+                                Total: ₹{Number(order.total_amount).toFixed(2)}
                             </div>
                         </div>
                     </motion.div>
