@@ -17,6 +17,7 @@ import PaymentPage from './pages/PaymentPage.jsx';
 import OrderSuccessPage from './pages/OrderSuccessPage.jsx';
 import VendorPage from './pages/VendorPage.jsx';
 import FranchisePage from './pages/FranchisePage.jsx';
+import AboutUsPage from './pages/AboutUsPage.jsx'; // --- NEW: Import the new page
 
 // Admin Imports
 import AdminLoginPage from './pages/AdminLoginPage.jsx';
@@ -137,6 +138,7 @@ export default function App() {
             <Route path="vendor" element={<VendorPage />} />
             <Route path="franchise" element={<FranchisePage />} />
             <Route path="coupons" element={<CouponsPage isFirstOrder={isFirstOrder} />} />
+            <Route path="about-us" element={<AboutUsPage />} />
             <Route path="help" element={<HelpCenterPage />} />
             <Route path="privacy" element={<PrivacyPolicyPage />} />
 

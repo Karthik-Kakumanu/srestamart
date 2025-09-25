@@ -98,6 +98,7 @@ const OrderHistoryView = ({ orders, loading, onOrderUpdate }) => {
 const SettingsView = ({ handleLogout }) => (
     <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg">
         <div className="divide-y divide-gray-100">
+            <SettingsLink to="/about-us" icon={<Info size={20} />} text="About Us" />
             <SettingsLink to="/account/addresses" icon={<MapPin size={20} />} text="Manage Addresses" />
             <SettingsLink to="/privacy" icon={<Shield size={20} />} text="Privacy Policy" />
             <SettingsLink to="/help" icon={<HelpCircle size={20} />} text="Help Center" />
@@ -107,7 +108,6 @@ const SettingsView = ({ handleLogout }) => (
         </div>
     </div>
 );
-
 const SettingsLink = ({ to, icon, text }) => (
     <Link to={to} className="flex items-center p-4 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
         <span className="text-gray-500">{icon}</span>

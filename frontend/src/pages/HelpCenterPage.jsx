@@ -62,8 +62,8 @@ export default function HelpCenterPage() {
                         <ContactCard 
                             icon={<Instagram />} 
                             title="Follow Us" 
-                            content="@sresta_mart"
-                            href="https://instagram.com/sresta_mart"
+                            content="@srestamart"
+                            href="https://instagram.com/srestamart"
                         />
                     </div>
 

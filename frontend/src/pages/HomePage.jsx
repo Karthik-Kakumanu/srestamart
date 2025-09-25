@@ -1,14 +1,17 @@
+// src/pages/HomePage.jsx (Full Updated Code)
+
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Heart, BrainCircuit, Bone, Egg, Leaf, Milk, Wheat, CookingPot, Beef,
     Microscope, Shield, Sun, Droplets, BatteryCharging, Sparkles, TestTube, FilterX, Vegan, Activity,
-    Menu, X, ChevronRight, User, Truck, Search, ShoppingCart, Store
+    Menu, X, ChevronRight, User, Truck, Search, ShoppingCart, Store, Info
 } from 'lucide-react';
 import logoIcon from '../../images/icon.png';
 
-const CATEGORY_ORDER = ['meatpoultry', 'eggs', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets'];
+const CATEGORY_ORDER = ['meatpoultry', 'eggs', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets', 'aboutus'];
 
 const categoryIcons = {
     meatpoultry: <Beef size={18} className="text-red-600" />,
@@ -18,80 +21,31 @@ const categoryIcons = {
     dryfruits: <Leaf size={18} className="text-green-500" />,
     oils: <Leaf size={18} className="text-amber-600" />,
     millets: <Wheat size={18} className="text-yellow-600" />,
+    aboutus: <Info size={18} className="text-blue-600" />,
 };
 
-// --- NEW: DETAILED PRODUCT INFO "DATABASE" ---
-// This data is stored here but will NOT be displayed on the home page.
-// It will only be passed to the cart when a product is added.
-// IMPORTANT: The keys (e.g., 'sonali-1kg') MUST match the `variant.id` from your database for this to work.
 const productDetailsData = {
-    // --- Meat & Poultry Examples ---
     'sonali-chicken-1kg': { 
-        nutrition: [
-            { label: 'Protein', value: '25g' },
-            { label: 'Fat', value: '14g' },
-            { label: 'Calories', value: '239 kcal' },
-            { label: 'Iron', value: '8%' },
-        ],
-        benefits: [
-            "Rich in lean protein for muscle development.",
-            "Lower fat content compared to broiler chicken.",
-            "Free-range and ethically raised, ensuring higher nutrient quality.",
-            "Contains essential amino acids for overall health.",
-        ],
+        nutrition: [ { label: 'Protein', value: '25g' }, { label: 'Fat', value: '14g' }, { label: 'Calories', value: '239 kcal' }, { label: 'Iron', value: '8%' }, ],
+        benefits: [ "Rich in lean protein for muscle development.", "Lower fat content compared to broiler chicken.", "Free-range and ethically raised, ensuring higher nutrient quality.", "Contains essential amino acids for overall health.", ],
         cooking_tips: "Best for curries and slow-roasting to retain its unique flavor and texture."
     },
     'kadaknath-chicken-1kg': { 
-        nutrition: [
-            { label: 'Protein', value: '27g' },
-            { label: 'Fat', value: '10g' },
-            { label: 'Cholesterol', value: 'Low' },
-            { label: 'Iron', value: '25%' },
-        ],
-        benefits: [
-            "Extremely high in iron and protein, known for medicinal properties.",
-            "Significantly lower in fat and cholesterol.",
-            "Believed to boost stamina and treat specific ailments in traditional medicine.",
-            "The black meat is a rich source of antioxidants.",
-        ],
+        nutrition: [ { label: 'Protein', value: '27g' }, { label: 'Fat', value: '10g' }, { label: 'Cholesterol', value: 'Low' }, { label: 'Iron', value: '25%' }, ],
+        benefits: [ "Extremely high in iron and protein, known for medicinal properties.", "Significantly lower in fat and cholesterol.", "Believed to boost stamina and treat specific ailments in traditional medicine.", "The black meat is a rich source of antioxidants.", ],
         cooking_tips: "The meat is firm; it is excellent for slow-cooked, herbal preparations or hearty stews."
     },
-
-    // --- Egg Examples ---
-    'natu-kodi-eggs-12': { // Example ID for a dozen eggs
-        nutrition: [
-            { label: 'Vitamin B12', value: '50% DV' },
-            { label: 'Omega-3', value: '200mg' },
-            { label: 'Calcium', value: '15% DV' },
-            { label: 'Cholesterol', value: '185mg' },
-        ],
-        benefits: [
-            "Boosts brain function and memory.",
-            "Strengthens bones and helps prevent osteoporosis.",
-            "Essential for hormonal balance in women.",
-            "Golden yolks indicate high levels of carotenoids.",
-        ],
+    'natu-kodi-eggs-12': {
+        nutrition: [ { label: 'Vitamin B12', value: '50% DV' }, { label: 'Omega-3', value: '200mg' }, { label: 'Calcium', value: '15% DV' }, { label: 'Cholesterol', value: '185mg' }, ],
+        benefits: [ "Boosts brain function and memory.", "Strengthens bones and helps prevent osteoporosis.", "Essential for hormonal balance in women.", "Golden yolks indicate high levels of carotenoids.", ],
         cooking_tips: "Perfect for boiling, omelettes, or as a nutrient-rich addition to any meal."
     },
-    
-    // --- Pickle Examples ---
     'country-chicken-pickle-500g': {
-        nutrition: [
-            { label: 'Serving Size', value: '1 tbsp' },
-            { label: 'Calories', value: '45 kcal' },
-            { label: 'Sodium', value: '250mg' },
-        ],
-        benefits: [
-            "Made with authentic, home-ground spices for a traditional taste.",
-            "Uses premium cold-pressed oil, which is healthier than refined oils.",
-            "Contains no artificial preservatives or colors.",
-            "A delicious way to add a protein kick to your meals.",
-        ],
+        nutrition: [ { label: 'Serving Size', value: '1 tbsp' }, { label: 'Calories', value: '45 kcal' }, { label: 'Sodium', value: '250mg' }, ],
+        benefits: [ "Made with authentic, home-ground spices for a traditional taste.", "Uses premium cold-pressed oil, which is healthier than refined oils.", "Contains no artificial preservatives or colors.", "A delicious way to add a protein kick to your meals.", ],
         cooking_tips: "Pairs perfectly with hot rice, roti, or as a side for curd rice."
     },
-    // ... ADD ALL YOUR OTHER PRODUCT DETAILS HERE ...
 };
-
 
 const categoryFeatures = {
     eggs: { 
@@ -99,190 +53,70 @@ const categoryFeatures = {
         subtitle: `"Health is the true wealth for our girl child, girls, and women."`,
         description: "Our Natu Kodi eggs are nutritional dynamos, carefully selected for their extraordinary benefits that empower wellness at every life stage.",
         imageUrl: "https://images.pexels.com/photos/162712/egg-white-food-protein-162712.jpeg?auto=compress&cs=tinysrgb&w=600",
-        features: [
-            { icon: <Heart className="text-red-500"/>, title: "Hormonal Harmony", text: "Abundant in Omega fatty acids, crucial for balancing hormones in girls and women." },
-            { icon: <Bone className="text-red-500"/>, title: "Superior Calcium Boost", text: "Naturally loaded with calcium to fortify bones throughout life." },
-            { icon: <BrainCircuit className="text-red-500"/>, title: "Memory Enhancement", text: "A prime source of Vitamin B12, enhancing cognitive sharpness and memory in kids." }
-        ]
+        features: [ { icon: <Heart className="text-red-500"/>, title: "Hormonal Harmony", text: "Abundant in Omega fatty acids, crucial for balancing hormones in girls and women." }, { icon: <Bone className="text-red-500"/>, title: "Superior Calcium Boost", text: "Naturally loaded with calcium to fortify bones throughout life." }, { icon: <BrainCircuit className="text-red-500"/>, title: "Memory Enhancement", text: "A prime source of Vitamin B12, enhancing cognitive sharpness and memory in kids." } ]
     },
     meatpoultry: { 
         title: "Premium Organic Meats & Poultry",
         subtitle: `"Fresh, flavorful, and responsibly sourced."`,
         description: "Our meats are from sustainable farms, providing high-protein options with rich taste for gourmet cooking.",
         imageUrl: "https://t4.ftcdn.net/jpg/12/57/80/51/240_F_1257805117_aFXp6VSt1JSL9tfAh9FwfPkIR73SPBdM.jpg",
-        features: [
-            { icon: <Beef className="text-red-500"/>, title: "Protein Powerhouse", text: "Essential for muscle repair and growth." },
-            { icon: <Shield className="text-red-500"/>, title: "Ethical Sourcing", text: "From farms prioritizing animal welfare." },
-            { icon: <Sparkles className="text-red-500"/>, title: "Flavorful Variety", text: "Cuts perfect for diverse cuisines." }
-        ]
+        features: [ { icon: <Beef className="text-red-500"/>, title: "Protein Powerhouse", text: "Essential for muscle repair and growth." }, { icon: <Shield className="text-red-500"/>, title: "Ethical Sourcing", text: "From farms prioritizing animal welfare." }, { icon: <Sparkles className="text-red-500"/>, title: "Flavorful Variety", text: "Cuts perfect for diverse cuisines." } ]
     },
-    // ... other categoryFeatures remain the same
     pickles: {
         title: "Exquisite Homemade Flavor Symphony",
         subtitle: `"Tradition's taste in every delightful bite."`,
         description: "Crafted with cherished family recipes and natural fermentation, each jar bursts with authentic, healthful flavors that elevate every meal.",
         imageUrl: "https://i.pinimg.com/736x/01/67/db/0167db2dc357d38a25024206507a8adb.jpg",
-        features: [
-            { icon: <Microscope className="text-red-500"/>, title: "Probiotic Powerhouse", text: "Fermented naturally for gut-healthy probiotics that enhance digestion." },
-            { icon: <Leaf className="text-red-500"/>, title: "Pure Natural Essence", text: "Sun-dried ingredients and premium oils, sans artificial additives." },
-            { icon: <Shield className="text-red-500"/>, title: "Immunity Fortifier", text: "Packed with antioxidants and Vitamin K for robust immune support." }
-        ]
+        features: [ { icon: <Microscope className="text-red-500"/>, title: "Probiotic Powerhouse", text: "Fermented naturally for gut-healthy probiotics that enhance digestion." }, { icon: <Leaf className="text-red-500"/>, title: "Pure Natural Essence", text: "Sun-dried ingredients and premium oils, sans artificial additives." }, { icon: <Shield className="text-red-500"/>, title: "Immunity Fortifier", text: "Packed with antioxidants and Vitamin K for robust immune support." } ]
     },
     dairy: {
         title: "Exquisite Farm-Fresh Indulgence",
         subtitle: `"Pure, creamy delights straight from local farms."`,
         description: "Indulge in the superior quality of our dairy range, from A2 milk to opulent ghee, vital for nourishing daily vitality.",
         imageUrl: "https://images.pexels.com/photos/799273/pexels-photo-799273.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-        features: [
-            { icon: <Bone className="text-red-500"/>, title: "Protein & Calcium Rich", text: "Key for strong bones, teeth, and muscle growth." },
-            { icon: <Sun className="text-red-500"/>, title: "Vitamin D Source", text: "Aids calcium absorption and bolsters immunity." },
-            { icon: <Droplets className="text-red-500"/>, title: "Unadulterated Purity", text: "No hormones or preservatives—just natural excellence." }
-        ]
+        features: [ { icon: <Bone className="text-red-500"/>, title: "Protein & Calcium Rich", text: "Key for strong bones, teeth, and muscle growth." }, { icon: <Sun className="text-red-500"/>, title: "Vitamin D Source", text: "Aids calcium absorption and bolsters immunity." }, { icon: <Droplets className="text-red-500"/>, title: "Unadulterated Purity", text: "No hormones or preservatives—just natural excellence." } ]
     },
     dryfruits: {
         title: "Nature's Elite Nutrient-Packed Snacks",
         subtitle: `"Daily energy and wellness in every handful."`,
         description: "Our premium dry fruits and nuts are vitamin-rich treasures, offering healthy fats for guilt-free snacking anytime.",
         imageUrl: "https://i.pinimg.com/736x/ac/c0/fd/acc0fd69020f14346772ed7eaf99049f.jpg",
-        features: [
-            { icon: <Heart className="text-red-500"/>, title: "Heart-Protective", text: "Full of healthy fats, fiber, and antioxidants for cardiovascular wellness." },
-            { icon: <BatteryCharging className="text-red-500"/>, title: "Instant Energy Surge", text: "Natural boost for workouts or midday slumps." },
-            { icon: <Sparkles className="text-red-500"/>, title: "Vitamin & Mineral Haven", text: "Essential nutrients like potassium, magnesium, and iron." }
-        ]
+        features: [ { icon: <Heart className="text-red-500"/>, title: "Heart-Protective", text: "Full of healthy fats, fiber, and antioxidants for cardiovascular wellness." }, { icon: <BatteryCharging className="text-red-500"/>, title: "Instant Energy Surge", text: "Natural boost for workouts or midday slumps." }, { icon: <Sparkles className="text-red-500"/>, title: "Vitamin & Mineral Haven", text: "Essential nutrients like potassium, magnesium, and iron." } ]
     },
     oils: {
         title: "Luxurious Cold-Pressed Liquid Gold",
         subtitle: `"Purity distilled in every drop."`,
         description: "Traditionally cold-pressed to preserve nutrients, flavor, and aroma, transforming your cooking into a healthful art.",
         imageUrl: "https://i.pinimg.com/736x/e5/0b/c2/e50bc2348c18f3d7c326d0c83b563f44.jpg",
-        features: [
-            { icon: <TestTube className="text-red-500"/>, title: "Nutrient Preservation", text: "Vitamins and antioxidants intact, superior to refined alternatives." },
-            { icon: <Heart className="text-red-500"/>, title: "Healthy Fat Abundance", text: "Monounsaturated and polyunsaturated fats for heart health." },
-            { icon: <FilterX className="text-red-500"/>, title: "Chemical-Free Assurance", text: "No solvents or chemicals—pure extraction mastery." }
-        ]
+        features: [ { icon: <TestTube className="text-red-500"/>, title: "Nutrient Preservation", text: "Vitamins and antioxidants intact, superior to refined alternatives." }, { icon: <Heart className="text-red-500"/>, title: "Healthy Fat Abundance", text: "Monounsaturated and polyunsaturated fats for heart health." }, { icon: <FilterX className="text-red-500"/>, title: "Chemical-Free Assurance", text: "No solvents or chemicals—pure extraction mastery." } ]
     },
     millets: {
         title: "The Timeless Supergrain Revolution",
         subtitle: `"Wholesome ancient power for modern living."`,
         description: "Gluten-free, fiber-rich millets offer a low-GI alternative to staples, ideal for sustained health and energy.",
         imageUrl: "https://i.pinimg.com/1200x/d3/7f/16/d37f167928df7914e368caa238907616.jpg",
-        features: [
-            { icon: <Wheat className="text-red-500"/>, title: "Fiber-Rich Delight", text: "Aids digestion, weight control, and satiety." },
-            { icon: <Vegan className="text-red-500"/>, title: "Gluten-Free Naturally", text: "Perfect for gluten sensitivities or celiac needs." },
-            { icon: <Activity className="text-red-500"/>, title: "Blood Sugar Stabilizer", text: "Low GI prevents sugar spikes effectively." }
-        ]
+        features: [ { icon: <Wheat className="text-red-500"/>, title: "Fiber-Rich Delight", text: "Aids digestion, weight control, and satiety." }, { icon: <Vegan className="text-red-500"/>, title: "Gluten-Free Naturally", text: "Perfect for gluten sensitivities or celiac needs." }, { icon: <Activity className="text-red-500"/>, title: "Blood Sugar Stabilizer", text: "Low GI prevents sugar spikes effectively." } ]
     },
 };
 
-const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, features }) => (
-    <motion.section key={title} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }} className="py-12 px-4 sm:px-6 mt-12 rounded-2xl bg-black/20 backdrop-blur-lg shadow-lg ring-1 ring-white/10" >
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.2 }} >
-                <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">{title}</h2>
-                <p className="mt-2 text-red-400 font-medium italic text-lg sm:text-xl">{subtitle}</p>
-                <p className="mt-4 text-gray-200 text-sm sm:text-base leading-relaxed">{description}</p>
-                <div className="mt-6 space-y-6">
-                    {Array.isArray(features) && features.map((feature, index) => (
-                        <motion.div key={index} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: index * 0.1 }} className="flex items-start gap-3" >
-                            <div className="flex-shrink-0 w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center shadow-sm">
-                                {React.cloneElement(feature.icon, { size: 24 })}
-                            </div>
-                            <div>
-                                <h4 className="font-semibold text-lg text-white">{feature.title}</h4>
-                                <p className="mt-1 text-gray-300 text-sm">{feature.text}</p>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.4 }} className="relative h-80 md:h-96 rounded-2xl shadow-lg overflow-hidden" >
-                <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-2xl filter brightness-90" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-            </motion.div>
-        </div>
-    </motion.section>
-);
-
-// --- MODIFIED: ProductCard now accepts productDetailsData as a prop ---
+const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, features }) => ( <motion.section key={title} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }} className="py-12 px-4 sm:px-6 mt-12 rounded-2xl bg-black/20 backdrop-blur-lg shadow-lg ring-1 ring-white/10" > <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center"> <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.2 }} > <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">{title}</h2> <p className="mt-2 text-red-400 font-medium italic text-lg sm:text-xl">{subtitle}</p> <p className="mt-4 text-gray-200 text-sm sm:text-base leading-relaxed">{description}</p> <div className="mt-6 space-y-6"> {Array.isArray(features) && features.map((feature, index) => ( <motion.div key={index} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: index * 0.1 }} className="flex items-start gap-3" > <div className="flex-shrink-0 w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center shadow-sm"> {React.cloneElement(feature.icon, { size: 24 })} </div> <div> <h4 className="font-semibold text-lg text-white">{feature.title}</h4> <p className="mt-1 text-gray-300 text-sm">{feature.text}</p> </div> </motion.div> ))} </div> </motion.div> <motion.div initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.4 }} className="relative h-80 md:h-96 rounded-2xl shadow-lg overflow-hidden" > <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-2xl filter brightness-90" /> <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div> </motion.div> </div> </motion.section> );
 const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAddToCart, productDetailsData }) => {
     const hasVariants = product.variants && product.variants.length > 0;
     const selectedVariantId = selectedVariants[product.id] || (hasVariants ? product.variants[0].id : null);
     const currentVariant = hasVariants ? product.variants.find(v => v.id === selectedVariantId) : null;
     const currentPrice = currentVariant ? currentVariant.price : 'N/A';
-
     const handleAddToCartClick = (e) => {
         if (!currentVariant) return;
-
-        // --- MODIFIED: Look up details and pass them with the product ---
-        // Find the specific details for the selected variant
-        const details = productDetailsData[currentVariant.id] || {}; // Use empty object as fallback
-
-        // Pass an object containing the product, the selected variant, AND the details
+        const details = productDetailsData[currentVariant.id] || {};
         handleAddToCart({ ...product, selectedVariant: currentVariant, details: details }, e);
     };
-
-    return (
-        <motion.div variants={{ hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1 } }} className="bg-white/40 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col group" whileHover={{ y: -8 }} >
-            <div className="w-full aspect-[4/3] overflow-hidden relative">
-                <img src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm"> New </div>
-            </div>
-            <div className="p-4 flex flex-col flex-grow">
-                <h3 className="font-semibold text-base sm:text-lg text-gray-900 mb-2">{product.name}</h3>
-                <p className="text-xs text-gray-700 mb-3 flex-grow line-clamp-3">{product.description}</p>
-                <div className="mb-3 min-h-[32px]">
-                    {hasVariants && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {product.variants.map(variant => {
-                                const isSelected = currentVariant?.id === variant.id;
-                                return (
-                                    <button key={variant.id} onClick={() => handleVariantChange(product.id, variant.id)} className={`px-3 py-1 text-xs font-medium rounded-full border transition-all duration-300 ${ isSelected ? 'bg-red-600 border-red-700 text-white shadow-md' : 'bg-white/60 border-gray-300 text-gray-800 hover:bg-white/90 hover:shadow-sm' }`} >
-                                        {variant.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-                <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-300/70">
-                    {hasVariants ? (
-                        <>
-                            <span className="text-lg font-bold text-red-600">₹{currentPrice}</span>
-                            {/* --- MODIFIED: The button now calls our new handler function --- */}
-                            <button onClick={handleAddToCartClick} className="flex items-center gap-1.5 text-white px-3 py-1.5 text-xs font-semibold rounded-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 disabled:bg-gray-400 transition-all shadow-md hover:shadow-lg" disabled={!currentVariant} >
-                                <ShoppingCart size={14} /> Add
-                            </button>
-                        </>
-                    ) : (
-                        <span className="text-xs font-medium text-gray-600 w-full text-center">Coming Soon</span>
-                    )}
-                </div>
-            </div>
-        </motion.div>
-    );
+    return ( <motion.div variants={{ hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1 } }} className="bg-white/40 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col group" whileHover={{ y: -8 }} > <div className="w-full aspect-[4/3] overflow-hidden relative"> <img src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" /> <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm"> New </div> </div> <div className="p-4 flex flex-col flex-grow"> <h3 className="font-semibold text-base sm:text-lg text-gray-900 mb-2">{product.name}</h3> <p className="text-xs text-gray-700 mb-3 flex-grow line-clamp-3">{product.description}</p> <div className="mb-3 min-h-[32px]"> {hasVariants && ( <div className="flex items-center gap-2 flex-wrap"> {product.variants.map(variant => { const isSelected = currentVariant?.id === variant.id; return ( <button key={variant.id} onClick={() => handleVariantChange(product.id, variant.id)} className={`px-3 py-1 text-xs font-medium rounded-full border transition-all duration-300 ${ isSelected ? 'bg-red-600 border-red-700 text-white shadow-md' : 'bg-white/60 border-gray-300 text-gray-800 hover:bg-white/90 hover:shadow-sm' }`} > {variant.label} </button> ); })} </div> )} </div> <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-300/70"> {hasVariants ? ( <> <span className="text-lg font-bold text-red-600">₹{currentPrice}</span> <button onClick={handleAddToCartClick} className="flex items-center gap-1.5 text-white px-3 py-1.5 text-xs font-semibold rounded-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 disabled:bg-gray-400 transition-all shadow-md hover:shadow-lg" disabled={!currentVariant} > <ShoppingCart size={14} /> Add </button> </> ) : ( <span className="text-xs font-medium text-gray-600 w-full text-center">Coming Soon</span> )} </div> </div> </motion.div> );
 };
-
-const SkeletonCard = () => (
-    <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg overflow-hidden animate-pulse">
-        <div className="w-full aspect-[4/3] bg-gray-300"></div>
-        <div className="p-4">
-            <div className="h-5 bg-gray-300 rounded w-4/5 mb-2"></div>
-            <div className="h-3 bg-gray-300 rounded w-full mb-3"></div>
-            <div className="h-3 bg-gray-300 rounded w-3/5 mb-3"></div>
-            <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-300/70">
-                <div className="h-6 bg-gray-300 rounded w-1/4"></div>
-                <div className="h-8 bg-gray-300 rounded-full w-2/5"></div>
-            </div>
-        </div>
-    </div>
-);
-
-const MEAT_POULTRY_ORDER = ['sonali', 'kadaknath', 'turkey', 'guinea fowl', 'duck', 'rabbit', 'goat'];
-const PICKLE_KEYWORD_ORDER = ['country chicken', 'chicken', 'mutton', 'prawn', 'fish', 'seafood'];
+const SkeletonCard = () => ( <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg overflow-hidden animate-pulse"> <div className="w-full aspect-[4/3] bg-gray-300"></div> <div className="p-4"> <div className="h-5 bg-gray-300 rounded w-4/5 mb-2"></div> <div className="h-3 bg-gray-300 rounded w-full mb-3"></div> <div className="h-3 bg-gray-300 rounded w-3/5 mb-3"></div> <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-300/70"> <div className="h-6 bg-gray-300 rounded w-1/4"></div> <div className="h-8 bg-gray-300 rounded-full w-2/5"></div> </div> </div> </div> );
 
 export default function HomePage({ handleAddToCart }) {
     const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState(CATEGORY_ORDER);
+    const [categories] = useState(CATEGORY_ORDER);
     const [selectedCategory, setSelectedCategory] = useState(CATEGORY_ORDER[0]);
     const [productsLoading, setProductsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -291,7 +125,6 @@ export default function HomePage({ handleAddToCart }) {
     const [totalPages, setTotalPages] = useState(0);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-
     const categoryVideos = {
         eggs: "/videos/eggs.mp4",
         meatpoultry: "/videos/eggs1.mp4",
@@ -303,23 +136,24 @@ export default function HomePage({ handleAddToCart }) {
     };
 
     useEffect(() => {
-        if (!selectedCategory) return;
+        if (!selectedCategory || selectedCategory === 'aboutus') {
+            setProductsLoading(false);
+            return;
+        };
         const fetchProducts = async () => {
             setProductsLoading(true);
             setError('');
             try {
                 const apiCategory = selectedCategory === 'meatpoultry' ? 'livebirds' : selectedCategory;
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?page=${currentPage}&limit=12&category=${apiCategory}`);
-
                 if (res.data && Array.isArray(res.data.products)) {
                     let fetchedProducts = res.data.products.map(p => ({ ...p, category: p.category.toLowerCase().replace(/\s+/g, '') }));
-
                     if (selectedCategory === 'meatpoultry') {
                         fetchedProducts.sort((a, b) => {
                             const aName = a.name.toLowerCase();
                             const bName = b.name.toLowerCase();
-                            const aIndex = MEAT_POULTRY_ORDER.findIndex(keyword => aName.includes(keyword));
-                            const bIndex = MEAT_POULTRY_ORDER.findIndex(keyword => bName.includes(keyword));
+                            const aIndex = ['sonali', 'kadaknath', 'turkey', 'guinea fowl', 'duck', 'rabbit', 'goat'].findIndex(keyword => aName.includes(keyword));
+                            const bIndex = ['sonali', 'kadaknath', 'turkey', 'guinea fowl', 'duck', 'rabbit', 'goat'].findIndex(keyword => bName.includes(keyword));
                             if (aIndex === -1) return 1;
                             if (bIndex === -1) return -1;
                             return aIndex - bIndex;
@@ -327,12 +161,11 @@ export default function HomePage({ handleAddToCart }) {
                     } else if (selectedCategory === 'pickles') {
                         const getRank = (productName) => {
                             const name = productName.toLowerCase();
-                            const index = PICKLE_KEYWORD_ORDER.findIndex(keyword => name.includes(keyword));
-                            return index === -1 ? PICKLE_KEYWORD_ORDER.length : index;
+                            const index = ['country chicken', 'chicken', 'mutton', 'prawn', 'fish', 'seafood'].findIndex(keyword => name.includes(keyword));
+                            return index === -1 ? 7 : index;
                         };
                         fetchedProducts.sort((a, b) => getRank(a.name) - getRank(b.name));
                     }
-
                     setProducts(fetchedProducts);
                     setTotalPages(res.data.totalPages);
                     const initialVariants = {};
@@ -355,7 +188,12 @@ export default function HomePage({ handleAddToCart }) {
     }, [selectedCategory, currentPage]);
 
     const handleVariantChange = (productId, variantId) => { setSelectedVariants(prev => ({ ...prev, [productId]: parseInt(variantId, 10) })); };
-    const handleFilterChange = (category) => { setSelectedCategory(category); setCurrentPage(1); setIsSidebarOpen(false); };
+    const handleFilterChange = (category) => {
+        if (category === 'aboutus') return;
+        setSelectedCategory(category);
+        setCurrentPage(1);
+        setIsSidebarOpen(false);
+    };
     const goToNextPage = () => { if (currentPage < totalPages) { setCurrentPage(currentPage + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); } };
     const goToPreviousPage = () => { if (currentPage > 1) { setCurrentPage(currentPage - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); } };
 
@@ -388,14 +226,16 @@ export default function HomePage({ handleAddToCart }) {
                             <nav className="flex-grow">
                                 <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Discover Categories</h3>
                                 <ul className="space-y-2">
-                                    {categories.map(category => (
+                                    {categories.map(category => {
+                                        const categoryName = category === 'meatpoultry' ? 'Meat & Poultry' : category.charAt(0).toUpperCase() + category.slice(1);
+                                        return (
                                         <li key={category}>
                                             <button onClick={() => handleFilterChange(category)} className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-base font-medium transition-all duration-300 ${ selectedCategory === category ? 'bg-red-600 text-white shadow-md' : 'text-gray-200 hover:bg-slate-700/50' }`} >
-                                                <div className="flex items-center gap-3"> {categoryIcons[category]} {category === 'meatpoultry' ? 'Meat & Poultry' : category.charAt(0).toUpperCase() + category.slice(1)} </div>
+                                                <div className="flex items-center gap-3"> {categoryIcons[category]} {categoryName} </div>
                                                 <ChevronRight size={16} />
                                             </button>
                                         </li>
-                                    ))}
+                                    )})}
                                 </ul>
                                 <hr className="my-6 border-gray-600" />
                                 <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Access</h3>
@@ -418,12 +258,39 @@ export default function HomePage({ handleAddToCart }) {
                         </div>
                     </div>
                     <div className="mt-6 flex overflow-x-auto sm:justify-center gap-3 px-4 sm:px-6 no-scrollbar">
-                        {categories.map(category => (
-                            <motion.button key={category} onClick={() => handleFilterChange(category)} whileHover={{ scale: 1.08, y: -2 }} whileTap={{ scale: 0.95 }} className={`flex-shrink-0 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-md ${ selectedCategory === category ? 'bg-gradient-to-r from-red-500 to-red-700 text-white' : 'bg-white/60 text-gray-900 hover:bg-white/80 backdrop-blur-sm' }`} >
-                                {categoryIcons[category]}
-                                <span className="whitespace-nowrap">{category === 'meatpoultry' ? 'Meat & Poultry' : category.charAt(0).toUpperCase() + category.slice(1)}</span>
-                            </motion.button>
-                        ))}
+                        {categories.map(category => {
+                            const buttonClass = `flex-shrink-0 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-md`;
+                            const activeClass = selectedCategory === category ? 'bg-gradient-to-r from-red-500 to-red-700 text-white' : 'bg-white/60 text-gray-900 hover:bg-white/80 backdrop-blur-sm';
+                            
+                            // If the category is 'aboutus', render a Link. Otherwise, render a button.
+                            if (category === 'aboutus') {
+                                return (
+                                    <Link
+                                        key={category}
+                                        to="/account"
+                                        state={{ defaultTab: 'about' }} // This tells the Account page to open the 'About Us' tab
+                                        className={`${buttonClass} bg-blue-50 text-blue-800 hover:bg-blue-100`}
+                                    >
+                                        {categoryIcons[category]}
+                                        <span className="whitespace-nowrap">About Us</span>
+                                    </Link>
+                                );
+                            }
+
+                            // Default button for product categories
+                            return (
+                                <motion.button 
+                                    key={category} 
+                                    onClick={() => handleFilterChange(category)}
+                                    whileHover={{ scale: 1.08, y: -2 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className={`${buttonClass} ${activeClass}`}
+                                >
+                                    {categoryIcons[category]}
+                                    <span className="whitespace-nowrap">{category === 'meatpoultry' ? 'Meat & Poultry' : category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                                </motion.button>
+                            );
+                        })}
                     </div>
                     <div className="mt-6 max-w-xl mx-auto px-4 sm:px-6">
                         <div className="relative">
@@ -438,7 +305,6 @@ export default function HomePage({ handleAddToCart }) {
                         {productsLoading
                             ? Array.from({ length: 8 }).map((_, index) => <SkeletonCard key={index} />)
                             : filteredProducts.map(product => (
-                                // --- MODIFIED: Pass the productDetailsData down to each card ---
                                 <ProductCard 
                                     key={product.id} 
                                     product={product} 
