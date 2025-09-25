@@ -10,6 +10,7 @@ const path = require('path');
 const twilio = require('twilio');
 const crypto = require('crypto');
 const multer = require('multer');
+const nodemailer = require('nodemailer'); // --- NEW: For sending emails
 
 const app = express();
 const PORT = process.env.PORT || 5000; // Added a fallback port
@@ -857,6 +858,62 @@ app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req,
     } catch (err) {
         console.error('Error completing order:', err.message);
         res.status(500).send('Server Error');
+    }
+});
+
+// --- NEW: INQUIRY & EMAIL API ROUTE ---/
+// ===================================
+
+// Nodemailer transporter setup
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS, // Use the App Password you generated
+    },
+});
+
+app.post('/api/inquiry', async (req, res) => {
+    const { inquiryType, formData } = req.body;
+
+    if (!inquiryType || !formData) {
+        return res.status(400).json({ msg: 'Missing inquiry data.' });
+    }
+
+    const subject = inquiryType === 'Vendor' 
+        ? 'New Vendor Partnership Inquiry' 
+        : 'New Franchise Inquiry';
+
+    // Create a beautiful HTML email body from the form data
+    const emailBody = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h2 style="color: #c0392b;">New ${inquiryType} Inquiry Received</h2>
+            <p>You have received a new inquiry from the Sresta Mart website. Details are below:</p>
+            <table style="width: 100%; border-collapse: collapse;">
+                ${Object.entries(formData).map(([key, value]) => `
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 8px; font-weight: bold; text-transform: capitalize; color: #333;">${key.replace('_', ' ')}</td>
+                        <td style="padding: 8px; color: #555;">${value}</td>
+                    </tr>
+                `).join('')}
+            </table>
+            <p style="margin-top: 20px; font-size: 12px; color: #888;">This is an automated message from the Sresta Mart website.</p>
+        </div>
+    `;
+
+    const mailOptions = {
+        from: `"Sresta Mart Inquiries" <${process.env.EMAIL_USER}>`,
+        to: 'srestamart@gmail.com', // Your destination email
+        subject: subject,
+        html: emailBody,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ success: true, msg: 'Inquiry sent successfully! We will get back to you soon.' });
+    } catch (error) {
+        console.error('Error sending inquiry email:', error);
+        res.status(500).json({ success: false, msg: 'Failed to send inquiry. Please try again later.' });
     }
 });
 
