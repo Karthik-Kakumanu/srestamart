@@ -334,6 +334,75 @@ app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) =
 });
 
 
+// --- NEW: COUPON MANAGEMENT (ADMIN) ---
+
+// Create a new coupon
+app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
+    const { code, discount_type, discount_value, expiry_date, min_purchase_amount } = req.body;
+    if (!code || !discount_type || !discount_value || !expiry_date) {
+        return res.status(400).json({ msg: 'Please provide all required coupon fields.' });
+    }
+    try {
+        const newCoupon = await pool.query(
+            `INSERT INTO coupons (code, discount_type, discount_value, expiry_date, min_purchase_amount)
+             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [code.toUpperCase(), discount_type, discount_value, expiry_date, min_purchase_amount || 0]
+        );
+        res.status(201).json(newCoupon.rows[0]);
+    } catch (err) {
+        console.error('Error creating coupon:', err.message);
+        if (err.code === '23505') { // Unique constraint violation
+            return res.status(400).json({ msg: 'This coupon code already exists.' });
+        }
+        res.status(500).send('Server Error');
+    }
+});
+
+// Get all coupons for the admin dashboard
+app.get('/api/admin/coupons', checkAdminToken, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM coupons ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching coupons for admin:', err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Update a coupon (e.g., toggle active status)
+app.put('/api/admin/coupons/:id', checkAdminToken, async (req, res) => {
+    const { id } = req.params;
+    const { is_active } = req.body; // Example: only updating active status for now
+    try {
+        const updatedCoupon = await pool.query(
+            'UPDATE coupons SET is_active = $1 WHERE id = $2 RETURNING *',
+            [is_active, id]
+        );
+        if (updatedCoupon.rowCount === 0) {
+            return res.status(404).json({ msg: 'Coupon not found.' });
+        }
+        res.json(updatedCoupon.rows[0]);
+    } catch (err) {
+        console.error('Error updating coupon:', err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Delete a coupon
+app.delete('/api/admin/coupons/:id', checkAdminToken, async (req, res) => {
+    try {
+        const result = await pool.query('DELETE FROM coupons WHERE id = $1 RETURNING *', [req.params.id]);
+        if (result.rowCount === 0) {
+            return res.status(404).json({ msg: 'Coupon not found.' });
+        }
+        res.json({ msg: 'Coupon deleted successfully.' });
+    } catch (err) {
+        console.error('Error deleting coupon:', err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
 // ===================================
 // --- 👤 USER & PUBLIC API ROUTES ---
 // ===================================
@@ -563,6 +632,57 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
     res.status(500).send('Server error fetching orders');
   }
 });
+
+// --- NEW: PUBLIC COUPON ROUTES ---
+
+// Get all active, non-expired coupons for the public coupons page
+app.get('/api/coupons/public', async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT code, discount_type, discount_value, expiry_date, min_purchase_amount FROM coupons WHERE is_active = TRUE AND expiry_date >= CURRENT_DATE ORDER BY expiry_date ASC"
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching public coupons:', err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Apply a coupon code
+app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
+    const { couponCode, cartTotal } = req.body;
+    if (!couponCode) return res.status(400).json({ success: false, msg: 'Coupon code is required.' });
+
+    try {
+        const result = await pool.query('SELECT * FROM coupons WHERE code = $1', [couponCode.toUpperCase()]);
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ success: false, msg: 'Invalid coupon code.' });
+        }
+        
+        const coupon = result.rows[0];
+
+        if (!coupon.is_active) {
+            return res.status(400).json({ success: false, msg: 'This coupon is no longer active.' });
+        }
+
+        if (new Date(coupon.expiry_date) < new Date()) {
+            return res.status(400).json({ success: false, msg: 'This coupon has expired.' });
+        }
+
+        if (Number(cartTotal) < Number(coupon.min_purchase_amount)) {
+            return res.status(400).json({ success: false, msg: `Minimum purchase of ₹${coupon.min_purchase_amount} is required.` });
+        }
+
+        // All checks passed
+        res.json({ success: true, coupon });
+
+    } catch (err) {
+        console.error('Error applying coupon:', err.message);
+        res.status(500).json({ success: false, msg: 'Server error. Please try again.' });
+    }
+});
+
 
 // ===========================================
 // --- 🚚 DELIVERY PARTNER API ROUTES ---

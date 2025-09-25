@@ -69,23 +69,30 @@ export default function App() {
     fetchUserData();
   }, [loggedInUser]);
 
+    // --- CRITICAL FIX: handleAddToCart now includes the 'details' object ---
     const handleAddToCart = (product) => {
-      setCartItems(prevItems => {
-          const itemExists = prevItems.find(item => item.id === product.selectedVariant.id);
-          if (itemExists) {
-              return prevItems.map(item =>
-                  item.id === product.selectedVariant.id ? { ...item, quantity: item.quantity + 1 } : item
-              );
-          } else {
-              return [...prevItems, { 
-                  id: product.selectedVariant.id, name: product.name, variantLabel: product.selectedVariant.label,
-                  price: product.selectedVariant.price, image_url: product.image_url, quantity: 1 
-              }];
-          }
-      });
-      setCartMessage(`${product.name} added to cart!`);
-      setTimeout(() => setCartMessage(''), 2000);
-  };
+        setCartItems(prevItems => {
+            const itemExists = prevItems.find(item => item.id === product.selectedVariant.id);
+            if (itemExists) {
+                return prevItems.map(item =>
+                    item.id === product.selectedVariant.id ? { ...item, quantity: item.quantity + 1 } : item
+                );
+            } else {
+                return [...prevItems, { 
+                    id: product.selectedVariant.id, 
+                    name: product.name, 
+                    variantLabel: product.selectedVariant.label,
+                    price: product.selectedVariant.price, 
+                    image_url: product.image_url, 
+                    quantity: 1,
+                    description: product.description, // Pass description
+                    details: product.details // Pass the rich details object
+                }];
+            }
+        });
+        setCartMessage(`${product.name} added to cart!`);
+        setTimeout(() => setCartMessage(''), 2000);
+    };
 
   const handleQuantityChange = (itemId, amount) => {
       setCartItems(prevItems =>

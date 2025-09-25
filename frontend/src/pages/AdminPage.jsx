@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import EditProductModal from '../components/admin/EditProductModal.jsx';
 import AddProductModal from '../components/admin/AddProductModal.jsx';
+import AddCouponModal from '../components/admin/AddCouponModal.jsx';
 
 const getAuthToken = () => localStorage.getItem('adminToken'); 
 
@@ -14,6 +15,7 @@ export default function AdminPage() {
     const [users, setUsers] = useState([]);
     const [orders, setOrders] = useState([]);
     const [deliveryPartners, setDeliveryPartners] = useState([]);
+    const [coupons, setCoupons] = useState([]); // --- NEW ---
     const [isLoading, setIsLoading] = useState(true);
     // --- THIS IS THE CORRECTED LINE ---
     const [error, setError] = useState('');
@@ -21,7 +23,7 @@ export default function AdminPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    
+    const [isAddCouponModalOpen, setIsAddCouponModalOpen] = useState(false);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [assigningOrder, setAssigningOrder] = useState(null);
 
@@ -42,13 +44,15 @@ export default function AdminPage() {
                 axios.get(`${import.meta.env.VITE_API_URL}/api/admin/products`, config),
                 axios.get(`${import.meta.env.VITE_API_URL}/api/admin/users`, config),
                 axios.get(`${import.meta.env.VITE_API_URL}/api/admin/orders`, config),
-                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/delivery-partners`, config)
+                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/delivery-partners`, config),
+                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/coupons`, config) 
             ]);
             
             setProducts(productsRes.data);
             setUsers(usersRes.data);
             setOrders(ordersRes.data);
             setDeliveryPartners(partnersRes.data);
+             setCoupons(couponsRes.data);
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to fetch admin data.');
         } finally {
@@ -100,10 +104,23 @@ export default function AdminPage() {
             }
         }
     };
+
+    const handleDeleteCoupon = async (couponId, couponCode) => {
+        if (window.confirm(`Are you sure you want to delete the coupon "${couponCode}"?`)) {
+            try {
+                const token = getAuthToken();
+                await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/coupons/${couponId}`, { headers: { 'x-admin-token': token } });
+                fetchData(); // Refresh all data
+            } catch (err) {
+                 setError(err.response?.data?.msg || 'Failed to delete coupon.');
+            }
+        }
+    };
     
     const handleSave = () => {
         setIsEditModalOpen(false);
         setIsAddModalOpen(false);
+        setIsAddCouponModalOpen(false);
         fetchData();
     };
 
@@ -138,11 +155,17 @@ export default function AdminPage() {
                             <TabButton name="Products" icon={<Package/>} activeView={view} setView={setView} viewId="products" />
                             <TabButton name="Users" icon={<Users/>} activeView={view} setView={setView} viewId="users" />
                             <TabButton name="Orders" icon={<ShoppingCart/>} activeView={view} setView={setView} viewId="orders" />
+                            <TabButton name="Coupons" icon={<Tag/>} activeView={view} setView={setView} viewId="coupons" />
                         </div>
                         <div className="flex items-center gap-4 mt-4 sm:mt-0 self-end sm:self-center mb-2">
                             {view === 'products' && (
                                 <button onClick={() => setIsAddModalOpen(true)} className="flex items-center text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg px-3 py-2 shadow transition-transform hover:scale-105">
                                     <PlusCircle size={16} className="mr-2"/> Add Product
+                                </button>
+                            )}
+                            {view === 'coupons' && (
+                                <button onClick={() => setIsAddCouponModalOpen(true)} className="flex items-center text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg px-3 py-2 shadow transition-transform hover:scale-105">
+                                    <PlusCircle size={16} className="mr-2"/> Add Coupon
                                 </button>
                             )}
                         </div>
@@ -154,7 +177,8 @@ export default function AdminPage() {
                                 view === 'overview' ? <OverviewCharts orders={orders} products={products} /> :
                                 view === 'products' ? <ProductTable products={products} onEdit={handleEditProduct} onDelete={handleDeleteProduct} /> :
                                 view === 'users' ? <UserTable users={users} /> :
-                                <OrdersTable orders={orders} onAssign={handleAssignClick} />
+                                view === 'orders' ? <OrdersTable orders={orders} onAssign={handleAssignClick} /> :
+                                <CouponTable coupons={coupons} onDelete={handleDeleteCoupon} />
                             }
                         </motion.div>
                     </AnimatePresence>
@@ -163,7 +187,8 @@ export default function AdminPage() {
 
             {isEditModalOpen && <EditProductModal product={editingProduct} onClose={() => setIsEditModalOpen(false)} onSave={handleSave} />}
             {isAddModalOpen && <AddProductModal onClose={() => setIsAddModalOpen(false)} onSave={handleSave} />}
-            
+            {isAddCouponModalOpen && <AddCouponModal onClose={() => setIsAddCouponModalOpen(false)} onSave={handleSave} />}
+
             <AnimatePresence>
                 {isAssignModalOpen && (
                     <AssignOrderModal 
@@ -440,3 +465,45 @@ const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
         </div>
     );
 };
+
+
+// --- NEW: CouponTable Component ---
+const CouponTable = ({ coupons, onDelete }) => (
+    <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+                <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type & Value</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Purchase</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expires On</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+                {coupons.map(coupon => (
+                    <tr key={coupon.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-bold text-gray-900">{coupon.code}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-800">{coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}</div>
+                            <div className="text-xs text-gray-500">{coupon.discount_type}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{coupon.min_purchase_amount}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(coupon.expiry_date).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${coupon.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {coupon.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onClick={() => onDelete(coupon.id, coupon.code)} className="text-red-600 hover:text-red-900 ml-4">Delete</button>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+);
