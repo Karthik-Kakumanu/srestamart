@@ -24,28 +24,28 @@ const categoryIcons = {
     aboutus: <Info size={18} className="text-blue-600" />,
 };
 
-// const productDetailsData = {
-//     'sonali-chicken-1kg': { 
-//         nutrition: [ { label: 'Protein', value: '25g' }, { label: 'Fat', value: '14g' }, { label: 'Calories', value: '239 kcal' }, { label: 'Iron', value: '8%' }, ],
-//         benefits: [ "Rich in lean protein for muscle development.", "Lower fat content compared to broiler chicken.", "Free-range and ethically raised, ensuring higher nutrient quality.", "Contains essential amino acids for overall health.", ],
-//         cooking_tips: "Best for curries and slow-roasting to retain its unique flavor and texture."
-//     },
-//     'kadaknath-chicken-1kg': { 
-//         nutrition: [ { label: 'Protein', value: '27g' }, { label: 'Fat', value: '10g' }, { label: 'Cholesterol', value: 'Low' }, { label: 'Iron', value: '25%' }, ],
-//         benefits: [ "Extremely high in iron and protein, known for medicinal properties.", "Significantly lower in fat and cholesterol.", "Believed to boost stamina and treat specific ailments in traditional medicine.", "The black meat is a rich source of antioxidants.", ],
-//         cooking_tips: "The meat is firm; it is excellent for slow-cooked, herbal preparations or hearty stews."
-//     },
-//     'natu-kodi-eggs-12': {
-//         nutrition: [ { label: 'Vitamin B12', value: '50% DV' }, { label: 'Omega-3', value: '200mg' }, { label: 'Calcium', value: '15% DV' }, { label: 'Cholesterol', value: '185mg' }, ],
-//         benefits: [ "Boosts brain function and memory.", "Strengthens bones and helps prevent osteoporosis.", "Essential for hormonal balance in women.", "Golden yolks indicate high levels of carotenoids.", ],
-//         cooking_tips: "Perfect for boiling, omelettes, or as a nutrient-rich addition to any meal."
-//     },
-//     'country-chicken-pickle-500g': {
-//         nutrition: [ { label: 'Serving Size', value: '1 tbsp' }, { label: 'Calories', value: '45 kcal' }, { label: 'Sodium', value: '250mg' }, ],
-//         benefits: [ "Made with authentic, home-ground spices for a traditional taste.", "Uses premium cold-pressed oil, which is healthier than refined oils.", "Contains no artificial preservatives or colors.", "A delicious way to add a protein kick to your meals.", ],
-//         cooking_tips: "Pairs perfectly with hot rice, roti, or as a side for curd rice."
-//     },
-// };
+const productDetailsData = {
+    'sonali-chicken-1kg': { 
+        nutrition: [ { label: 'Protein', value: '25g' }, { label: 'Fat', value: '14g' }, { label: 'Calories', value: '239 kcal' }, { label: 'Iron', value: '8%' }, ],
+        benefits: [ "Rich in lean protein for muscle development.", "Lower fat content compared to broiler chicken.", "Free-range and ethically raised, ensuring higher nutrient quality.", "Contains essential amino acids for overall health.", ],
+        cooking_tips: "Best for curries and slow-roasting to retain its unique flavor and texture."
+    },
+    'kadaknath-chicken-1kg': { 
+        nutrition: [ { label: 'Protein', value: '27g' }, { label: 'Fat', value: '10g' }, { label: 'Cholesterol', value: 'Low' }, { label: 'Iron', value: '25%' }, ],
+        benefits: [ "Extremely high in iron and protein, known for medicinal properties.", "Significantly lower in fat and cholesterol.", "Believed to boost stamina and treat specific ailments in traditional medicine.", "The black meat is a rich source of antioxidants.", ],
+        cooking_tips: "The meat is firm; it is excellent for slow-cooked, herbal preparations or hearty stews."
+    },
+    'natu-kodi-eggs-12': {
+        nutrition: [ { label: 'Vitamin B12', value: '50% DV' }, { label: 'Omega-3', value: '200mg' }, { label: 'Calcium', value: '15% DV' }, { label: 'Cholesterol', value: '185mg' }, ],
+        benefits: [ "Boosts brain function and memory.", "Strengthens bones and helps prevent osteoporosis.", "Essential for hormonal balance in women.", "Golden yolks indicate high levels of carotenoids.", ],
+        cooking_tips: "Perfect for boiling, omelettes, or as a nutrient-rich addition to any meal."
+    },
+    'country-chicken-pickle-500g': {
+        nutrition: [ { label: 'Serving Size', value: '1 tbsp' }, { label: 'Calories', value: '45 kcal' }, { label: 'Sodium', value: '250mg' }, ],
+        benefits: [ "Made with authentic, home-ground spices for a traditional taste.", "Uses premium cold-pressed oil, which is healthier than refined oils.", "Contains no artificial preservatives or colors.", "A delicious way to add a protein kick to your meals.", ],
+        cooking_tips: "Pairs perfectly with hot rice, roti, or as a side for curd rice."
+    },
+};
 
 const categoryFeatures = {
     eggs: { 
