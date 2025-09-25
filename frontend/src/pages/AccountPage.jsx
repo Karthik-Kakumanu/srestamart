@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 // --- THIS IS THE CORRECTED LINE ---
-import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, PackageCheck } from 'lucide-react';
+import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, PackageCheck, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AccountPage({ loggedInUser, orders, ordersLoading, handleLogout }) {

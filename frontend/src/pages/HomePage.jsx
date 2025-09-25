@@ -267,7 +267,7 @@ export default function HomePage({ handleAddToCart }) {
                                 return (
                                     <Link
                                         key={category}
-                                        to="/account"
+                                        to="/about-us"
                                         state={{ defaultTab: 'about' }} // This tells the Account page to open the 'About Us' tab
                                         className={`${buttonClass} bg-blue-50 text-blue-800 hover:bg-blue-100`}
                                     >
