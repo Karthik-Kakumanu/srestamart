@@ -106,10 +106,10 @@ const categoryFeatures = {
         ]
     },
     meatpoultry: { 
-        title: "Premium Ethical Meats & Poultry",
+        title: "Premium Organic Meats & Poultry",
         subtitle: `"Fresh, flavorful, and responsibly sourced."`,
         description: "Our meats are from sustainable farms, providing high-protein options with rich taste for gourmet cooking.",
-        imageUrl: "https://images.pexels.com/photos/618681/pexels-photo-618681.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        imageUrl: "https://t4.ftcdn.net/jpg/12/57/80/51/240_F_1257805117_aFXp6VSt1JSL9tfAh9FwfPkIR73SPBdM.jpg",
         features: [
             { icon: <Beef className="text-red-500"/>, title: "Protein Powerhouse", text: "Essential for muscle repair and growth." },
             { icon: <Shield className="text-red-500"/>, title: "Ethical Sourcing", text: "From farms prioritizing animal welfare." },
@@ -121,7 +121,7 @@ const categoryFeatures = {
         title: "Exquisite Homemade Flavor Symphony",
         subtitle: `"Tradition's taste in every delightful bite."`,
         description: "Crafted with cherished family recipes and natural fermentation, each jar bursts with authentic, healthful flavors that elevate every meal.",
-        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT8m41uJaxOcN9ZVxI78lDW_OFxL6g6E-mTig&s",
+        imageUrl: "https://i.pinimg.com/736x/01/67/db/0167db2dc357d38a25024206507a8adb.jpg",
         features: [
             { icon: <Microscope className="text-red-500"/>, title: "Probiotic Powerhouse", text: "Fermented naturally for gut-healthy probiotics that enhance digestion." },
             { icon: <Leaf className="text-red-500"/>, title: "Pure Natural Essence", text: "Sun-dried ingredients and premium oils, sans artificial additives." },
@@ -143,7 +143,7 @@ const categoryFeatures = {
         title: "Nature's Elite Nutrient-Packed Snacks",
         subtitle: `"Daily energy and wellness in every handful."`,
         description: "Our premium dry fruits and nuts are vitamin-rich treasures, offering healthy fats for guilt-free snacking anytime.",
-        imageUrl: "https://images.pexels.com/photos/2983141/pexels-photo-2983141.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        imageUrl: "https://i.pinimg.com/736x/ac/c0/fd/acc0fd69020f14346772ed7eaf99049f.jpg",
         features: [
             { icon: <Heart className="text-red-500"/>, title: "Heart-Protective", text: "Full of healthy fats, fiber, and antioxidants for cardiovascular wellness." },
             { icon: <BatteryCharging className="text-red-500"/>, title: "Instant Energy Surge", text: "Natural boost for workouts or midday slumps." },
@@ -154,7 +154,7 @@ const categoryFeatures = {
         title: "Luxurious Cold-Pressed Liquid Gold",
         subtitle: `"Purity distilled in every drop."`,
         description: "Traditionally cold-pressed to preserve nutrients, flavor, and aroma, transforming your cooking into a healthful art.",
-        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlD8qSZ1Qpf6F_pTnhy_snOlaPyGqLEB3YbQ&s",
+        imageUrl: "https://i.pinimg.com/736x/e5/0b/c2/e50bc2348c18f3d7c326d0c83b563f44.jpg",
         features: [
             { icon: <TestTube className="text-red-500"/>, title: "Nutrient Preservation", text: "Vitamins and antioxidants intact, superior to refined alternatives." },
             { icon: <Heart className="text-red-500"/>, title: "Healthy Fat Abundance", text: "Monounsaturated and polyunsaturated fats for heart health." },
@@ -165,7 +165,7 @@ const categoryFeatures = {
         title: "The Timeless Supergrain Revolution",
         subtitle: `"Wholesome ancient power for modern living."`,
         description: "Gluten-free, fiber-rich millets offer a low-GI alternative to staples, ideal for sustained health and energy.",
-        imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTsUCfJOmuHsF_FNrRaSTIE96Q9ToAH9sGF7Q&s",
+        imageUrl: "https://i.pinimg.com/1200x/d3/7f/16/d37f167928df7914e368caa238907616.jpg",
         features: [
             { icon: <Wheat className="text-red-500"/>, title: "Fiber-Rich Delight", text: "Aids digestion, weight control, and satiety." },
             { icon: <Vegan className="text-red-500"/>, title: "Gluten-Free Naturally", text: "Perfect for gluten sensitivities or celiac needs." },
