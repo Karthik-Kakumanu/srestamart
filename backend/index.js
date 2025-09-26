@@ -866,7 +866,9 @@ app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req,
 
 // Nodemailer transporter setup
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com', // Explicitly use the Gmail SMTP server
+    port: 465,              // Use port 465 for SSL, which is more secure and often allowed
+    secure: true,           // Enforce SSL
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS, // Use the App Password you generated
@@ -909,11 +911,14 @@ app.post('/api/inquiry', async (req, res) => {
     };
 
     try {
+        // --- MODIFIED: Added better logging for verification ---
+        console.log('Attempting to send email...');
         await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully!');
         res.status(200).json({ success: true, msg: 'Inquiry sent successfully! We will get back to you soon.' });
     } catch (error) {
-        console.error('Error sending inquiry email:', error);
-        res.status(500).json({ success: false, msg: 'Failed to send inquiry. Please try again later.' });
+        console.error('Error sending inquiry email:', error); // This will now log the full error object
+        res.status(500).json({ success: false, msg: 'Failed to send inquiry. Please check server logs.' });
     }
 });
 
