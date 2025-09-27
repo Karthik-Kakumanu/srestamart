@@ -479,21 +479,21 @@ export default function HomePage({ handleAddToCart }) {
 
                 <div className="relative z-10">
                     {/* UPDATED: Header section with corrected spacing and static text */}
-                    <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/50 to-transparent">
+                    <div className="pt-6 sm:pt-8 pb-4 bg-gradient-to-b from-black/50 to-transparent">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
                             <button onClick={() => setIsSidebarOpen(true)} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-sm hover:bg-white/30 transition-all sm:left-6">
                                 <Menu className="text-white" size={20}/>
                             </button>
                             <div className="inline-block">
-                                <h1 className="text-3xl sm:text-5xl font-bold text-white text-shadow tracking-tight" style={{ color: '#FFD700' }}>
-                                    SRESTA MART.
+                                <h1 className="text-3xl sm:text-4xl font-bold text-white text-shadow tracking-tight" style={{ color: '#FFD700' }}>
+                                    SRESTA MART
                                 </h1>
-                                <p className="mt-2 text-md sm:text-lg text-white/90 text-shadow max-w-2xl mx-auto">
-                                    Tasty, Tangy And Always Fresh.
+                                <p className="mt-1 text-sm sm:text-base text-white/90 text-shadow max-w-2xl mx-auto">
+                                   Tasty, Tangy And Always Fresh.
                                 </p>
                             </div>
                         </div>
-                        <div className="mt-8 flex overflow-x-auto sm:justify-center gap-3 px-4 sm:px-6 no-scrollbar">
+                        <div className="mt-4 flex overflow-x-auto sm:justify-center gap-3 px-4 sm:px-6 no-scrollbar">
                             {categories.map(category => {
                                 const buttonClass = `flex-shrink-0 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-md`;
                                 const activeClass = selectedCategory === category ? 'bg-gradient-to-r from-red-500 to-red-700 text-white' : 'bg-white/60 text-gray-900 hover:bg-white/80 backdrop-blur-sm';
@@ -511,16 +511,17 @@ export default function HomePage({ handleAddToCart }) {
                                 );
                             })}
                         </div>
-                        <div className="mt-6 max-w-xl mx-auto px-4 sm:px-6">
+                        <div className="mt-4 max-w-xl mx-auto px-4 sm:px-6">
                             <div className="relative">
                                 <input type="text" placeholder="Search for pure & organic products..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full py-3 px-5 pr-10 rounded-full bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-md backdrop-blur-sm text-sm" />
                                 <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70" size={18} />
                             </div>
                         </div>
                     </div>
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                         {error && (<motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="bg-red-500/20 backdrop-blur-sm text-red-300 p-4 rounded-lg mb-8 text-center shadow-sm text-sm" > {error} </motion.div>)}
-                        <motion.div key={selectedCategory + searchQuery} variants={productGridVariants} initial="hidden" animate="visible" className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" >
+                        {/* UPDATED: Product grid now uses 3 columns on medium screens and up */}
+                        <motion.div key={selectedCategory + searchQuery} variants={productGridVariants} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" >
                             {productsLoading ? (
                                 Array.from({ length: 8 }).map((_, index) => <SkeletonCard key={index} />)
                             ) : filteredProducts.length > 0 ? (
