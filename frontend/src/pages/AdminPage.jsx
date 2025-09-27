@@ -428,7 +428,6 @@ const OrderRow = ({ order, onAssign }) => {
                         className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                         title={isAutomated ? "This order is handled automatically" : ""}
                     >
-                        Assign
                       Assign
                     </button>
                 </td>
