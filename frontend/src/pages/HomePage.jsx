@@ -309,7 +309,7 @@ export default function HomePage({ handleAddToCart }) {
     const [searchQuery, setSearchQuery] = useState('');
     const categoryVideos = {
         eggs: "/videos/eggs.mp4",
-        meatpoultry: "/videos/eggs1.mp4",
+        meatpoultry: "/videos/meatpoultry.mp4",
         dryfruits: "/videos/dryfruits.mp4",
         dairy: "/videos/dairy.mp4",
         oils: "/videos/oils.mp4",
