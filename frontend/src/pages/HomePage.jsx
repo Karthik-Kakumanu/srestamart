@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import logoIcon from '../../images/icon.png';
 
-// "About Us" is now cleanly integrated into the sidebar, not the main category filter.
 const CATEGORY_ORDER = ['meatpoultry', 'eggs', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets'];
 
 const categoryIcons = {
@@ -240,12 +239,13 @@ const SkeletonCard = () => (
     </div>
 );
 
-// UPDATED: Footer with corrected developer credits and social links
+// UPDATED: Footer with corrected developer credits and responsive link layout
 const Footer = () => (
     <footer className="bg-slate-900/70 text-gray-300 backdrop-blur-lg mt-auto relative z-10 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div className="md:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {/* About Sresta Mart Section (takes more space on larger screens) */}
+                <div className="md:col-span-2 lg:col-span-2">
                     <div className="flex items-center mb-4">
                         <img src={logoIcon} alt="Sresta Mart Logo" className="h-10 w-auto mr-3"/>
                         <h3 className="text-xl font-bold text-white">Sresta Mart</h3>
@@ -254,6 +254,7 @@ const Footer = () => (
                         At Sresta Mart, we are dedicated to bringing you the purest, most nutritious organic products directly from trusted farms. Our commitment is to quality, health, and the well-being of our community.
                     </p>
                 </div>
+                {/* Our Products Section */}
                 <div>
                     <h3 className="text-lg font-semibold text-white mb-4">Our Products</h3>
                     <ul className="space-y-2 text-sm">
@@ -265,14 +266,15 @@ const Footer = () => (
                         <li><span className="text-yellow-600 mr-2">›</span>Natural Millets</li>
                     </ul>
                 </div>
+                {/* Quick Links Section (Responsive grid for links) */}
                 <div>
                     <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
-                    <ul className="space-y-2 text-sm">
-                        <li><Link to="/about-us" className="hover:text-red-400 transition-colors">About Us</Link></li>
-                        <li><Link to="/privacy" className="hover:text-red-400 transition-colors">Privacy Policy</Link></li>
-                        <li><Link to="/help" className="hover:text-red-400 transition-colors">Help & Support</Link></li>
-                        <li className="flex items-center gap-2 pt-2"><Phone size={14} /><a href="tel:+919949529575" className="hover:text-red-400 transition-colors">+91 94949 529575</a></li>
-                        <li className="flex items-center gap-2"><Mail size={14} /><a href="mailto:srestamart@gmail.com" className="hover:text-red-400 transition-colors">srestamart@gmail.com</a></li>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                        <Link to="/about-us" className="hover:text-red-400 transition-colors">About Us</Link>
+                        <Link to="/privacy" className="hover:text-red-400 transition-colors">Privacy Policy</Link>
+                        <Link to="/help" className="hover:text-red-400 transition-colors col-span-2">Help & Support</Link>
+                        <a href="tel:+919949529575" className="col-span-2 flex items-center gap-2 pt-2 hover:text-red-400 transition-colors"><Phone size={14} />+91 94949 529575</a>
+                        <a href="mailto:srestamart@gmail.com" className="col-span-2 flex items-center gap-2 hover:text-red-400 transition-colors"><Mail size={14} />srestamart@gmail.com</a>
                     </ul>
                 </div>
             </div>
@@ -478,26 +480,22 @@ export default function HomePage({ handleAddToCart }) {
                 </AnimatePresence>
 
                 <div className="relative z-10">
-                    <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/30 to-transparent">
-                        <div className="flex flex-row items-center justify-center mb-8 relative px-4 sm:px-6">
-                            <button onClick={() => setIsSidebarOpen(true)} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-sm hover:bg-white/30 transition-all">
+                    {/* UPDATED: Header section with corrected spacing and static text */}
+                    <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/50 to-transparent">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
+                            <button onClick={() => setIsSidebarOpen(true)} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-sm hover:bg-white/30 transition-all sm:left-6">
                                 <Menu className="text-white" size={20}/>
                             </button>
-                            <motion.div
-                                className="text-center"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1, y: [0, -5, 0] }}
-                                transition={{ duration: 1, delay: 0.2, y: { repeat: Infinity, duration: 4, ease: "easeInOut" } }}
-                            >
-                                <h1 className="text-3xl sm:text-5xl font-bold text-white text-shadow tracking-tight">
+                            <div className="inline-block">
+                                <h1 className="text-3xl sm:text-5xl font-bold text-white text-shadow tracking-tight" style={{ color: '#FFD700' }}>
                                     SRESTA MART.
                                 </h1>
-                                <p className="mt-2 text-md sm:text-lg text-red-200 text-shadow max-w-2xl mx-auto">
+                                <p className="mt-2 text-md sm:text-lg text-white/90 text-shadow max-w-2xl mx-auto">
                                     Experience the authentic taste of nature with our farm-fresh collection.
                                 </p>
-                            </motion.div>
+                            </div>
                         </div>
-                        <div className="mt-6 flex overflow-x-auto sm:justify-center gap-3 px-4 sm:px-6 no-scrollbar">
+                        <div className="mt-8 flex overflow-x-auto sm:justify-center gap-3 px-4 sm:px-6 no-scrollbar">
                             {categories.map(category => {
                                 const buttonClass = `flex-shrink-0 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-md`;
                                 const activeClass = selectedCategory === category ? 'bg-gradient-to-r from-red-500 to-red-700 text-white' : 'bg-white/60 text-gray-900 hover:bg-white/80 backdrop-blur-sm';
@@ -517,7 +515,7 @@ export default function HomePage({ handleAddToCart }) {
                         </div>
                         <div className="mt-6 max-w-xl mx-auto px-4 sm:px-6">
                             <div className="relative">
-                                <input type="text" placeholder="Search products..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full py-3 px-5 pr-10 rounded-full bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-md backdrop-blur-sm text-sm" />
+                                <input type="text" placeholder="Search for pure & organic products..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full py-3 px-5 pr-10 rounded-full bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-md backdrop-blur-sm text-sm" />
                                 <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70" size={18} />
                             </div>
                         </div>
