@@ -489,7 +489,7 @@ export default function HomePage({ handleAddToCart }) {
                                     SRESTA MART.
                                 </h1>
                                 <p className="mt-2 text-md sm:text-lg text-white/90 text-shadow max-w-2xl mx-auto">
-                                    Experience the authentic taste of nature with our farm-fresh collection.
+                                    Tasty, Tangy And Always Fresh.
                                 </p>
                             </div>
                         </div>

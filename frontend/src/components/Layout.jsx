@@ -46,11 +46,11 @@ export default function Layout({ loggedInUser, handleLogout, cartItems }) {
 
           {/* Group 1: Left Contacts */}
           <div className="flex items-center gap-2 sm:gap-4">
-            <a href="tel:+919494837550" title="Call us" className="flex flex-col items-center text-gray-600 hover:text-green-600 transition-colors">
+            <a href="tel:+919949529575" title="Call us" className="flex flex-col items-center text-gray-600 hover:text-green-600 transition-colors">
               <Phone size={24} />
               <span className="text-xs font-medium">Call</span>
             </a>
-            <a href="https://wa.me/919494837550" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
+            <a href="https://wa.me/919949529575" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
               <img src="/icons/whatsapp.png" alt="WhatsApp" className="h-10 w-10" />
             </a>
           </div>
