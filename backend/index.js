@@ -645,14 +645,15 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
   const userId = req.user.id;
   try {
     const query = `
-      SELECT
-        o.*,
-        dp.name as partner_name
-      FROM orders o
-      LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
-      WHERE o.user_id = $1
-      ORDER BY o.created_at DESC;
-    `;
+  SELECT
+    o.*,
+    dp.name as partner_name,
+    dp.phone as partner_phone -- <<< ADD THIS LINE
+  FROM orders o
+  LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
+  WHERE o.user_id = $1
+  ORDER BY o.created_at DESC;
+`;
     const { rows } = await pool.query(query, [userId]);
     res.json(rows);
   } catch (err) {
@@ -820,6 +821,34 @@ app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req,
         console.error('Error completing order:', err.message);
         res.status(500).send('Server Error');
     }
+});
+
+// Add this new endpoint to your backend/index.js file
+
+app.get('/api/orders/:orderId/location', checkUserToken, async (req, res) => {
+  const { orderId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const query = `
+      SELECT dp.last_known_location
+      FROM orders o
+      JOIN delivery_partners dp ON o.assigned_to_id = dp.id
+      WHERE o.id = $1 AND o.user_id = $2;
+    `;
+    const result = await pool.query(query, [orderId, userId]);
+
+    if (result.rowCount === 0 || !result.rows[0].last_known_location) {
+      return res.status(404).json({ msg: 'Location not available for this order yet.' });
+    }
+
+    // The location is stored as a JSON string, so we parse it before sending
+    res.json(result.rows[0].last_known_location);
+
+  } catch (err) {
+    console.error('Error fetching partner location:', err.message);
+    res.status(500).send('Server Error');
+  }
 });
 
 
