@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import logoIcon from '../../images/icon.png';
 
-// "About Us" has been removed from the main filters to avoid confusion. It's now in the sidebar.
+// "About Us" is now cleanly integrated into the sidebar, not the main category filter.
 const CATEGORY_ORDER = ['meatpoultry', 'eggs', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets'];
 
 const categoryIcons = {
@@ -272,7 +272,7 @@ const Footer = () => (
                         <li><Link to="/privacy" className="hover:text-red-400 transition-colors">Privacy Policy</Link></li>
                         <li><Link to="/help" className="hover:text-red-400 transition-colors">Help & Support</Link></li>
                         <li className="flex items-center gap-2 pt-2"><Phone size={14} /><a href="tel:+919949529575" className="hover:text-red-400 transition-colors">+91 94949 529575</a></li>
-                        <li className="flex items-center gap-2"><Mail size={14} /><a href="mailto:srestamart@gmail.com" className="hover:text-red-400 transition-colors">support@srestamart.com</a></li>
+                        <li className="flex items-center gap-2"><Mail size={14} /><a href="mailto:srestamart@gmail.com" className="hover:text-red-400 transition-colors">srestamart@gmail.com</a></li>
                     </ul>
                 </div>
             </div>
@@ -429,7 +429,6 @@ export default function HomePage({ handleAddToCart }) {
                     />
                 )}
             </AnimatePresence>
-            {/* REMOVED: The dark overlay that was covering the video */}
             
             <main className="flex-grow">
                 <AnimatePresence>
@@ -571,3 +570,4 @@ export default function HomePage({ handleAddToCart }) {
         </div>
     );
 }
+
