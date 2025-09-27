@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react'; // --- MODIFIED --- useEffect added
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-// --- THIS IS THE MODIFIED LINE ---
 import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, PackageCheck, Info, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -119,7 +118,6 @@ const OrderCard = ({ order, onOrderUpdate }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
-    // --- NEW: State to hold the partner's location ---
     const [partnerLocation, setPartnerLocation] = useState(null);
 
     const statusInfo = {
@@ -132,10 +130,11 @@ const OrderCard = ({ order, onOrderUpdate }) => {
         Pending: { color: "bg-gray-100 text-gray-700" }
     };
 
-    // --- NEW: Define which statuses are eligible for live tracking ---
-    const isTrackable = ['Assigned', 'Out for Delivery'].includes(order.delivery_status);
+    const isAutomated = order.delivery_type === 'automated';
+    
+    // Tracking is only possible if the order is NOT automated AND its status is active.
+    const isTrackable = !isAutomated && ['Assigned', 'Out for Delivery'].includes(order.delivery_status);
 
-    // --- NEW: Effect to fetch location periodically ONLY for trackable orders ---
     useEffect(() => {
         let intervalId = null;
 
@@ -151,19 +150,17 @@ const OrderCard = ({ order, onOrderUpdate }) => {
             }
         };
 
-        // Start polling only if the card is expanded and the order is trackable
         if (isExpanded && isTrackable) {
-            fetchPartnerLocation(); // Fetch immediately
-            intervalId = setInterval(fetchPartnerLocation, 15000); // Then fetch every 15 seconds
+            fetchPartnerLocation(); 
+            intervalId = setInterval(fetchPartnerLocation, 15000); // Fetch every 15 seconds
         }
 
-        // Cleanup function: this runs when the component unmounts OR dependencies change
         return () => {
             if (intervalId) {
                 clearInterval(intervalId); // Stop polling
             }
         };
-    }, [isExpanded, isTrackable, order.id]); // Dependencies that trigger the effect
+    }, [isExpanded, isTrackable, order.id]);
 
 
     const handleMarkAsDelivered = async (e) => {
@@ -186,7 +183,6 @@ const OrderCard = ({ order, onOrderUpdate }) => {
     };
 
     const currentStatusStyle = statusInfo[order.delivery_status] || statusInfo.Pending;
-    const isAutomated = order.delivery_type === 'automated';
     const isDelivered = order.delivery_status === 'Delivered' || order.status === 'Completed';
 
     return (
@@ -252,13 +248,12 @@ const OrderCard = ({ order, onOrderUpdate }) => {
                                     </div>
                                 )}
 
-                                {/* --- NEW: Live location tracking UI --- */}
                                 {isTrackable && (
                                     <div className="mt-4">
                                         <p className="font-semibold text-gray-700">Live Tracking:</p>
                                         {partnerLocation ? (
                                             <a 
-                                                href={`https://www.google.com/maps?q=${partnerLocation.latitude},${partnerLocation.longitude}`}
+                                                href={`https://maps.google.com/?q=${partnerLocation.latitude},${partnerLocation.longitude}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 onClick={(e) => e.stopPropagation()}
@@ -272,7 +267,6 @@ const OrderCard = ({ order, onOrderUpdate }) => {
                                         )}
                                     </div>
                                 )}
-
 
                                 {isAutomated && !isDelivered && (
                                     <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
