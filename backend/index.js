@@ -1,8 +1,8 @@
-// backend/index.js (Modified & Corrected)
+// backend/index.js (Corrected)
 
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
+const cors = require('cors'); // You still need the cors package
 const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
@@ -10,10 +10,10 @@ const path = require('path');
 const twilio = require('twilio');
 const crypto = require('crypto');
 const multer = require('multer');
-const nodemailer = require('nodemailer'); // --- NEW: For sending emails
+const nodemailer = require('nodemailer');
 
 const app = express();
-const PORT = process.env.PORT || 5000; // Added a fallback port
+const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 
 // --- DATABASE CONNECTION ---
@@ -24,21 +24,11 @@ const pool = new Pool({
 });
 
 // --- CORE MIDDLEWARE ---
-const allowedOrigins = [
-  'https://www.srestamart.com', 
-  'https://srestamart.com',
-  'https://srestamart.onrender.com',
-  'http://localhost:5173'
-];
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  }
-}));
+// ✅ **FIX 1: SIMPLIFIED CORS CONFIGURATION**
+// This replaces the restrictive origin check with a more open policy,
+// allowing your deployed frontend to communicate with the backend.
+app.use(cors());
+
 app.use(bodyParser.json());
 
 // --- STATIC ASSETS & FILE UPLOAD SETUP ---
@@ -88,6 +78,7 @@ const checkUserToken = (req, res, next) => {
 
 // ===================================
 // --- 👑 ADMIN API ROUTES ---
+// ... (All your admin routes remain unchanged) ...
 // ===================================
 
 app.post('/api/admin/login', (req, res) => {
@@ -109,9 +100,6 @@ app.post('/api/admin/upload', checkAdminToken, upload.single('productImage'), (r
     res.json({ success: true, imageUrl: imageUrl });
 });
 
-// --- Product Management (Admin) ---
-
-// ✅ **NEW**: GET ALL PRODUCTS FOR ADMIN DASHBOARD
 app.get('/api/admin/products', checkAdminToken, async (req, res) => {
     try {
         const query = `
@@ -194,7 +182,6 @@ app.put('/api/admin/products/:id', checkAdminToken, async (req, res) => {
   }
 });
 
-// ✅ **MODIFIED**: SAFER PRODUCT DELETION WITH TRANSACTIONS
 app.delete('/api/admin/products/:id', checkAdminToken, async (req, res) => {
     const client = await pool.connect();
     try {
@@ -219,7 +206,6 @@ app.delete('/api/admin/products/:id', checkAdminToken, async (req, res) => {
 });
 
 
-// --- Variant Management (Admin) ---
 app.post('/api/admin/variants', checkAdminToken, async (req, res) => {
     const { product_id, label, price } = req.body;
     if (!product_id || !label || price === undefined) {
@@ -273,7 +259,6 @@ app.delete('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
     }
 });
 
-// --- User Management (Admin) ---
 app.get('/api/admin/users', checkAdminToken, async (req, res) => {
   try {
     const usersResult = await pool.query('SELECT id, name, phone, created_at, is_admin, addresses FROM users ORDER BY id ASC');
@@ -284,7 +269,6 @@ app.get('/api/admin/users', checkAdminToken, async (req, res) => {
   }
 });
 
-// --- Order Management (Admin) ---
 app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
   try {
     const query = `
@@ -334,10 +318,6 @@ app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) =
   }
 });
 
-
-// --- NEW: COUPON MANAGEMENT (ADMIN) ---
-
-// Create a new coupon
 app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
     const { code, discount_type, discount_value, expiry_date, min_purchase_amount } = req.body;
     if (!code || !discount_type || !discount_value || !expiry_date) {
@@ -352,14 +332,13 @@ app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
         res.status(201).json(newCoupon.rows[0]);
     } catch (err) {
         console.error('Error creating coupon:', err.message);
-        if (err.code === '23505') { // Unique constraint violation
+        if (err.code === '23505') { 
             return res.status(400).json({ msg: 'This coupon code already exists.' });
         }
         res.status(500).send('Server Error');
     }
 });
 
-// Get all coupons for the admin dashboard
 app.get('/api/admin/coupons', checkAdminToken, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM coupons ORDER BY created_at DESC');
@@ -370,10 +349,9 @@ app.get('/api/admin/coupons', checkAdminToken, async (req, res) => {
     }
 });
 
-// Update a coupon (e.g., toggle active status)
 app.put('/api/admin/coupons/:id', checkAdminToken, async (req, res) => {
     const { id } = req.params;
-    const { is_active } = req.body; // Example: only updating active status for now
+    const { is_active } = req.body; 
     try {
         const updatedCoupon = await pool.query(
             'UPDATE coupons SET is_active = $1 WHERE id = $2 RETURNING *',
@@ -389,7 +367,6 @@ app.put('/api/admin/coupons/:id', checkAdminToken, async (req, res) => {
     }
 });
 
-// Delete a coupon
 app.delete('/api/admin/coupons/:id', checkAdminToken, async (req, res) => {
     try {
         const result = await pool.query('DELETE FROM coupons WHERE id = $1 RETURNING *', [req.params.id]);
@@ -406,9 +383,8 @@ app.delete('/api/admin/coupons/:id', checkAdminToken, async (req, res) => {
 
 // ===================================
 // --- 👤 USER & PUBLIC API ROUTES ---
+// ... (All your user routes remain unchanged) ...
 // ===================================
-
-// --- Auth (User) ---
 app.post('/api/register', async (req, res) => {
   const { name, phone, password } = req.body;
   if (!name || !phone || !password) return res.status(400).json({ msg: 'Please enter all fields' });
@@ -452,12 +428,11 @@ app.post('/api/forgot-password-twilio', async (req, res) => {
     try {
         const userResult = await pool.query('SELECT * FROM users WHERE phone = $1', [phone]);
         if (userResult.rows.length === 0) {
-            // Security: Don't reveal if a user exists or not.
             return res.json({ msg: 'If an account exists for this number, an OTP has been sent.' });
         }
         
         const otp = crypto.randomInt(100000, 999999).toString();
-        const expires = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 minutes
+        const expires = new Date(Date.now() + 10 * 60 * 1000); 
         
         await pool.query(
             'UPDATE users SET reset_password_otp = $1, reset_password_expires = $2 WHERE phone = $3',
@@ -503,7 +478,6 @@ app.post('/api/reset-password-twilio', async (req, res) => {
     }
 });
 
-// --- Public Products (Paginated) ---
 app.get('/api/products', async (req, res) => {
   try {
     const category = req.query.category; 
@@ -557,7 +531,6 @@ app.get('/api/products', async (req, res) => {
       }
     });
 
-    // ✅ **MODIFIED**: Ensure original paginated order is respected
     const orderedProducts = productIds.map(id => productsMap.get(id));
 
     res.status(200).json({ products: orderedProducts, currentPage: page, totalPages, totalProducts });
@@ -568,7 +541,6 @@ app.get('/api/products', async (req, res) => {
 });
 
 
-// --- Addresses (User) ---
 app.get('/api/addresses', checkUserToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT addresses FROM users WHERE id = $1', [req.user.id]);
@@ -596,9 +568,6 @@ app.post('/api/addresses', checkUserToken, async (req, res) => {
   }
 });
 
-
-// --- MODIFIED: Order Creation now has location-based logic ---
-
 app.post('/api/orders', checkUserToken, async (req, res) => {
   const { userId, cartItems, shippingAddress, totalAmount } = req.body;
   if (req.user.id !== userId) return res.status(403).json({ msg: 'User not authorized.' });
@@ -610,18 +579,15 @@ app.post('/api/orders', checkUserToken, async (req, res) => {
   let status = 'Processing';
 
   if (addressString.includes('hyderabad')) {
-      // Rule A: Manual delivery for Hyderabad
       deliveryType = 'manual';
       deliveryStatus = 'Pending';
   } else if (addressString.includes('telangana') || addressString.includes('andhra pradesh') || addressString.includes('a.p')) {
-      // Rule B: Automated 2-day delivery for Telangana (non-Hyd) and AP
       deliveryType = 'automated';
       deliveryStatus = 'Out for Delivery';
       status = 'Out for Delivery';
       expectedDate = new Date();
       expectedDate.setDate(expectedDate.getDate() + 2);
   } else {
-      // Rule C: Automated 4-day delivery for Rest of India
       deliveryType = 'automated';
       deliveryStatus = 'Out for Delivery';
       status = 'Out for Delivery';
@@ -642,7 +608,6 @@ app.post('/api/orders', checkUserToken, async (req, res) => {
   }
 });
 
-// --- NEW: Endpoint for user to mark their order as delivered ---
 app.put('/api/orders/:orderId/mark-delivered', checkUserToken, async (req, res) => {
     const { orderId } = req.params;
     const userId = req.user.id;
@@ -670,7 +635,6 @@ app.put('/api/orders/:orderId/mark-delivered', checkUserToken, async (req, res) 
 app.get('/api/orders', checkUserToken, async (req, res) => {
   const userId = req.user.id;
   try {
-    // We already fetch all necessary columns, no change needed here.
     const query = `
       SELECT
         o.*,
@@ -688,9 +652,6 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
   }
 });
 
-// --- NEW: PUBLIC COUPON ROUTES ---
-
-// Get all active, non-expired coupons for the public coupons page
 app.get('/api/coupons/public', async (req, res) => {
     try {
         const result = await pool.query(
@@ -703,7 +664,6 @@ app.get('/api/coupons/public', async (req, res) => {
     }
 });
 
-// Apply a coupon code
 app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
     const { couponCode, cartTotal } = req.body;
     if (!couponCode) return res.status(400).json({ success: false, msg: 'Coupon code is required.' });
@@ -729,7 +689,6 @@ app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
             return res.status(400).json({ success: false, msg: `Minimum purchase of ₹${coupon.min_purchase_amount} is required.` });
         }
 
-        // All checks passed
         res.json({ success: true, coupon });
 
     } catch (err) {
@@ -741,9 +700,9 @@ app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
 
 // ===========================================
 // --- 🚚 DELIVERY PARTNER API ROUTES ---
+// ... (All your delivery routes remain unchanged) ...
 // ===========================================
 
-// Partner Login
 app.post('/api/delivery/login', async (req, res) => {
   const { phone, password } = req.body;
   if (!phone || !password) {
@@ -772,15 +731,12 @@ app.post('/api/delivery/login', async (req, res) => {
   }
 });
 
-// ✅ --- NEW ROUTE --- Update Partner's Location
 app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
     const { latitude, longitude } = req.body;
     if (latitude === undefined || longitude === undefined) {
         return res.status(400).json({ msg: 'Latitude and longitude are required.' });
     }
     try {
-        // NOTE: Assumes your `delivery_partners` table has a `last_known_location` column (jsonb type recommended)
-        // and `location_updated_at` (timestamptz type recommended).
         const locationJson = JSON.stringify({ latitude, longitude });
         await pool.query(
             'UPDATE delivery_partners SET last_known_location = $1, location_updated_at = NOW() WHERE id = $2',
@@ -794,7 +750,6 @@ app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
 });
 
 
-// Get Assigned Orders for a Partner
 app.get('/api/delivery/orders', checkPartnerToken, async (req, res) => {
   try {
     const partnerId = req.partner.id;
@@ -816,13 +771,10 @@ app.get('/api/delivery/orders', checkPartnerToken, async (req, res) => {
   }
 });
 
-// ✅ --- NEW ROUTE --- Accept an Assigned Order
-// CORRECTED CODE
 app.put('/api/delivery/orders/:orderId/accept', checkPartnerToken, async (req, res) => {
     const { orderId } = req.params;
     try {
         const result = await pool.query(
-            // ✅ This now updates BOTH status fields for consistency
             `UPDATE orders 
              SET delivery_status = 'Out for Delivery', status = 'Out for Delivery' 
              WHERE id = $1 AND assigned_to_id = $2 AND delivery_status = 'Assigned'
@@ -839,12 +791,10 @@ app.put('/api/delivery/orders/:orderId/accept', checkPartnerToken, async (req, r
     }
 });
 
-// ✅ --- MODIFIED --- Complete a Delivery
 app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req, res) => {
     const { orderId } = req.params;
     try {
         const result = await pool.query(
-            // This now updates BOTH the delivery status and the main order status
             `UPDATE orders 
              SET delivery_status = 'Delivered', status = 'Completed'
              WHERE id = $1 AND assigned_to_id = $2 AND delivery_status = 'Out for Delivery'
@@ -861,18 +811,24 @@ app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req,
     }
 });
 
-// --- NEW: INQUIRY & EMAIL API ROUTE ---/
+
+// ===================================
+// --- 📧 INQUIRY & EMAIL API ROUTE ---
 // ===================================
 
-// Nodemailer transporter setup
+// ✅ **FIX 2: MODIFIED INQUIRY & EMAIL LOGIC**
+// Nodemailer transporter setup with added context.
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com', // Explicitly use the Gmail SMTP server
-    port: 465,              // Use port 465 for SSL, which is more secure and often allowed
-    secure: true,           // Enforce SSL
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // Use the App Password you generated
+        pass: process.env.EMAIL_PASS,
     },
+    // IMPORTANT: Hosting providers like Render often block SMTP ports (465, 587) on free tiers.
+    // If you get a timeout error, it's an environmental issue, not a code issue.
+    // The best long-term solution is to switch to an email API service like Resend, SendGrid, or Mailgun.
 });
 
 app.post('/api/inquiry', async (req, res) => {
@@ -886,7 +842,6 @@ app.post('/api/inquiry', async (req, res) => {
         ? 'New Vendor Partnership Inquiry' 
         : 'New Franchise Inquiry';
 
-    // Create a beautiful HTML email body from the form data
     const emailBody = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
             <h2 style="color: #c0392b;">New ${inquiryType} Inquiry Received</h2>
@@ -894,8 +849,8 @@ app.post('/api/inquiry', async (req, res) => {
             <table style="width: 100%; border-collapse: collapse;">
                 ${Object.entries(formData).map(([key, value]) => `
                     <tr style="border-bottom: 1px solid #ddd;">
-                        <td style="padding: 8px; font-weight: bold; text-transform: capitalize; color: #333;">${key.replace('_', ' ')}</td>
-                        <td style="padding: 8px; color: #555;">${value}</td>
+                        <td style="padding: 8px; font-weight: bold; text-transform: capitalize; color: #333;">${key.replace(/_/g, ' ')}</td>
+                        <td style="padding: 8px; color: #555;">${value || 'N/A'}</td>
                     </tr>
                 `).join('')}
             </table>
@@ -905,20 +860,23 @@ app.post('/api/inquiry', async (req, res) => {
 
     const mailOptions = {
         from: `"Sresta Mart Inquiries" <${process.env.EMAIL_USER}>`,
-        to: 'srestamart@gmail.com', // Your destination email
+        to: 'srestamart@gmail.com',
         subject: subject,
         html: emailBody,
     };
 
     try {
-        // --- MODIFIED: Added better logging for verification ---
-        console.log('Attempting to send email...');
+        console.log('Attempting to send email via Nodemailer...');
         await transporter.sendMail(mailOptions);
         console.log('Email sent successfully!');
         res.status(200).json({ success: true, msg: 'Inquiry sent successfully! We will get back to you soon.' });
     } catch (error) {
-        console.error('Error sending inquiry email:', error); // This will now log the full error object
-        res.status(500).json({ success: false, msg: 'Failed to send inquiry. Please check server logs.' });
+        console.error('NODEMAILER_ERROR:', error);
+        // Provide a more specific error message if a timeout occurs
+        if (error.code === 'ETIMEDOUT') {
+            return res.status(500).json({ success: false, msg: 'The mail server is not responding. Please try again later.' });
+        }
+        res.status(500).json({ success: false, msg: 'Failed to send your inquiry due to a server error.' });
     }
 });
 
