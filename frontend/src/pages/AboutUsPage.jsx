@@ -102,7 +102,7 @@ export default function AboutUsPage() {
             >
               <h2 className="text-3xl font-bold text-gray-800 mb-4">Our Journey</h2>
               <p className="mb-4 text-lg">
-                Welcome to Sresta Mart! We started our journey in 2022 with a simple but powerful mission: to bring pure, healthy, and ethically sourced organic products from our farms in Telangana directly to your table. We saw a need for authentic, trustworthy food and decided to be the bridge between nature's best and your family's health.
+                Welcome to Sresta Mart! We started our journey in 2023 with a simple but powerful mission: to bring pure, healthy, and ethically sourced organic products from our farms in Telangana directly to your table. We saw a need for authentic, trustworthy food and decided to be the bridge between nature's best and your family's health.
               </p>
             </motion.div>
 

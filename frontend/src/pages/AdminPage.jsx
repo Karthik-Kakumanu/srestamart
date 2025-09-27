@@ -376,73 +376,90 @@ const OrdersTable = ({ orders, onAssign }) => (
 );
 
 const OrderRow = ({ order, onAssign }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
 
-    const isAutomated = order.delivery_type === 'automated';
+    // --- NEW: Logic to check if the shipping address is outside Hyderabad ---
+    const isOutsideHyderabad = order.shipping_address?.value && !order.shipping_address.value.toLowerCase().includes('hyderabad');
 
-    return (
-        <>
-            <tr className="hover:bg-slate-50">
-                <td className="px-6 py-4" onClick={() => setIsExpanded(!isExpanded)}>
-                    <div className="font-medium text-gray-800 cursor-pointer hover:text-red-600">{`Order #${order.id}`}</div>
-                    <div className="text-xs text-gray-500">{order.customer_name}</div>
-                </td>
-                <td className="px-6 py-4">
-                    <div className="text-sm text-gray-700">{order.delivery_status}</div>
-                    {isAutomated ? (
-                        <div className="text-xs text-blue-500 flex items-center gap-1">
-                            <Bot size={12} /> Automated
-                        </div>
-                    ) : (
-                        <div className="text-xs text-gray-500">{order.partner_name ? `by ${order.partner_name}` : 'Unassigned'}</div>
-                    )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <div className="font-semibold text-gray-800">₹{Number(order.total_amount).toFixed(2)}</div>
-                    {order.expected_delivery_date ? (
-                        <div className="text-xs text-gray-500">Exp: {new Date(order.expected_delivery_date).toLocaleDateString()}</div>
-                    ) : (
-                        <div className="text-xs text-gray-500">On: {new Date(order.created_at).toLocaleDateString()}</div>
-                    )}
-                </td>
-                <td className="px-6 py-4 text-center">
-                    {/* The Assign button is now disabled for automated orders */}
-                    <button 
-                        onClick={() => onAssign(order)} 
-                        disabled={isAutomated || order.delivery_status !== 'Pending'}
-                        className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                        title={isAutomated ? "This order is handled automatically" : ""}
-                    >
-                        Assign
-                    </button>
-                </td>
-            </tr>
-            {isExpanded && (
-                <tr className="bg-white">
-                    <td colSpan="4" className="p-0">
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-                            <div className="bg-slate-100/80 p-4 m-2 rounded-lg">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                    <div>
-                                        <p className="font-bold text-slate-700">Full Item List:</p>
-                                        <ul className="list-disc list-inside text-slate-600 mt-1">
-                                            {order.items?.map((item, index) => (
-                                                <li key={index}>{item.name} ({item.variantLabel}) - <span className="font-medium">{item.quantity} x ₹{item.price.toFixed(2)}</span></li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-slate-700">Shipping Details:</p>
-                                        <p className="text-slate-600 mt-1">{order.shipping_address?.label}: {order.shipping_address?.value}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </td>
-                </tr>
-            )}
-        </>
-    );
+    const isAutomated = order.delivery_type === 'automated';
+
+    return (
+        <>
+            {/* --- MODIFIED: Conditional styling for the table row --- */}
+            <tr className={
+                isOutsideHyderabad 
+                    ? 'bg-amber-50 border-l-4 border-amber-400 hover:bg-amber-100' 
+                    : 'hover:bg-slate-50'
+            }>
+                <td className="px-6 py-4" onClick={() => setIsExpanded(!isExpanded)}>
+                    <div className="font-medium text-gray-800 cursor-pointer hover:text-red-600">{`Order #${order.id}`}</div>
+                    {/* --- MODIFIED: Added a flex container and the "Outstation" badge --- */}
+                    <div className="flex items-center mt-1">
+                        {isOutsideHyderabad && (
+                            <span className="bg-amber-200 text-amber-800 text-xs font-semibold mr-2 px-2 py-0.5 rounded-full">
+                                Outstation
+                            </span>
+                        )}
+                        <div className="text-xs text-gray-500">{order.customer_name}</div>
+                    </div>
+                </td>
+                <td className="px-6 py-4">
+                    <div className="text-sm text-gray-700">{order.delivery_status}</div>
+                    {isAutomated ? (
+                        <div className="text-xs text-blue-500 flex items-center gap-1">
+          _message_type_suffix": 0
+                          <Bot size={12} /> Automated
+                        </div>
+                    ) : (
+                        <div className="text-xs text-gray-500">{order.partner_name ? `by ${order.partner_name}` : 'Unassigned'}</div>
+                    )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="font-semibold text-gray-800">₹{Number(order.total_amount).toFixed(2)}</div>
+                    {order.expected_delivery_date ? (
+                        <div className="text-xs text-gray-500">Exp: {new Date(order.expected_delivery_date).toLocaleDateString()}</div>
+                    ) : (
+                        <div className="text-xs text-gray-500">On: {new Date(order.created_at).toLocaleDateString()}</div>
+                    )}
+                </td>
+                <td className="px-6 py-4 text-center">
+                    <button 
+                        onClick={() => onAssign(order)} 
+                        disabled={isAutomated || order.delivery_status !== 'Pending'}
+                        className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                        title={isAutomated ? "This order is handled automatically" : ""}
+                    >
+          _message_type_suffix": 0
+                      Assign
+                    </button>
+                </td>
+            </tr>
+            {isExpanded && (
+                <tr className="bg-white">
+                    <td colSpan="4" className="p-0">
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+                            <div className="bg-slate-100/80 p-4 m-2 rounded-lg">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                    <div>
+                                        <p className="font-bold text-slate-700">Full Item List:</p>
+                                        <ul className="list-disc list-inside text-slate-600 mt-1">
+                                            {order.items?.map((item, index) => (
+                                                <li key={index}>{item.name} ({item.variantLabel}) - <span className="font-medium">{item.quantity} x ₹{item.price.toFixed(2)}</span></li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-700">Shipping Details:</p>
+                                        <p className="text-slate-600 mt-1">{order.shipping_address?.label}: {order.shipping_address?.value}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </td>
+                </tr>
+            )}
+        </>
+    );
 };
 
 const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {

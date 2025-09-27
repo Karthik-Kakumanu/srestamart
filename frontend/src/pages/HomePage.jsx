@@ -279,7 +279,7 @@ const Footer = () => (
             <div className="mt-8 pt-6 border-t border-gray-700/50 text-center text-sm">
                 <p>&copy; {new Date().getFullYear()} Sresta Mart. All Rights Reserved.</p>
                 <div className="mt-3 text-xs text-gray-500">
-                    <p>Developed by Karthik & Poonam</p>
+                    <p>Developed by Karthik Kakumanu & Poonam Purohit</p>
                     <div className="flex items-center justify-center gap-x-4 mt-2">
                         <a href="https://pixelkode.netlify.app" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-semibold text-gray-400 hover:text-white transition-colors">
                             <Globe size={14}/>

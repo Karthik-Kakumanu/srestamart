@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // --- MODIFIED --- useEffect added
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-// --- THIS IS THE CORRECTED LINE ---
-import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, PackageCheck, Info } from 'lucide-react';
+// --- THIS IS THE MODIFIED LINE ---
+import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, PackageCheck, Info, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AccountPage({ loggedInUser, orders, ordersLoading, handleLogout }) {
     const [activeTab, setActiveTab] = useState('orders');
 
     const updateOrderInList = () => {
-        // A simple page reload is the easiest way to see the updated status
         window.location.reload(); 
     };
 
@@ -120,6 +119,8 @@ const OrderCard = ({ order, onOrderUpdate }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    // --- NEW: State to hold the partner's location ---
+    const [partnerLocation, setPartnerLocation] = useState(null);
 
     const statusInfo = {
         Processing: { color: "bg-yellow-100 text-yellow-700" },
@@ -130,6 +131,40 @@ const OrderCard = ({ order, onOrderUpdate }) => {
         Cancelled: { color: "bg-red-100 text-red-700" },
         Pending: { color: "bg-gray-100 text-gray-700" }
     };
+
+    // --- NEW: Define which statuses are eligible for live tracking ---
+    const isTrackable = ['Assigned', 'Out for Delivery'].includes(order.delivery_status);
+
+    // --- NEW: Effect to fetch location periodically ONLY for trackable orders ---
+    useEffect(() => {
+        let intervalId = null;
+
+        const fetchPartnerLocation = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders/${order.id}/location`, {
+                    headers: { 'x-auth-token': token }
+                });
+                setPartnerLocation(res.data);
+            } catch (err) {
+                console.error("Failed to fetch partner location:", err);
+            }
+        };
+
+        // Start polling only if the card is expanded and the order is trackable
+        if (isExpanded && isTrackable) {
+            fetchPartnerLocation(); // Fetch immediately
+            intervalId = setInterval(fetchPartnerLocation, 15000); // Then fetch every 15 seconds
+        }
+
+        // Cleanup function: this runs when the component unmounts OR dependencies change
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId); // Stop polling
+            }
+        };
+    }, [isExpanded, isTrackable, order.id]); // Dependencies that trigger the effect
+
 
     const handleMarkAsDelivered = async (e) => {
         e.stopPropagation();
@@ -197,12 +232,47 @@ const OrderCard = ({ order, onOrderUpdate }) => {
                                     </div>
                                 )}
                                 
-                                {order.partner_name && (
+                                {order.partner_name && order.partner_phone && (
                                      <div className="mb-4">
                                         <p className="font-semibold text-gray-700">Delivery Partner:</p>
-                                        <p className="text-gray-600 mt-1">{order.partner_name}</p>
+                                        <div className="flex items-center justify-between mt-1">
+                                            <div>
+                                                <p className="text-gray-800 font-medium">{order.partner_name}</p>
+                                                <p className="text-sm text-gray-500">{order.partner_phone}</p>
+                                            </div>
+                                            <a 
+                                                href={`tel:${order.partner_phone}`}
+                                                onClick={(e) => e.stopPropagation()} 
+                                                className="flex items-center gap-2 bg-blue-500 text-white text-xs font-bold py-1.5 px-3 rounded-full hover:bg-blue-600 transition-colors"
+                                            >
+                                                <Phone size={12} />
+                                                <span>Call</span>
+                                            </a>
+                                        </div>
                                     </div>
                                 )}
+
+                                {/* --- NEW: Live location tracking UI --- */}
+                                {isTrackable && (
+                                    <div className="mt-4">
+                                        <p className="font-semibold text-gray-700">Live Tracking:</p>
+                                        {partnerLocation ? (
+                                            <a 
+                                                href={`https://www.google.com/maps?q=${partnerLocation.latitude},${partnerLocation.longitude}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="flex items-center gap-2 mt-1 text-green-600 font-bold hover:underline"
+                                            >
+                                                <MapPin size={14} />
+                                                <span>View Live Location on Map</span>
+                                            </a>
+                                        ) : (
+                                            <p className="text-sm text-gray-500 italic mt-1">Fetching partner's current location...</p>
+                                        )}
+                                    </div>
+                                )}
+
 
                                 {isAutomated && !isDelivered && (
                                     <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">

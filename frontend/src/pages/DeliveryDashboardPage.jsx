@@ -1,231 +1,246 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react'; // --- MODIFIED --- Added useCallback
 import axios from 'axios';
 import { motion } from 'framer-motion';
-// ✅ --- NEW --- Import CheckCircle icon
-import { MapPin, Box, Check, CheckCircle, ExternalLink, RefreshCw, RadioTower } from 'lucide-react';
+import { MapPin, Box, Check, CheckCircle, ExternalLink, RefreshCw, RadioTower, Ban } from 'lucide-react'; // --- MODIFIED --- Added Ban icon
 import { jwtDecode } from 'jwt-decode';
 
 const getPartnerToken = () => localStorage.getItem('deliveryPartnerToken') || '';
 
+// --- MODIFIED: Hook now returns controls to start/stop tracking ---
 const useLocationTracker = () => {
-  const locationIntervalRef = useRef(null);
+    const locationIntervalRef = useRef(null);
 
-  useEffect(() => {
-    const sendLocation = (position) => {
-      const { latitude, longitude } = position.coords;
-      const token = getPartnerToken();
-      if (!token) return;
+    const stopTracking = useCallback(() => {
+        if (locationIntervalRef.current) {
+            clearInterval(locationIntervalRef.current);
+            locationIntervalRef.current = null;
+            console.log("Location tracking stopped.");
+        }
+    }, []);
 
-      axios.put(
-        `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/location`,
-        { latitude, longitude },
-        { headers: { 'x-partner-token': token } }
-      ).catch(err => console.error("Failed to send location:", err));
-    };
+    const startTracking = useCallback(() => {
+        if (locationIntervalRef.current) {
+            console.log("Tracking is already active.");
+            return; // Don't start a new interval if one is already running
+        }
+        console.log("Starting location tracking...");
 
-    const handleError = (error) => {
-      console.warn(`Location Error: ${error.message}`);
-    };
+        const sendLocation = (position) => {
+            const { latitude, longitude } = position.coords;
+            const token = getPartnerToken();
+            if (!token) return;
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(sendLocation, handleError);
-      locationIntervalRef.current = setInterval(() => {
-        navigator.geolocation.getCurrentPosition(sendLocation, handleError);
-      }, 30000);
-    } else {
-      console.error("Geolocation is not supported by this browser.");
-    }
+            axios.put(
+                `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/location`,
+                { latitude, longitude },
+                { headers: { 'x-partner-token': token } }
+            ).catch(err => console.error("Failed to send location:", err));
+        };
 
-    return () => {
-      if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
-    };
-  }, []);
+        const handleError = (error) => console.warn(`Location Error: ${error.message}`);
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(sendLocation, handleError); // Send once immediately
+            locationIntervalRef.current = setInterval(() => {
+                navigator.geolocation.getCurrentPosition(sendLocation, handleError);
+            }, 30000); // And then every 30 seconds
+        } else {
+            console.error("Geolocation is not supported by this browser.");
+        }
+    }, []);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => stopTracking();
+    }, [stopTracking]);
+
+    return { startTracking, stopTracking };
 };
 
 export default function DeliveryDashboardPage() {
-  const [orders, setOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const partner = JSON.parse(localStorage.getItem('deliveryPartner')) || {};
-  const token = getPartnerToken();
-  const userRole = token ? jwtDecode(token).role : null;
+    const [orders, setOrders] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [isTracking, setIsTracking] = useState(false); // --- NEW: State to show tracking status in UI
+    const partner = JSON.parse(localStorage.getItem('deliveryPartner')) || {};
+    const token = getPartnerToken();
+    const userRole = token ? jwtDecode(token).role : null;
 
-  useLocationTracker();
+    // --- MODIFIED: Get the controls from the hook, don't start it automatically ---
+    const { startTracking, stopTracking } = useLocationTracker();
 
-  const fetchOrders = async () => {
-    setIsLoading(true);
-    setError('');
-    try {
-      const headerKey = userRole === 'admin' ? 'x-admin-token' : 'x-partner-token';
-      const config = { headers: { [headerKey]: token } };
+    // --- NEW: This effect controls the tracking based on order status ---
+    useEffect(() => {
+        // Check if there's any order that is currently 'Out for Delivery'
+        const hasActiveOrder = orders.some(order => order.delivery_status === 'Out for Delivery');
 
-      let url = `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders`;
+        if (hasActiveOrder) {
+            startTracking();
+            setIsTracking(true);
+        } else {
+            stopTracking();
+            setIsTracking(false);
+        }
+    }, [orders, startTracking, stopTracking]);
 
-      if (userRole === 'admin') {
-        url = `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/admin/orders`;
-      }
 
-      const res = await axios.get(url, config);
-      setOrders(res.data);
-    } catch (err) {
-      setError(err.response?.data?.msg || "Failed to fetch orders.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const fetchOrders = async () => {
+        setIsLoading(true);
+        setError('');
+        try {
+            const headerKey = userRole === 'admin' ? 'x-admin-token' : 'x-partner-token';
+            const config = { headers: { [headerKey]: token } };
 
-  useEffect(() => { fetchOrders(); }, []);
+            let url = `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders`;
+            if (userRole === 'admin') {
+                url = `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/admin/orders`;
+            }
 
-  const handleAcceptOrder = async (orderId) => {
-    try {
-      const config = { headers: { 'x-partner-token': token } };
-      await axios.put(
-        `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/accept`,
-        {},
-        config
-      );
-      fetchOrders();
-    } catch (err) {
-      alert("Failed to accept order. Please try again.");
-    }
-  };
+            const res = await axios.get(url, config);
+            setOrders(res.data);
+        } catch (err) {
+            setError(err.response?.data?.msg || "Failed to fetch orders.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-  // ✅ --- NEW --- Function to complete a delivery
-  const handleCompleteOrder = async (orderId) => {
-    try {
-      const config = { headers: { 'x-partner-token': token } };
-      await axios.put(
-        `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/complete`,
-        {},
-        config
-      );
-      fetchOrders();
-    } catch (err) {
-      alert("Failed to complete order. Please try again.");
-    }
-  };
+    useEffect(() => { fetchOrders(); }, []);
 
-  // ✅ --- FIXED --- Correct Google Maps URL
-  const getGoogleMapsUrl = (address) => `https://maps.google.com/?q=${encodeURIComponent(address)}`;
+    const handleAcceptOrder = async (orderId) => {
+        try {
+            const config = { headers: { 'x-partner-token': token } };
+            await axios.put(
+                `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/accept`,
+                {},
+                config
+            );
+            fetchOrders(); // This will re-fetch orders, triggering the useEffect above to start tracking
+        } catch (err) {
+            alert("Failed to accept order. Please try again.");
+        }
+    };
 
-  const getStatusPill = (status) => {
-    switch (status) {
-      case 'Out for Delivery':
-        return 'bg-blue-100 text-blue-800';
-      case 'Delivered':
-        return 'bg-green-100 text-green-800';
-      case 'Assigned':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+    const handleCompleteOrder = async (orderId) => {
+        try {
+            const config = { headers: { 'x-partner-token': token } };
+            await axios.put(
+                `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/complete`,
+                {},
+                config
+            );
+            fetchOrders(); // This will re-fetch orders, triggering the useEffect above to stop tracking if no other active orders exist
+        } catch (err) {
+            alert("Failed to complete order. Please try again.");
+        }
+    };
 
-  return (
-    <div className="min-h-screen bg-slate-100 p-4 sm:p-8">
-      {/* header */}
-      <header className="max-w-5xl mx-auto mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-800">Delivery Dashboard</h1>
-          <p className="text-gray-500">Welcome, {partner?.name || 'Partner'}!</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-green-600 font-semibold">
-            <RadioTower size={20} className="animate-pulse" />
-            <span>Tracking Active</span>
-          </div>
-          <button
-            onClick={fetchOrders}
-            disabled={isLoading}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
-          </button>
-        </div>
-      </header>
+    const getGoogleMapsUrl = (address) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
-      {/* orders list */}
-      <main className="max-w-5xl mx-auto">
-        {isLoading ? <p>Loading assigned orders...</p> :
-         error ? <p className="text-red-500">{error}</p> :
-         orders.length === 0 ? (
-          <div className="text-center bg-white p-12 rounded-2xl shadow-xl">
-            <Box className="mx-auto text-red-200 h-24 w-24" strokeWidth={1} />
-            <h2 className="mt-6 text-2xl font-bold text-gray-800">No Orders Assigned</h2>
-            <p className="text-gray-500 mt-2">There are currently no deliveries assigned to you. Please check back later.</p>
-          </div>
-         ) : (
-          <div className="space-y-6">
-            {orders.map(order => (
-              <motion.div
-                key={order.id}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden"
-              >
-                <div className="p-5 border-b grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
-                  <div>
-                    <p className="text-xs text-gray-500">Order ID</p>
-                    <p className="font-bold text-red-600">#{order.id}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Customer</p>
-                    <p className="font-semibold text-gray-800">{order.customer_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Amount to Collect</p>
-                    <p className="font-bold text-green-600">₹{Number(order.total_amount).toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Status</p>
-                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${getStatusPill(order.delivery_status)}`}>
-                      {order.delivery_status}
-                    </span>
-                  </div>
+    const getStatusPill = (status) => {
+        switch (status) {
+            case 'Out for Delivery': return 'bg-blue-100 text-blue-800';
+            case 'Delivered': return 'bg-green-100 text-green-800';
+            case 'Assigned': return 'bg-yellow-100 text-yellow-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-100 p-4 sm:p-8">
+            <header className="max-w-5xl mx-auto mb-8 flex justify-between items-center">
+                <div>
+                    <h1 className="text-4xl font-bold text-gray-800">Delivery Dashboard</h1>
+                    <p className="text-gray-500">Welcome, {partner?.name || 'Partner'}!</p>
                 </div>
-                <div className="p-5 bg-slate-50">
-                  <div className="flex flex-col md:flex-row justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <MapPin size={20} />
-                        <p>{order.shipping_address?.value || 'No address'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 self-end md:self-center">
-                      {/* ✅ --- MODIFIED --- Conditional button rendering */}
-                      {userRole === 'partner' && order.delivery_status === 'Assigned' && (
-                        <button
-                          onClick={() => handleAcceptOrder(order.id)}
-                          className="flex items-center gap-2 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors shadow"
-                        >
-                          <Check size={18} /> Accept Delivery
-                        </button>
-                      )}
-                      {userRole === 'partner' && order.delivery_status === 'Out for Delivery' && (
-                        <button
-                          onClick={() => handleCompleteOrder(order.id)}
-                          className="flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors shadow"
-                        >
-                          <CheckCircle size={18} /> Complete Delivery
-                        </button>
-                      )}
-                      <a
-                        href={getGoogleMapsUrl(order.shipping_address?.value || '')}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow"
-                      >
-                        <ExternalLink size={18} /> Get Directions
-                      </a>
-                    </div>
-                  </div>
+                <div className="flex items-center gap-4">
+                    {/* --- MODIFIED: UI now reflects the actual tracking state --- */}
+                    {isTracking ? (
+                        <div className="flex items-center gap-2 text-green-600 font-semibold">
+                            <RadioTower size={20} className="animate-pulse" />
+                            <span>Tracking Active</span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2 text-gray-500 font-semibold">
+                            <Ban size={20} />
+                            <span>Tracking Inactive</span>
+                        </div>
+                    )}
+                    <button onClick={fetchOrders} disabled={isLoading} className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 disabled:opacity-50">
+                        <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+                    </button>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-         )}
-      </main>
-    </div>
-  );
+            </header>
+
+            <main className="max-w-5xl mx-auto">
+                {isLoading ? <p>Loading assigned orders...</p> :
+                 error ? <p className="text-red-500">{error}</p> :
+                 orders.length === 0 ? (
+                    <div className="text-center bg-white p-12 rounded-2xl shadow-xl">
+                        <Box className="mx-auto text-red-200 h-24 w-24" strokeWidth={1} />
+                        <h2 className="mt-6 text-2xl font-bold text-gray-800">No Orders Assigned</h2>
+                        <p className="text-gray-500 mt-2">There are currently no deliveries assigned to you. Please check back later.</p>
+                    </div>
+                 ) : (
+                    <div className="space-y-6">
+                        {orders.map(order => (
+                            <motion.div
+                                key={order.id}
+                                layout
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-white rounded-2xl shadow-lg overflow-hidden"
+                            >
+                                <div className="p-5 border-b grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                                    <div>
+                                        <p className="text-xs text-gray-500">Order ID</p>
+                                        <p className="font-bold text-red-600">#{order.id}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500">Customer</p>
+                                        <p className="font-semibold text-gray-800">{order.customer_name}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500">Amount to Collect</p>
+                                        <p className="font-bold text-green-600">₹{Number(order.total_amount).toFixed(2)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500">Status</p>
+                                        <span className={`px-2 py-1 text-xs font-bold rounded-full ${getStatusPill(order.delivery_status)}`}>
+                                            {order.delivery_status}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="p-5 bg-slate-50">
+                                    <div className="flex flex-col md:flex-row justify-between gap-4">
+                                        <div>
+                                            <div className="flex items-center gap-3 text-gray-700">
+                                                <MapPin size={20} />
+                                                <p>{order.shipping_address?.value || 'No address'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3 self-end md:self-center">
+                                            {userRole === 'partner' && order.delivery_status === 'Assigned' && (
+                                                <button onClick={() => handleAcceptOrder(order.id)} className="flex items-center gap-2 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors shadow">
+                                                    <Check size={18} /> Accept Delivery
+                                                </button>
+                                            )}
+                                            {userRole === 'partner' && order.delivery_status === 'Out for Delivery' && (
+                                                <button onClick={() => handleCompleteOrder(order.id)} className="flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors shadow">
+                                                    <CheckCircle size={18} /> Complete Delivery
+                                                </button>
+                                            )}
+                                            <a href={getGoogleMapsUrl(order.shipping_address?.value || '')} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow">
+                                                <ExternalLink size={18} /> Get Directions
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
+            </main>
+        </div>
+    );
 }
