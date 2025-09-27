@@ -239,12 +239,11 @@ const SkeletonCard = () => (
     </div>
 );
 
-// UPDATED: Footer with corrected developer credits and responsive link layout
+// UPDATED: Footer with responsive grid for "Quick Links"
 const Footer = () => (
     <footer className="bg-slate-900/70 text-gray-300 backdrop-blur-lg mt-auto relative z-10 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {/* About Sresta Mart Section (takes more space on larger screens) */}
                 <div className="md:col-span-2 lg:col-span-2">
                     <div className="flex items-center mb-4">
                         <img src={logoIcon} alt="Sresta Mart Logo" className="h-10 w-auto mr-3"/>
@@ -254,7 +253,6 @@ const Footer = () => (
                         At Sresta Mart, we are dedicated to bringing you the purest, most nutritious organic products directly from trusted farms. Our commitment is to quality, health, and the well-being of our community.
                     </p>
                 </div>
-                {/* Our Products Section */}
                 <div>
                     <h3 className="text-lg font-semibold text-white mb-4">Our Products</h3>
                     <ul className="space-y-2 text-sm">
@@ -266,9 +264,9 @@ const Footer = () => (
                         <li><span className="text-yellow-600 mr-2">›</span>Natural Millets</li>
                     </ul>
                 </div>
-                {/* Quick Links Section (Responsive grid for links) */}
                 <div>
                     <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
+                    {/* FIXED: This now uses a grid to organize links side-by-side */}
                     <div className="grid grid-cols-2 gap-2 text-sm">
                         <Link to="/about-us" className="hover:text-red-400 transition-colors">About Us</Link>
                         <Link to="/privacy" className="hover:text-red-400 transition-colors">Privacy Policy</Link>
