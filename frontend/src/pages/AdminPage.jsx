@@ -407,7 +407,6 @@ const OrderRow = ({ order, onAssign }) => {
                     <div className="text-sm text-gray-700">{order.delivery_status}</div>
                     {isAutomated ? (
                         <div className="text-xs text-blue-500 flex items-center gap-1">
-          _message_type_suffix": 0
                           <Bot size={12} /> Automated
                         </div>
                     ) : (
@@ -429,7 +428,7 @@ const OrderRow = ({ order, onAssign }) => {
                         className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                         title={isAutomated ? "This order is handled automatically" : ""}
                     >
-          _message_type_suffix": 0
+                        Assign
                       Assign
                     </button>
                 </td>
