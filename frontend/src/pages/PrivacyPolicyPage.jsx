@@ -60,8 +60,8 @@ export default function PrivacyPolicyPage() {
                                 Refunds will only be issued under the following specific conditions:
                             </p>
                             <ul className="mt-2 space-y-1">
-                                <li><CheckCircle size={16} className="inline mr-2 text-green-600" />The product you received was completely **rotten** or spoiled upon arrival.</li>
-                                <li><CheckCircle size={16} className="inline mr-2 text-green-600" />You received a **mismatched product** (i.e., not what you ordered).</li>
+                                <li><CheckCircle size={16} className="inline mr-2 text-green-600" />The product you received was completely rotten or spoiled upon arrival.</li>
+                                <li><CheckCircle size={16} className="inline mr-2 text-green-600" />You received a mismatched product (i.e., not what you ordered).</li>
                             </ul>
                         </div>
 
@@ -76,7 +76,7 @@ export default function PrivacyPolicyPage() {
                                     <div className="flex items-start gap-2">
                                         <MapPin size={16} className="inline mt-1 text-green-600"/>
                                         <div>
-                                            <strong>For deliveries within Hyderabad:</strong> Sresta Mart takes **full responsibility** for any damage that occurs during transit. We will provide a suitable resolution, such as a replacement or refund.
+                                            <strong>For deliveries within Hyderabad:</strong> Sresta Mart takes full responsibility for any damage that occurs during transit. We will provide a suitable resolution, such as a replacement or refund.
                                         </div>
                                     </div>
                                 </li>
@@ -84,7 +84,7 @@ export default function PrivacyPolicyPage() {
                                     <div className="flex items-start gap-2">
                                         <MapPin size={16} className="inline mt-1 text-red-600"/>
                                         <div>
-                                            <strong>For deliveries outside Hyderabad:</strong> While we package our products securely, Sresta Mart is **not responsible for damage** caused by the third-party courier service during transit. However, we will fully support you by providing necessary documentation and assistance to help you file a claim with the courier company.
+                                            <strong>For deliveries outside Hyderabad:</strong> While we package our products securely, Sresta Mart is not responsible for damage caused by the third-party courier service during transit. However, we will fully support you by providing necessary documentation and assistance to help you file a claim with the courier company.
                                         </div>
                                     </div>
                                 </li>
@@ -111,7 +111,7 @@ export default function PrivacyPolicyPage() {
                     <hr className="my-8" />
 
                     <PolicySection icon={<MessageSquare size={24} className="text-teal-600" />} title="Contact Us">
-                        <p>If you have any questions about our policies, please contact us. You can find our contact details on the **Help Center** page in the app or website footer.</p>
+                        <p>If you have any questions about our policies, please contact us. You can find our contact details on the Help Center page in the website footer.</p>
                     </PolicySection>
 
                 </motion.div>

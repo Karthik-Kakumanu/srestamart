@@ -1,5 +1,3 @@
-// src/pages/HomePage.jsx (Full Updated Code)
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -11,7 +9,7 @@ import {
 } from 'lucide-react';
 import logoIcon from '../../images/icon.png';
 
-// REMOVED: 'aboutus' from the category order to remove it from the filter bar
+// "About Us" has been removed from the main filters to avoid confusion. It's now in the sidebar.
 const CATEGORY_ORDER = ['meatpoultry', 'eggs', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets'];
 
 const categoryIcons = {
@@ -153,7 +151,6 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
     </motion.section>
 );
 
-// UPDATED: itemVariants for a more effective product card loading animation
 const itemVariants = {
     hidden: { scale: 0.95, opacity: 0 },
     visible: { 
@@ -243,9 +240,9 @@ const SkeletonCard = () => (
     </div>
 );
 
-// UPDATED: Footer with new developer credits and social links
+// UPDATED: Footer with corrected developer credits and social links
 const Footer = () => (
-    <footer className="bg-slate-900/60 text-gray-300 backdrop-blur-lg mt-auto relative z-10 border-t border-white/10">
+    <footer className="bg-slate-900/70 text-gray-300 backdrop-blur-lg mt-auto relative z-10 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div className="md:col-span-2">
@@ -254,18 +251,18 @@ const Footer = () => (
                         <h3 className="text-xl font-bold text-white">Sresta Mart</h3>
                     </div>
                     <p className="text-sm leading-relaxed">
-                        At Sresta Mart, we are dedicated to bringing you the purest, most nutritious organic products directly from trusted farms. Our commitment is to quality, health, and the well-being of our community. We specialize in ethically sourced, premium-grade foods that nourish your family.
+                        At Sresta Mart, we are dedicated to bringing you the purest, most nutritious organic products directly from trusted farms. Our commitment is to quality, health, and the well-being of our community.
                     </p>
                 </div>
                 <div>
                     <h3 className="text-lg font-semibold text-white mb-4">Our Products</h3>
                     <ul className="space-y-2 text-sm">
                         <li><span className="text-red-400 mr-2">›</span>Organic Meat & Poultry</li>
-                        <li><span className="text-yellow-400 mr-2">›</span>Farm-Fresh Natu Kodi Eggs</li>
+                        <li><span className="text-yellow-400 mr-2">›</span>Farm-Fresh Eggs</li>
                         <li><span className="text-orange-400 mr-2">›</span>Authentic Non-Veg Pickles</li>
-                        <li><span className="text-blue-300 mr-2">›</span>Pure A2 Dairy Products</li>
-                        <li><span className="text-amber-500 mr-2">›</span>Nutrient-Rich Cold Pressed Oils</li>
-                        <li><span className="text-yellow-600 mr-2">›</span>Wholesome Natural Millets</li>
+                        <li><span className="text-blue-300 mr-2">›</span>Pure Dairy Products</li>
+                        <li><span className="text-amber-500 mr-2">›</span>Cold Pressed Oils</li>
+                        <li><span className="text-yellow-600 mr-2">›</span>Natural Millets</li>
                     </ul>
                 </div>
                 <div>
@@ -274,8 +271,8 @@ const Footer = () => (
                         <li><Link to="/about-us" className="hover:text-red-400 transition-colors">About Us</Link></li>
                         <li><Link to="/privacy" className="hover:text-red-400 transition-colors">Privacy Policy</Link></li>
                         <li><Link to="/help" className="hover:text-red-400 transition-colors">Help & Support</Link></li>
-                        <li className="flex items-center gap-2 pt-2"><Phone size={14} /><a href="tel:+911234567890" className="hover:text-red-400 transition-colors">+91 12345 67890</a></li>
-                        <li className="flex items-center gap-2"><Mail size={14} /><a href="mailto:support@srestamart.com" className="hover:text-red-400 transition-colors">support@srestamart.com</a></li>
+                        <li className="flex items-center gap-2 pt-2"><Phone size={14} /><a href="tel:+919949529575" className="hover:text-red-400 transition-colors">+91 94949 529575</a></li>
+                        <li className="flex items-center gap-2"><Mail size={14} /><a href="mailto:srestamart@gmail.com" className="hover:text-red-400 transition-colors">support@srestamart.com</a></li>
                     </ul>
                 </div>
             </div>
@@ -406,7 +403,7 @@ export default function HomePage({ handleAddToCart }) {
     const sidebarVariants = { open: { x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } }, closed: { x: "-100%", transition: { type: "spring", stiffness: 300, damping: 30 } } };
 
     return (
-        <div className="relative min-h-screen overflow-x-hidden flex flex-col bg-slate-900">
+        <div className="relative min-h-screen overflow-x-hidden flex flex-col bg-transparent">
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
                 body { font-family: 'Poppins', sans-serif; }
@@ -421,7 +418,7 @@ export default function HomePage({ handleAddToCart }) {
                         key={selectedCategory}
                         src={categoryVideos[selectedCategory]}
                         initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.8 }}
+                        animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 1.5, ease: 'easeInOut' }}
                         autoPlay
@@ -432,8 +429,8 @@ export default function HomePage({ handleAddToCart }) {
                     />
                 )}
             </AnimatePresence>
-            <div className="fixed inset-0 bg-slate-900/50 -z-10"></div>
-
+            {/* REMOVED: The dark overlay that was covering the video */}
+            
             <main className="flex-grow">
                 <AnimatePresence>
                     {isSidebarOpen && (
@@ -470,6 +467,7 @@ export default function HomePage({ handleAddToCart }) {
                                     <hr className="my-6 border-gray-600" />
                                     <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Access</h3>
                                     <ul className="space-y-2">
+                                        <li><Link to="/about-us" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all"><Info size={16} /> About Us</Link></li>
                                         <li><a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all"><User size={16} /> Vendor Portal</a></li>
                                         <li><a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all"><Truck size={16} /> Delivery Hub</a></li>
                                         <li><a href="/franchise" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all"><Store size={16} /> Franchise</a></li>
@@ -481,7 +479,7 @@ export default function HomePage({ handleAddToCart }) {
                 </AnimatePresence>
 
                 <div className="relative z-10">
-                    <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/20 to-transparent">
+                    <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/30 to-transparent">
                         <div className="flex flex-row items-center justify-center mb-8 relative px-4 sm:px-6">
                             <button onClick={() => setIsSidebarOpen(true)} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-sm hover:bg-white/30 transition-all">
                                 <Menu className="text-white" size={20}/>
@@ -493,7 +491,7 @@ export default function HomePage({ handleAddToCart }) {
                                 transition={{ duration: 1, delay: 0.2, y: { repeat: Infinity, duration: 4, ease: "easeInOut" } }}
                             >
                                 <h1 className="text-3xl sm:text-5xl font-bold text-white text-shadow tracking-tight">
-                                    Pure, Organic, Divine.
+                                    SRESTA MART.
                                 </h1>
                                 <p className="mt-2 text-md sm:text-lg text-red-200 text-shadow max-w-2xl mx-auto">
                                     Experience the authentic taste of nature with our farm-fresh collection.
