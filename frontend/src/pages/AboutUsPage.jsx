@@ -66,7 +66,7 @@ export default function AboutUsPage() {
           {/* 1. Hero Image Section */}
           <div className="relative h-64 sm:h-80">
             <img 
-              src="https://images.pexels.com/photos/2690323/pexels-photo-2690323.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" 
+              src="https://i.pinimg.com/1200x/bf/2b/c9/bf2bc9c192686d4d13b06afd2efb269d.jpg" 
               alt="Organic Farm"
               className="w-full h-full object-cover"
             />
@@ -102,7 +102,7 @@ export default function AboutUsPage() {
             >
               <h2 className="text-3xl font-bold text-gray-800 mb-4">Our Journey</h2>
               <p className="mb-4 text-lg">
-                Welcome to Sresta Mart! We started our journey in **2020** with a simple but powerful mission: to bring pure, healthy, and ethically sourced organic products from our farms in Andhra Pradesh directly to your table. We saw a need for authentic, trustworthy food and decided to be the bridge between nature's best and your family's health.
+                Welcome to Sresta Mart! We started our journey in 2022 with a simple but powerful mission: to bring pure, healthy, and ethically sourced organic products from our farms in Telangana directly to your table. We saw a need for authentic, trustworthy food and decided to be the bridge between nature's best and your family's health.
               </p>
             </motion.div>
 

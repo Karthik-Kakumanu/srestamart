@@ -11,7 +11,7 @@ const faqData = [
     },
     {
         question: "What are the delivery charges?",
-        answer: "We are happy to offer FREE delivery on all orders within our serviceable areas in Ponnur. There are no hidden charges."
+        answer: "The delivery charge varies based on your location and the total order amount."
     },
     {
         question: "How can I be sure of the quality of the products?",
@@ -50,14 +50,14 @@ export default function HelpCenterPage() {
                         <ContactCard 
                             icon={<Phone />} 
                             title="Call Us" 
-                            content="+91 94948 37550"
-                            href="tel:+919494837550"
+                            content="+91 99495 29575"
+                            href="tel:+919949529575"
                         />
                         <ContactCard 
                             icon={<Mail />} 
                             title="Email Us" 
                             content="support@srestamart.com"
-                            href="mailto:support@srestamart.com"
+                            href="mailto:srestamart@gmail.com"
                         />
                         <ContactCard 
                             icon={<Instagram />} 
