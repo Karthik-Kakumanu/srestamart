@@ -1,8 +1,8 @@
-// backend/index.js (Corrected)
+// backend/index.js
 
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors'); // You still need the cors package
+const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
@@ -10,11 +10,14 @@ const path = require('path');
 const twilio = require('twilio');
 const crypto = require('crypto');
 const multer = require('multer');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend'); // Import Resend
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
+
+// Initialize Resend with your API Key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // --- DATABASE CONNECTION ---
 const { Pool } = require('pg');
@@ -24,11 +27,7 @@ const pool = new Pool({
 });
 
 // --- CORE MIDDLEWARE ---
-// ✅ **FIX 1: SIMPLIFIED CORS CONFIGURATION**
-// This replaces the restrictive origin check with a more open policy,
-// allowing your deployed frontend to communicate with the backend.
 app.use(cors());
-
 app.use(bodyParser.json());
 
 // --- STATIC ASSETS & FILE UPLOAD SETUP ---
@@ -78,7 +77,6 @@ const checkUserToken = (req, res, next) => {
 
 // ===================================
 // --- 👑 ADMIN API ROUTES ---
-// ... (All your admin routes remain unchanged) ...
 // ===================================
 
 app.post('/api/admin/login', (req, res) => {
@@ -100,6 +98,7 @@ app.post('/api/admin/upload', checkAdminToken, upload.single('productImage'), (r
     res.json({ success: true, imageUrl: imageUrl });
 });
 
+// --- Product Management (Admin) ---
 app.get('/api/admin/products', checkAdminToken, async (req, res) => {
     try {
         const query = `
@@ -206,6 +205,7 @@ app.delete('/api/admin/products/:id', checkAdminToken, async (req, res) => {
 });
 
 
+// --- Variant Management (Admin) ---
 app.post('/api/admin/variants', checkAdminToken, async (req, res) => {
     const { product_id, label, price } = req.body;
     if (!product_id || !label || price === undefined) {
@@ -259,6 +259,7 @@ app.delete('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
     }
 });
 
+// --- User Management (Admin) ---
 app.get('/api/admin/users', checkAdminToken, async (req, res) => {
   try {
     const usersResult = await pool.query('SELECT id, name, phone, created_at, is_admin, addresses FROM users ORDER BY id ASC');
@@ -269,6 +270,7 @@ app.get('/api/admin/users', checkAdminToken, async (req, res) => {
   }
 });
 
+// --- Order Management (Admin) ---
 app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
   try {
     const query = `
@@ -318,6 +320,8 @@ app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) =
   }
 });
 
+
+// --- COUPON MANAGEMENT (ADMIN) ---
 app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
     const { code, discount_type, discount_value, expiry_date, min_purchase_amount } = req.body;
     if (!code || !discount_type || !discount_value || !expiry_date) {
@@ -332,7 +336,7 @@ app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
         res.status(201).json(newCoupon.rows[0]);
     } catch (err) {
         console.error('Error creating coupon:', err.message);
-        if (err.code === '23505') { 
+        if (err.code === '23505') { // Unique constraint violation
             return res.status(400).json({ msg: 'This coupon code already exists.' });
         }
         res.status(500).send('Server Error');
@@ -351,7 +355,7 @@ app.get('/api/admin/coupons', checkAdminToken, async (req, res) => {
 
 app.put('/api/admin/coupons/:id', checkAdminToken, async (req, res) => {
     const { id } = req.params;
-    const { is_active } = req.body; 
+    const { is_active } = req.body; // Example: only updating active status for now
     try {
         const updatedCoupon = await pool.query(
             'UPDATE coupons SET is_active = $1 WHERE id = $2 RETURNING *',
@@ -383,8 +387,9 @@ app.delete('/api/admin/coupons/:id', checkAdminToken, async (req, res) => {
 
 // ===================================
 // --- 👤 USER & PUBLIC API ROUTES ---
-// ... (All your user routes remain unchanged) ...
 // ===================================
+
+// --- Auth (User) ---
 app.post('/api/register', async (req, res) => {
   const { name, phone, password } = req.body;
   if (!name || !phone || !password) return res.status(400).json({ msg: 'Please enter all fields' });
@@ -432,7 +437,7 @@ app.post('/api/forgot-password-twilio', async (req, res) => {
         }
         
         const otp = crypto.randomInt(100000, 999999).toString();
-        const expires = new Date(Date.now() + 10 * 60 * 1000); 
+        const expires = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 minutes
         
         await pool.query(
             'UPDATE users SET reset_password_otp = $1, reset_password_expires = $2 WHERE phone = $3',
@@ -478,6 +483,7 @@ app.post('/api/reset-password-twilio', async (req, res) => {
     }
 });
 
+// --- Public Products (Paginated) ---
 app.get('/api/products', async (req, res) => {
   try {
     const category = req.query.category; 
@@ -541,6 +547,7 @@ app.get('/api/products', async (req, res) => {
 });
 
 
+// --- Addresses (User) ---
 app.get('/api/addresses', checkUserToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT addresses FROM users WHERE id = $1', [req.user.id]);
@@ -568,6 +575,8 @@ app.post('/api/addresses', checkUserToken, async (req, res) => {
   }
 });
 
+
+// --- Order Creation ---
 app.post('/api/orders', checkUserToken, async (req, res) => {
   const { userId, cartItems, shippingAddress, totalAmount } = req.body;
   if (req.user.id !== userId) return res.status(403).json({ msg: 'User not authorized.' });
@@ -652,6 +661,7 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
   }
 });
 
+// --- PUBLIC COUPON ROUTES ---
 app.get('/api/coupons/public', async (req, res) => {
     try {
         const result = await pool.query(
@@ -700,9 +710,9 @@ app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
 
 // ===========================================
 // --- 🚚 DELIVERY PARTNER API ROUTES ---
-// ... (All your delivery routes remain unchanged) ...
 // ===========================================
 
+// Partner Login
 app.post('/api/delivery/login', async (req, res) => {
   const { phone, password } = req.body;
   if (!phone || !password) {
@@ -750,6 +760,7 @@ app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
 });
 
 
+// Get Assigned Orders for a Partner
 app.get('/api/delivery/orders', checkPartnerToken, async (req, res) => {
   try {
     const partnerId = req.partner.id;
@@ -816,21 +827,6 @@ app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req,
 // --- 📧 INQUIRY & EMAIL API ROUTE ---
 // ===================================
 
-// ✅ **FIX 2: MODIFIED INQUIRY & EMAIL LOGIC**
-// Nodemailer transporter setup with added context.
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-    // IMPORTANT: Hosting providers like Render often block SMTP ports (465, 587) on free tiers.
-    // If you get a timeout error, it's an environmental issue, not a code issue.
-    // The best long-term solution is to switch to an email API service like Resend, SendGrid, or Mailgun.
-});
-
 app.post('/api/inquiry', async (req, res) => {
     const { inquiryType, formData } = req.body;
 
@@ -839,8 +835,8 @@ app.post('/api/inquiry', async (req, res) => {
     }
 
     const subject = inquiryType === 'Vendor' 
-        ? 'New Vendor Partnership Inquiry' 
-        : 'New Franchise Inquiry';
+        ? 'New Vendor Partnership Inquiry from Sresta Mart' 
+        : 'New Franchise Inquiry from Sresta Mart';
 
     const emailBody = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
@@ -858,27 +854,30 @@ app.post('/api/inquiry', async (req, res) => {
         </div>
     `;
 
-    const mailOptions = {
-        from: `"Sresta Mart Inquiries" <${process.env.EMAIL_USER}>`,
-        to: 'srestamart@gmail.com',
-        subject: subject,
-        html: emailBody,
-    };
-
     try {
-        console.log('Attempting to send email via Nodemailer...');
-        await transporter.sendMail(mailOptions);
-        console.log('Email sent successfully!');
-        res.status(200).json({ success: true, msg: 'Inquiry sent successfully! We will get back to you soon.' });
-    } catch (error) {
-        console.error('NODEMAILER_ERROR:', error);
-        // Provide a more specific error message if a timeout occurs
-        if (error.code === 'ETIMEDOUT') {
-            return res.status(500).json({ success: false, msg: 'The mail server is not responding. Please try again later.' });
+        console.log('Attempting to send email via Resend...');
+
+        const { data, error } = await resend.emails.send({
+            from: 'Sresta Mart Inquiries <onboarding@resend.dev>', // Replace with your verified domain email
+            to: ['srestamart@gmail.com'],
+            subject: subject,
+            html: emailBody,
+        });
+
+        if (error) {
+            console.error('RESEND_ERROR:', error);
+            return res.status(400).json({ success: false, msg: 'Failed to send inquiry.', error });
         }
+
+        console.log('Email sent successfully via Resend!', data);
+        res.status(200).json({ success: true, msg: 'Inquiry sent successfully! We will get back to you soon.' });
+
+    } catch (error) {
+        console.error('SERVER_ERROR sending email:', error);
         res.status(500).json({ success: false, msg: 'Failed to send your inquiry due to a server error.' });
     }
 });
+
 
 // ===================================
 // --- 🖥️ SERVE FRONTEND & START SERVER ---

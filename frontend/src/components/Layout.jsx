@@ -9,7 +9,7 @@ export default function Layout({ loggedInUser, handleLogout, cartItems }) {
 
   const activeLinkStyle = { color: '#dc2626', fontWeight: 'bold' };
 
-  const shopAddress = "HNO 5-34, PLOT NO 1, BUDHA NAGAR ROAD NO 1, PEERZADIGUDA, MEDIPALLY(M), MEDCHAL-MALKAJGIRI (D), TELANGANA - 500039";
+  const shopAddress = "5-34, Road No. 1, Budha Nagar, MEDIPALLY, Mallika Arjun Nagar, Peerzadiguda, Hyderabad, Telangana 500039";
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shopAddress)}`;
 
   return (

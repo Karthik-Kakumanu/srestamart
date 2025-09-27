@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Heart, BrainCircuit, Bone, Egg, Leaf, Milk, Wheat, CookingPot, Beef,
     Microscope, Shield, Sun, Droplets, BatteryCharging, Sparkles, TestTube, FilterX, Vegan, Activity,
-    Menu, X, ChevronRight, User, Truck, Search, ShoppingCart, Store, Info
+    Menu, X, ChevronRight, User, Truck, Search, ShoppingCart, Store, Info, Phone, Mail
 } from 'lucide-react';
 import logoIcon from '../../images/icon.png';
 
@@ -114,6 +114,53 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
 };
 const SkeletonCard = () => ( <div className="bg-white/40 backdrop-blur-md rounded-2xl shadow-lg overflow-hidden animate-pulse"> <div className="w-full aspect-[4/3] bg-gray-300"></div> <div className="p-4"> <div className="h-5 bg-gray-300 rounded w-4/5 mb-2"></div> <div className="h-3 bg-gray-300 rounded w-full mb-3"></div> <div className="h-3 bg-gray-300 rounded w-3/5 mb-3"></div> <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-300/70"> <div className="h-6 bg-gray-300 rounded w-1/4"></div> <div className="h-8 bg-gray-300 rounded-full w-2/5"></div> </div> </div> </div> );
 
+// ## NEW FOOTER COMPONENT
+const Footer = () => (
+    <footer className="bg-slate-900/60 text-gray-300 backdrop-blur-lg mt-16 relative z-10 border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                {/* About Sresta Mart Section */}
+                <div className="md:col-span-2">
+                    <div className="flex items-center mb-4">
+                        <img src={logoIcon} alt="Sresta Mart Logo" className="h-10 w-auto mr-3"/>
+                        <h3 className="text-xl font-bold text-white">Sresta Mart</h3>
+                    </div>
+                    <p className="text-sm leading-relaxed">
+                        At Sresta Mart, we are dedicated to bringing you the purest, most nutritious organic products directly from trusted farms. Our commitment is to quality, health, and the well-being of our community. We specialize in ethically sourced, premium-grade foods that nourish your family.
+                    </p>
+                </div>
+                {/* Our Products Section */}
+                <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">Our Products</h3>
+                    <ul className="space-y-2 text-sm">
+                        <li><span className="text-red-400 mr-2">›</span>Organic Meat & Poultry</li>
+                        <li><span className="text-yellow-400 mr-2">›</span>Farm-Fresh Natu Kodi Eggs</li>
+                        <li><span className="text-orange-400 mr-2">›</span>Authentic Non-Veg Pickles</li>
+                        <li><span className="text-blue-300 mr-2">›</span>Pure A2 Dairy Products</li>
+                        <li><span className="text-amber-500 mr-2">›</span>Nutrient-Rich Cold Pressed Oils</li>
+                        <li><span className="text-yellow-600 mr-2">›</span>Wholesome Natural Millets</li>
+                    </ul>
+                </div>
+                {/* Quick Links Section */}
+                <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
+                    <ul className="space-y-2 text-sm">
+                        <li><Link to="/about-us" className="hover:text-red-400 transition-colors">About Us</Link></li>
+                        <li><Link to="/privacy" className="hover:text-red-400 transition-colors">Privacy Policy</Link></li>
+                        <li><Link to="/help" className="hover:text-red-400 transition-colors">Help & Support</Link></li>
+                        <li className="flex items-center gap-2 pt-2"><Phone size={14} /><a href="tel:+911234567890" className="hover:text-red-400 transition-colors">+91 12345 67890</a></li>
+                        <li className="flex items-center gap-2"><Mail size={14} /><a href="mailto:support@srestamart.com" className="hover:text-red-400 transition-colors">support@srestamart.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div className="mt-8 pt-6 border-t border-gray-700/50 text-center text-sm">
+                <p>&copy; 2025 Sresta Mart. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+);
+
+
 export default function HomePage({ handleAddToCart }) {
     const [products, setProducts] = useState([]);
     const [categories] = useState(CATEGORY_ORDER);
@@ -203,7 +250,7 @@ export default function HomePage({ handleAddToCart }) {
     const sidebarVariants = { open: { x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } }, closed: { x: "-100%", transition: { type: "spring", stiffness: 300, damping: 30 } } };
 
     return (
-        <div className="relative min-h-screen overflow-x-hidden">
+        <div className="relative min-h-screen overflow-x-hidden flex flex-col">
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
                 body { font-family: 'Poppins', sans-serif; }
@@ -214,126 +261,131 @@ export default function HomePage({ handleAddToCart }) {
             `}</style>
             <AnimatePresence> {categoryVideos[selectedCategory] && (<motion.video key={selectedCategory} src={categoryVideos[selectedCategory]} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: 'easeInOut' }} autoPlay loop muted playsInline className="fixed inset-0 w-full h-full object-cover -z-20 filter blur-sm scale-105" />)} </AnimatePresence>
             <div className="fixed inset-0 bg-gradient-radial from-red-900/10 via-slate-900/20 to-slate-900/40 -z-10"></div>
-            <AnimatePresence>
-                {isSidebarOpen && (
-                    <>
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" />
-                        <motion.div variants={sidebarVariants} initial="closed" animate="open" exit="closed" className="fixed top-0 left-0 h-full w-64 bg-slate-800/80 backdrop-blur-lg shadow-lg z-50 p-6 flex flex-col" >
-                            <div className="flex justify-between items-center mb-8">
-                                <img src={logoIcon} alt="Sresta Mart Logo" className="h-12 w-auto"/>
-                                <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-slate-700/50 rounded-full"> <X className="text-gray-200" size={20} /> </button>
+            
+            {/* Main Content Area */}
+            <main className="flex-grow">
+                <AnimatePresence>
+                    {isSidebarOpen && (
+                        <>
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" />
+                            <motion.div variants={sidebarVariants} initial="closed" animate="open" exit="closed" className="fixed top-0 left-0 h-full w-64 bg-slate-800/80 backdrop-blur-lg shadow-lg z-50 p-6 flex flex-col" >
+                                <div className="flex justify-between items-center mb-8">
+                                    <img src={logoIcon} alt="Sresta Mart Logo" className="h-12 w-auto"/>
+                                    <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-slate-700/50 rounded-full"> <X className="text-gray-200" size={20} /> </button>
+                                </div>
+                                <nav className="flex-grow">
+                                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Discover Categories</h3>
+                                    <ul className="space-y-2">
+                                        {categories.map(category => {
+                                            const categoryName = category === 'meatpoultry' ? 'Meat & Poultry' : category.charAt(0).toUpperCase() + category.slice(1);
+                                            return (
+                                            <li key={category}>
+                                                <button onClick={() => handleFilterChange(category)} className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-base font-medium transition-all duration-300 ${ selectedCategory === category ? 'bg-red-600 text-white shadow-md' : 'text-gray-200 hover:bg-slate-700/50' }`} >
+                                                    <div className="flex items-center gap-3"> {categoryIcons[category]} {categoryName} </div>
+                                                    <ChevronRight size={16} />
+                                                </button>
+                                            </li>
+                                        )})}
+                                    </ul>
+                                    <hr className="my-6 border-gray-600" />
+                                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Access</h3>
+                                    <ul className="space-y-2">
+                                        <li> <a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all"> <User size={16} /> Vendor Portal </a> </li>
+                                        <li> <a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all"> <Truck size={16} /> Delivery Hub </a> </li>
+                                        <li> <a href="/franchise" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all"> <Store size={16} /> Franchise </a> </li>
+                                    </ul>
+                                </nav>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+                <div className="relative z-10">
+                    <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/20 to-transparent">
+                        <div className="flex flex-row items-center justify-center mb-8 relative px-4 sm:px-6">
+                            <button onClick={() => setIsSidebarOpen(true)} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-sm hover:bg-white/30 transition-all" > <Menu className="text-white" size={20}/> </button>
+                            <div className="flex items-center gap-3">
+                                <motion.h2 initial={{opacity: 0, y: -30}} animate={{opacity: 1, y: 0}} transition={{ delay: 0.3, duration: 0.8 }} className="px-12 text-2xl sm:text-4xl font-bold text-white text-shadow text-center tracking-tight" > Discover Our Premium Collection </motion.h2>
                             </div>
-                            <nav className="flex-grow">
-                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Discover Categories</h3>
-                                <ul className="space-y-2">
-                                    {categories.map(category => {
-                                        const categoryName = category === 'meatpoultry' ? 'Meat & Poultry' : category.charAt(0).toUpperCase() + category.slice(1);
-                                        return (
-                                        <li key={category}>
-                                            <button onClick={() => handleFilterChange(category)} className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-base font-medium transition-all duration-300 ${ selectedCategory === category ? 'bg-red-600 text-white shadow-md' : 'text-gray-200 hover:bg-slate-700/50' }`} >
-                                                <div className="flex items-center gap-3"> {categoryIcons[category]} {categoryName} </div>
-                                                <ChevronRight size={16} />
-                                            </button>
-                                        </li>
-                                    )})}
-                                </ul>
-                                <hr className="my-6 border-gray-600" />
-                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Access</h3>
-                                <ul className="space-y-2">
-                                    <li> <a href="/vendor" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all"> <User size={16} /> Vendor Portal </a> </li>
-                                    <li> <a href="/delivery/login" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all"> <Truck size={16} /> Delivery Hub </a> </li>
-                                    <li> <a href="/franchise" className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium text-gray-200 hover:bg-slate-700/50 transition-all"> <Store size={16} /> Franchise </a> </li>
-                                </ul>
-                            </nav>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-            <div className="relative z-10">
-                <div className="pt-8 sm:pt-12 pb-6 bg-gradient-to-b from-black/20 to-transparent">
-                    <div className="flex flex-row items-center justify-center mb-8 relative px-4 sm:px-6">
-                        <button onClick={() => setIsSidebarOpen(true)} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-sm hover:bg-white/30 transition-all" > <Menu className="text-white" size={20}/> </button>
-                        <div className="flex items-center gap-3">
-                            <motion.h2 initial={{opacity: 0, y: -30}} animate={{opacity: 1, y: 0}} transition={{ delay: 0.3, duration: 0.8 }} className="px-12 text-2xl sm:text-4xl font-bold text-white text-shadow text-center tracking-tight" > Discover Our Premium Collection </motion.h2>
                         </div>
-                    </div>
-                    <div className="mt-6 flex overflow-x-auto sm:justify-center gap-3 px-4 sm:px-6 no-scrollbar">
-                        {categories.map(category => {
-                            const buttonClass = `flex-shrink-0 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-md`;
-                            const activeClass = selectedCategory === category ? 'bg-gradient-to-r from-red-500 to-red-700 text-white' : 'bg-white/60 text-gray-900 hover:bg-white/80 backdrop-blur-sm';
-                            
-                            // If the category is 'aboutus', render a Link. Otherwise, render a button.
-                            if (category === 'aboutus') {
+                        <div className="mt-6 flex overflow-x-auto sm:justify-center gap-3 px-4 sm:px-6 no-scrollbar">
+                            {categories.map(category => {
+                                const buttonClass = `flex-shrink-0 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-md`;
+                                const activeClass = selectedCategory === category ? 'bg-gradient-to-r from-red-500 to-red-700 text-white' : 'bg-white/60 text-gray-900 hover:bg-white/80 backdrop-blur-sm';
+                                
+                                if (category === 'aboutus') {
+                                    return (
+                                        <Link
+                                            key={category}
+                                            to="/about-us"
+                                            state={{ defaultTab: 'about' }}
+                                            className={`${buttonClass} bg-blue-50 text-blue-800 hover:bg-blue-100`}
+                                        >
+                                            {categoryIcons[category]}
+                                            <span className="whitespace-nowrap">About Us</span>
+                                        </Link>
+                                    );
+                                }
+
                                 return (
-                                    <Link
-                                        key={category}
-                                        to="/about-us"
-                                        state={{ defaultTab: 'about' }} // This tells the Account page to open the 'About Us' tab
-                                        className={`${buttonClass} bg-blue-50 text-blue-800 hover:bg-blue-100`}
+                                    <motion.button 
+                                        key={category} 
+                                        onClick={() => handleFilterChange(category)}
+                                        whileHover={{ scale: 1.08, y: -2 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        className={`${buttonClass} ${activeClass}`}
                                     >
                                         {categoryIcons[category]}
-                                        <span className="whitespace-nowrap">About Us</span>
-                                    </Link>
+                                        <span className="whitespace-nowrap">{category === 'meatpoultry' ? 'Meat & Poultry' : category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                                    </motion.button>
                                 );
+                            })}
+                        </div>
+                        <div className="mt-6 max-w-xl mx-auto px-4 sm:px-6">
+                            <div className="relative">
+                                <input type="text" placeholder="Search products..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full py-3 px-5 pr-10 rounded-full bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-md backdrop-blur-sm text-sm" />
+                                <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70" size={18} />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                        {error && ( <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="bg-red-500/20 backdrop-blur-sm text-red-300 p-4 rounded-lg mb-8 text-center shadow-sm text-sm" > {error} </motion.div> )}
+                        <motion.div key={selectedCategory + searchQuery} variants={productGridVariants} initial="hidden" animate="visible" className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" >
+                            {productsLoading
+                                ? Array.from({ length: 8 }).map((_, index) => <SkeletonCard key={index} />)
+                                : filteredProducts.map(product => (
+                                    <ProductCard 
+                                        key={product.id} 
+                                        product={product} 
+                                        selectedVariants={selectedVariants} 
+                                        handleVariantChange={handleVariantChange} 
+                                        handleAddToCart={handleAddToCart}
+                                        productDetailsData={productDetailsData} 
+                                    />
+                                ))
                             }
+                        </motion.div>
+                        {!productsLoading && totalPages > 1 && (
+                            <div className="mt-12 flex justify-center items-center gap-4 flex-wrap">
+                                <button onClick={goToPreviousPage} disabled={currentPage === 1} className="px-4 py-2 bg-black/20 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black/30 backdrop-blur-sm shadow-sm hover:shadow-md transition-all text-sm" > Previous </button>
+                                <span className="px-4 py-2 text-white text-shadow bg-black/20 rounded-full shadow-sm text-sm"> Page {currentPage} / {totalPages} </span>
+                                <button onClick={goToNextPage} disabled={currentPage === totalPages} className="px-4 py-2 bg-black/20 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black/30 backdrop-blur-sm shadow-sm hover:shadow-md transition-all text-sm" > Next </button>
+                            </div>
+                        )}
+                        {currentFeatureData && (
+                            <CategoryFeatureSection 
+                                title={currentFeatureData.title} 
+                                subtitle={currentFeatureData.subtitle} 
+                                description={currentFeatureData.description} 
+                                imageUrl={currentFeatureData.imageUrl} 
+                                features={currentFeatureData.features} 
+                            />
+                        )}
+                    </div>
+                </div>
+            </main>
 
-                            // Default button for product categories
-                            return (
-                                <motion.button 
-                                    key={category} 
-                                    onClick={() => handleFilterChange(category)}
-                                    whileHover={{ scale: 1.08, y: -2 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className={`${buttonClass} ${activeClass}`}
-                                >
-                                    {categoryIcons[category]}
-                                    <span className="whitespace-nowrap">{category === 'meatpoultry' ? 'Meat & Poultry' : category.charAt(0).toUpperCase() + category.slice(1)}</span>
-                                </motion.button>
-                            );
-                        })}
-                    </div>
-                    <div className="mt-6 max-w-xl mx-auto px-4 sm:px-6">
-                        <div className="relative">
-                            <input type="text" placeholder="Search products..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full py-3 px-5 pr-10 rounded-full bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-md backdrop-blur-sm text-sm" />
-                            <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70" size={18} />
-                        </div>
-                    </div>
-                </div>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                    {error && ( <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="bg-red-500/20 backdrop-blur-sm text-red-300 p-4 rounded-lg mb-8 text-center shadow-sm text-sm" > {error} </motion.div> )}
-                    <motion.div key={selectedCategory + searchQuery} variants={productGridVariants} initial="hidden" animate="visible" className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" >
-                        {productsLoading
-                            ? Array.from({ length: 8 }).map((_, index) => <SkeletonCard key={index} />)
-                            : filteredProducts.map(product => (
-                                <ProductCard 
-                                    key={product.id} 
-                                    product={product} 
-                                    selectedVariants={selectedVariants} 
-                                    handleVariantChange={handleVariantChange} 
-                                    handleAddToCart={handleAddToCart}
-                                    productDetailsData={productDetailsData} 
-                                />
-                            ))
-                        }
-                    </motion.div>
-                    {!productsLoading && totalPages > 1 && (
-                        <div className="mt-12 flex justify-center items-center gap-4 flex-wrap">
-                            <button onClick={goToPreviousPage} disabled={currentPage === 1} className="px-4 py-2 bg-black/20 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black/30 backdrop-blur-sm shadow-sm hover:shadow-md transition-all text-sm" > Previous </button>
-                            <span className="px-4 py-2 text-white text-shadow bg-black/20 rounded-full shadow-sm text-sm"> Page {currentPage} / {totalPages} </span>
-                            <button onClick={goToNextPage} disabled={currentPage === totalPages} className="px-4 py-2 bg-black/20 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black/30 backdrop-blur-sm shadow-sm hover:shadow-md transition-all text-sm" > Next </button>
-                        </div>
-                    )}
-                    {currentFeatureData && (
-                        <CategoryFeatureSection 
-                            title={currentFeatureData.title} 
-                            subtitle={currentFeatureData.subtitle} 
-                            description={currentFeatureData.description} 
-                            imageUrl={currentFeatureData.imageUrl} 
-                            features={currentFeatureData.features} 
-                        />
-                    )}
-                </div>
-            </div>
+            {/* Footer Area */}
+            <Footer />
         </div>
     );
 }
