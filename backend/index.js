@@ -858,7 +858,7 @@ app.post('/api/inquiry', async (req, res) => {
         console.log('Attempting to send email via Resend...');
 
         const { data, error } = await resend.emails.send({
-            from: 'Sresta Mart Inquiries <onboarding@resend.dev>', // Replace with your verified domain email
+            from: 'Sresta Mart Inquiries <noreply@srestamart.com>', // Replace with your verified domain email
             to: ['srestamart@gmail.com'],
             subject: subject,
             html: emailBody,
