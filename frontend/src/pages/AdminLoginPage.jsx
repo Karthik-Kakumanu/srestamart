@@ -6,7 +6,7 @@ import logoUrl from "../../images/icon.png";
 import { Lock, User } from 'lucide-react';
 
 // A high-quality, relevant background image for the branding panel
-const brandingImageUrl = "https://images.pexels.com/photos/1458916/pexels-photo-1458916.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2";
+const brandingImageUrl = "https://i.pinimg.com/736x/8b/16/7a/8b167af653c2399dd93b952a48740620.jpg";
 
 export default function AdminLoginPage() {
     const [username, setUsername] = useState('');
