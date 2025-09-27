@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import logoUrl from '../../images/icon.png';
-// --- MODIFIED: Icons for new layout ---
 import { Home, ShoppingCart, Tag, User, Phone, MapPin } from 'lucide-react';
 
 export default function Layout({ loggedInUser, handleLogout, cartItems }) {
@@ -9,12 +8,15 @@ export default function Layout({ loggedInUser, handleLogout, cartItems }) {
 
   const activeLinkStyle = { color: '#dc2626', fontWeight: 'bold' };
 
-  const shopAddress = "5-34, Road No. 1, Budha Nagar, MEDIPALLY, Mallika Arjun Nagar, Peerzadiguda, Hyderabad, Telangana 500039";
-  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shopAddress)}`;
+  // --- FIXED: Correct Google Maps search URL ---
+  // This creates a search query that includes your store name and address.
+  const shopName = "Sresta Mart";
+  const shopAddress = "5-34, Road No. 1, Budha Nagar, MEDIPALLY, Peerzadiguda, Hyderabad, Telangana 500039";
+  const searchQuery = `${shopName}, ${shopAddress}`;
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchQuery)}`;
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* --- MODIFIED: Header with more attractive address link --- */}
       <header className="bg-white/80 backdrop-blur-sm shadow-md p-2 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center space-x-2">
           <img src={logoUrl} alt="Sresta Mart Logo" className="h-8 w-auto" />
@@ -38,12 +40,12 @@ export default function Layout({ loggedInUser, handleLogout, cartItems }) {
         <Outlet />
       </main>
 
-      {/* --- MODIFIED: Completely revamped footer with three groups and real icons --- */}
+      {/* --- MODIFIED: Footer with responsive spacing for mobile --- */}
       <footer className="sticky bottom-0 left-0 w-full bg-white/95 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.05)] py-2 px-4 z-40">
         <div className="max-w-2xl mx-auto flex justify-between items-center h-full">
 
           {/* Group 1: Left Contacts */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <a href="tel:+919494837550" title="Call us" className="flex flex-col items-center text-gray-600 hover:text-green-600 transition-colors">
               <Phone size={24} />
               <span className="text-xs font-medium">Call</span>
@@ -54,7 +56,7 @@ export default function Layout({ loggedInUser, handleLogout, cartItems }) {
           </div>
 
           {/* Group 2: Center Navigation */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <NavLink to="/" style={({ isActive }) => isActive ? activeLinkStyle : undefined} className="flex flex-col items-center p-1 text-gray-600 hover:text-red-500">
               <Home size={22} /><span className="text-xs mt-0.5">Home</span>
             </NavLink>
@@ -75,7 +77,7 @@ export default function Layout({ loggedInUser, handleLogout, cartItems }) {
              <a href="https://www.instagram.com/srestamart/" target="_blank" rel="noopener noreferrer" title="Visit our Instagram">
                 <img src="/icons/instagram.png" alt="Instagram" className="h-10 w-10" />
             </a>
-            <div className="flex flex-col">
+            <div className="hidden sm:flex flex-col">
               <a href="https://www.instagram.com/srestamart/" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-gray-600 hover:text-pink-600">srestamart</a>
               <a href="https://www.instagram.com/sresta_organic_farms/" target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-gray-600 hover:text-pink-600">sresta_organic</a>
             </div>
