@@ -360,15 +360,15 @@ app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) =
 // --- COUPON MANAGEMENT (ADMIN) ---
 // (All these routes remain exactly the same)
 app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
-    const { code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category } = req.body;
+    const { code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description } = req.body;
     if (!code || !discount_type || !discount_value || !expiry_date) {
         return res.status(400).json({ msg: 'Please provide all required coupon fields.' });
     }
     try {
         const newCoupon = await pool.query(
-              `INSERT INTO coupons (code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category)
-              VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-              [code.toUpperCase(), discount_type, discount_value, expiry_date, min_purchase_amount || 0, applicable_category || null]
+    `INSERT INTO coupons (code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+    [code.toUpperCase(), discount_type, discount_value, expiry_date, min_purchase_amount || 0, applicable_category || null, poster_url || null, description || null]
 );
         res.status(201).json(newCoupon.rows[0]);
     } catch (err) {
@@ -381,8 +381,8 @@ app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
 });
 
 app.get('/api/admin/coupons', checkAdminToken, async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM coupons ORDER BY created_at DESC');
+    try {
+        const result = await pool.query('SELECT * FROM coupons ORDER BY created_at DESC');
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching coupons for admin:', err.message);
@@ -702,10 +702,10 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
 
 // --- PUBLIC COUPON ROUTES ---
 app.get('/api/coupons/public', async (req, res) => {
-    try {
-        const result = await pool.query(
-          "SELECT code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category FROM coupons WHERE is_active = TRUE AND expiry_date >= CURRENT_DATE ORDER BY expiry_date ASC"
-        );
+    try {
+        const result = await pool.query(
+          "SELECT code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description FROM coupons WHERE is_active = TRUE AND expiry_date >= CURRENT_DATE ORDER BY expiry_date ASC"
+        );
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching public coupons:', err.message);
