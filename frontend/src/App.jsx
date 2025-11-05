@@ -78,7 +78,9 @@ export default function App() {
         fetchUserData();
     }, [loggedInUser]); // This only re-runs when the user logs in
 
-    // --- All your cart/logout functions remain the same ---
+    
+    // --- *** CRITICAL CHANGE HERE *** ---
+    // --- MODIFIED: `handleAddToCart` now saves the product.category ---
     const handleAddToCart = (product) => {
         setCartItems(prevItems => {
             const itemExists = prevItems.find(item => item.id === product.selectedVariant.id);
@@ -87,6 +89,7 @@ export default function App() {
                     item.id === product.selectedVariant.id ? { ...item, quantity: item.quantity + 1 } : item
                 );
             } else {
+                // The new cart item object now includes `category`
                 return [...prevItems, { 
                     id: product.selectedVariant.id, 
                     name: product.name, 
@@ -94,8 +97,9 @@ export default function App() {
                     price: product.selectedVariant.price, 
                     image_url: product.image_url, 
                     quantity: 1,
-                    description: product.description, // Pass description
-                    details: product.details // Pass the rich details object
+                    description: product.description,
+                    details: product.details,
+                    category: product.category // <-- THIS IS THE NEW, ESSENTIAL LINE
                 }];
             }
         });
@@ -137,7 +141,6 @@ export default function App() {
                 />
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 
-                {/* --- MODIFIED: Pass the refreshData function to the AdminPage --- */}
                 <Route path="/admin" element={
                     <AdminProtectedRoute>
                         <AdminPage onDataChange={refreshData} />
@@ -150,7 +153,6 @@ export default function App() {
                 <Route path="/" element={<Layout loggedInUser={loggedInUser} handleLogout={handleLogout} cartItems={cartItems} />}>
                     {/* Publicly Accessible Routes */}
                     
-                    {/* --- MODIFIED: Pass the dataVersion state to HomePage --- */}
                     <Route index element={<HomePage handleAddToCart={handleAddToCart} dataVersion={dataVersion} />} />
                     
                     <Route path="vendor" element={<VendorPage />} />

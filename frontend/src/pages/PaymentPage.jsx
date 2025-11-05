@@ -2,40 +2,45 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { ArrowRight, ShoppingBag, Truck, Wallet, Tag, XCircle, Loader2, CreditCard } from 'lucide-react';
+import { ArrowRight, ShoppingBag, Truck, Wallet, Tag, XCircle, Loader2, CreditCard, ShieldCheck } from 'lucide-react';
 import logoIcon from '../../images/icon.png'; // Make sure this path is correct
 
-// --- HELPER FUNCTION TO PARSE WEIGHT FROM VARIANT LABEL ---
-const parseWeightFromLabel = (label) => {
-    if (!label || typeof label !== 'string') return 0;
-    const lowerLabel = label.toLowerCase();
-    const match = lowerLabel.match(/(\d*\.?\d+)\s*(kg|g)/);
-    if (match) {
-        const value = parseFloat(match[1]);
-        const unit = match[2];
-        return unit === 'g' ? value / 1000 : value; // Convert grams to kg
-    }
-    return 0; 
-};
+// --- *** NEW SHIPPING LOGIC *** ---
 
-// --- HELPER FUNCTION FOR SHIPPING CALCULATION ---
-const calculateShipping = (subtotal, address, totalWeight) => {
-    if (!address || !address.value) return 0; // Don't charge shipping if no address
-    const addressString = address.value.toLowerCase();
-    
-    // Always charge for at least 1kg if there's any weight
-    const weightInKg = Math.max(1, Math.ceil(totalWeight)); 
-    
-    if (addressString.includes('hyderabad')) {
-        return subtotal > 1500 ? 0 : 50 * weightInKg; 
-    }
-    if (addressString.includes('telangana')) return 150 * weightInKg;
-    if (addressString.includes('andhra pradesh') || addressString.includes('a.p')) return 200 * weightInKg;
-    
-    return 350 * weightInKg;
-};
+// List of categories that have a shipping fee.
+// Note: 'livebirds' is the category in your database. 'meatpoultry' is just the display name.
+const PAID_SHIPPING_CATEGORIES = ['livebirds', 'meat', 'eggs', 'pickles'];
+const SHIPPING_FEE = 75;
 
-// --- NEW: Function to load the Razorpay script ---
+/**
+ * Calculates the new fixed shipping cost based on cart contents.
+ * @param {Array} items - The items in the cart (must include 'category' for each item).
+ * @returns {number} - The shipping cost (75 or 0).
+ */
+const calculateShipping = (items) => {
+    if (!items || items.length === 0) {
+        return 0;
+    }
+
+    // Check if *any* item in the cart is from a paid shipping category.
+    // This requires `App.jsx` to be correctly adding the `item.category` when adding to cart.
+    const hasPaidShippingItem = items.some(item => {
+        const itemCategory = (item.category || '').toLowerCase().replace(/\s+/g, '');
+        // We check for both 'meatpoultry' (old frontend name) and the DB names
+        return PAID_SHIPPING_CATEGORIES.includes(itemCategory) || itemCategory === 'meatpoultry';
+    });
+
+    if (hasPaidShippingItem) {
+        return SHIPPING_FEE;
+    }
+
+    // If no paid items are found, shipping is free
+    return 0;
+};
+// --- *** END OF NEW SHIPPING LOGIC *** ---
+
+
+// --- Function to load the Razorpay script ---
 const loadRazorpayScript = (src) => {
     return new Promise((resolve) => {
         const script = document.createElement('script');
@@ -62,37 +67,42 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
     const [couponSuccess, setCouponSuccess] = useState('');
     const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
 
-    // --- NEW: State for payment method ---
-    const [paymentMethod, setPaymentMethod] = useState('cod'); // 'cod' or 'razorpay'
+    const [paymentMethod, setPaymentMethod] = useState('cod'); 
 
-    // --- Load Razorpay script on component mount ---
     useEffect(() => {
         loadRazorpayScript('https://checkout.razorpay.com/v1/checkout.js');
     }, []);
 
     
-    const { firstOrderDiscount, couponDiscount, shippingCost, finalTotal, totalWeight, subtotal } = useMemo(() => {
+    // --- MODIFIED: useMemo now uses the new shipping logic ---
+    const { firstOrderDiscount, couponDiscount, shippingCost, finalTotal, subtotal } = useMemo(() => {
         const subtotal = checkoutDetails?.totalAmount || 0;
+        
+        // 1. Calculate First Order Discount
         const firstOrderDiscount = isFirstOrder ? subtotal * 0.10 : 0;
+        
+        // 2. Get Coupon Discount
         const couponDiscount = appliedDiscount || 0;
+        
+        // 3. Calculate total discount
         const totalDiscount = firstOrderDiscount + couponDiscount;
         const discountedSubtotal = subtotal - totalDiscount;
-        const totalWeight = checkoutDetails?.items.reduce((acc, item) => {
-            const weightPerUnit = parseWeightFromLabel(item.variantLabel);
-            return acc + (weightPerUnit * item.quantity);
-        }, 0) || 0;
-        const shippingCost = calculateShipping(subtotal, checkoutDetails?.shippingAddress, totalWeight);
+
+        // 4. Calculate Shipping (using the new category-based function)
+        // We pass checkoutDetails.items (which *must* have categories)
+        const shippingCost = calculateShipping(checkoutDetails?.items);
+
+        // 5. Calculate Final Total
         const finalTotal = discountedSubtotal + shippingCost;
 
         return { 
             firstOrderDiscount, 
             couponDiscount, 
             shippingCost, 
-            finalTotal: Math.max(0, finalTotal), 
-            totalWeight, 
+            finalTotal: Math.max(0, finalTotal), // Ensure total is not negative
             subtotal 
         };
-    }, [isFirstOrder, checkoutDetails, appliedDiscount, checkoutDetails.shippingAddress]); // Added shippingAddress dependency
+    }, [isFirstOrder, checkoutDetails, appliedDiscount]); // `checkoutDetails.items` is now the key dependency
 
     if (!checkoutDetails || checkoutDetails.items.length === 0) {
         return ( 
@@ -108,6 +118,7 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
         );
     }
 
+    // (This function is correct from our previous version)
     const handleApplyCoupon = async () => {
         if (!couponCode) {
             setCouponError("Please enter a coupon code.");
@@ -138,6 +149,7 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
         }
     };
 
+    // (This function is correct from our previous version)
     const handleRemoveCoupon = () => {
         setAppliedCoupon(null);
         setAppliedDiscount(0); 
@@ -146,7 +158,7 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
         setCouponSuccess('');
     };
 
-    // --- THIS IS THE NEW PAYMENT HANDLER ---
+    // Main payment handler (This is correct)
     const handlePayment = () => {
         if (paymentMethod === 'cod') {
             handlePlaceOrderCOD();
@@ -155,7 +167,7 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
         }
     };
 
-    // --- This is your OLD function, now just for COD ---
+    // COD order function (This is correct)
     const handlePlaceOrderCOD = async () => {
         setIsSubmitting(true);
         try {
@@ -164,7 +176,7 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
                 userId: user.id,
                 cartItems: checkoutDetails.items,
                 shippingAddress: checkoutDetails.shippingAddress,
-                totalAmount: finalTotal,
+                totalAmount: finalTotal, // Send the final calculated total
             };
             const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/orders`, orderData, {
                 headers: { 'x-auth-token': token }
@@ -180,10 +192,9 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
             alert("There was an error placing your order. Please try again.");
             setIsSubmitting(false);
         }
-        // Don't setIsSubmitting(false) here, as we are navigating away
     };
 
-    // --- THIS IS THE NEW RAZORPAY FUNCTION ---
+    // Razorpay order function (This is correct)
     const handlePlaceOrderRazorpay = async () => {
         setIsSubmitting(true);
         const token = localStorage.getItem('token');
@@ -193,7 +204,7 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
             const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/create-order`, 
             {
                 amount: finalTotal,
-                receipt: `receipt_order_${new Date().getTime()}` // A unique receipt ID
+                receipt: `receipt_order_${new Date().getTime()}`
             }, 
             {
                 headers: { 'x-auth-token': token }
@@ -208,16 +219,14 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
                 currency: "INR",
                 name: "Sresta Mart",
                 description: "Order Payment",
-                image: logoIcon, // Your logo
+                image: logoIcon,
                 order_id: order_id,
-                // This function is called AFTER payment is successful
                 handler: async function (response) {
                     try {
                         const verifyRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/payment/verify`, {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
-                            // Pass all the cart data to create the order in the DB
                             cartItems: checkoutDetails.items,
                             shippingAddress: checkoutDetails.shippingAddress,
                             totalAmount: finalTotal
@@ -244,27 +253,24 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
                 },
                 prefill: {
                     name: user.name,
-                    email: user.email || "customer@srestamart.com", // Razorpay requires an email
+                    email: user.email || "customer@srestamart.com",
                     contact: user.phone,
                 },
                 notes: {
                     address: checkoutDetails.shippingAddress.value,
                 },
                 theme: {
-                    color: "#DC2626", // Red color
+                    color: "#DC2626",
                 },
             };
 
             // 3. Open the Razorpay Modal
             const rzp = new window.Razorpay(options);
             rzp.open();
-
-            // Handle payment failure
             rzp.on('payment.failed', function (response) {
                 alert(`Payment Failed: ${response.error.description}`);
                 setIsSubmitting(false);
             });
-
         } catch (error) {
             console.error("Failed to create Razorpay order:", error);
             alert("Could not connect to payment gateway. Please try again.");
@@ -276,7 +282,7 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
     return (
         <div className="flex-grow bg-slate-50 p-4 sm:p-8">
             <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                {/* --- MODIFIED: Payment Method Section --- */}
+                {/* --- Payment Method Selection --- */}
                 <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="lg:col-span-2 bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">Payment Method</h1>
                     <p className="text-gray-500 mb-6">Please select your payment option.</p>
@@ -313,7 +319,7 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
 
                 </motion.div>
 
-                {/* --- Final Summary Section (MODIFIED) --- */}
+                {/* --- Final Summary Section --- */}
                 <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="lg:col-span-1">
                     <div className="bg-white p-6 rounded-2xl shadow-xl sticky top-28">
                         <h3 className="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-4">Final Summary</h3>
@@ -371,8 +377,9 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
                                 </div>
                             )}
                             
+                            {/* --- MODIFIED: Shipping Cost Display (New Logic) --- */}
                             <div className="flex justify-between text-gray-600">
-                                <span>Shipping ({totalWeight.toFixed(2)} kg)</span>
+                                <span>Shipping</span>
                                 <span className={`font-semibold ${shippingCost > 0 ? 'text-gray-900' : 'text-green-600'}`}>
                                     {shippingCost > 0 ? `₹${shippingCost.toFixed(2)}` : 'FREE'}
                                 </span>
@@ -383,11 +390,19 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
                             <span>₹{finalTotal.toFixed(2)}</span>
                         </div>
 
-                        {/* --- MODIFIED: Confirm Order Button --- */}
+                        {/* --- NEW: GST Notification --- */}
+                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                            <ShieldCheck size={18} className="text-green-600 flex-shrink-0" />
+                            <p className="text-xs text-green-700">
+                                Total bill is inclusive of all applicable taxes (GST).
+                            </p>
+                        </div>
+                        
+                        {/* Confirm Order Button */}
                         <motion.button 
                             whileHover={!isSubmitting ? { scale: 1.05 } : {}} 
                             whileTap={!isSubmitting ? { scale: 0.95 } : {}} 
-                            onClick={handlePayment} // Changed from handlePlaceOrder
+                            onClick={handlePayment} 
                             disabled={isSubmitting} 
                             className={`relative w-full flex items-center justify-center mt-6 text-white font-bold py-4 rounded-lg transition-all text-lg shadow-lg hover:shadow-xl disabled:bg-gray-400 disabled:cursor-not-allowed overflow-hidden ${paymentMethod === 'cod' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
                         >
