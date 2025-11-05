@@ -92,7 +92,6 @@ export default function AdminPage({ onDataChange }) {
         setIsEditModalOpen(true);
     };
     
-    // --- MODIFIED: Calls `onDataChange` ---
     const handleDeleteProduct = async (productId, productName) => {
         if (window.confirm(`Are you sure you want to delete "${productName}"?`)) {
             try {
@@ -100,7 +99,7 @@ export default function AdminPage({ onDataChange }) {
                 const config = { headers: { 'x-admin-token': token } };
                 await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/products/${productId}`, config);
                 fetchData(); 
-                onDataChange(); // --- Triggers update on HomePage
+                onDataChange();
             } catch (err) {
                 setError(err.response?.data?.msg || 'Failed to delete product.');
             }
@@ -113,19 +112,19 @@ export default function AdminPage({ onDataChange }) {
                 const token = getAuthToken();
                 await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/coupons/${couponId}`, { headers: { 'x-admin-token': token } });
                 fetchData();
+                onDataChange(); // Also trigger a refresh for coupons
             } catch (err) {
                  setError(err.response?.data?.msg || 'Failed to delete coupon.');
             }
         }
     };
     
-    // --- MODIFIED: Calls `onDataChange` ---
     const handleSave = () => {
         setIsEditModalOpen(false);
         setIsAddModalOpen(false);
         setIsAddCouponModalOpen(false);
         fetchData(); 
-        onDataChange(); // --- Triggers update on HomePage
+        onDataChange();
     };
 
     const totalRevenue = useMemo(() => orders.reduce((acc, order) => acc + Number(order.total_amount), 0), [orders]);
@@ -146,7 +145,6 @@ export default function AdminPage({ onDataChange }) {
 
                 {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg" role="alert"><p>{error}</p></div>}
                 
-                {/* --- RESPONSIVE: Stacks on mobile --- */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     <StatCard icon={<DollarSign />} title="Total Revenue" value={`₹${totalRevenue.toFixed(2)}`} color="green" />
                     <StatCard icon={<ShoppingCart />} title="Total Orders" value={orders.length} color="orange" />
@@ -154,7 +152,6 @@ export default function AdminPage({ onDataChange }) {
                 </div>
 
                 <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg">
-                    {/* --- RESPONSIVE: Horizontal scroll on mobile --- */}
                     <div className="flex flex-col sm:flex-row items-center justify-between mb-4 border-b border-slate-200">
                         <div className="flex space-x-2 w-full overflow-x-auto pb-2 sm:w-auto sm:overflow-x-visible">
                             <TabButton name="Overview" icon={<BarChart2/>} activeView={view} setView={setView} viewId="overview" />
@@ -209,6 +206,8 @@ export default function AdminPage({ onDataChange }) {
     );
 }
 
+// --- All sub-components are unchanged, except for CouponTable ---
+
 const StatCard = ({ icon, title, value, color }) => {
     const colors = {
         blue: "from-blue-500 to-blue-400",
@@ -227,14 +226,12 @@ const StatCard = ({ icon, title, value, color }) => {
 };
 
 const TabButton = ({ name, icon, activeView, setView, viewId }) => (
-    // --- RESPONSIVE: Added `flex-shrink-0` to prevent shrinking in scroll container ---
     <button onClick={() => setView(viewId)} className={`flex-shrink-0 flex items-center px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${activeView === viewId ? 'border-red-600 text-red-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
         {React.cloneElement(icon, { className: "inline-block mr-2 h-4 w-4" })} {name}
     </button>
 );
 
 const OverviewCharts = ({ orders, products }) => {
-    // (This component is already responsive)
     const salesData = useMemo(() => {
         const salesByDay = orders.reduce((acc, order) => {
             const date = new Date(order.created_at).toLocaleDateString('en-CA');
@@ -290,11 +287,10 @@ const OverviewCharts = ({ orders, products }) => {
     );
 };
 
-// --- RESPONSIVE: Product Table (stacks to cards on mobile) ---
 const ProductTable = ({ products, onEdit, onDelete }) => (
     <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 hidden md:table-header-group"> {/* Hide table head on mobile */}
+            <thead className="bg-gray-50 hidden md:table-header-group">
                 <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
@@ -336,7 +332,6 @@ const ProductTable = ({ products, onEdit, onDelete }) => (
     </div>
 );
 
-// --- RESPONSIVE: User Table (stacks to cards on mobile) ---
 const UserTable = ({ users }) => {
     const UserAvatar = ({ name }) => (
         <div className="w-10 h-10 flex-shrink-0 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">
@@ -390,7 +385,6 @@ const UserTable = ({ users }) => {
     );
 };
 
-// --- RESPONSIVE: Orders Table (stacks to cards on mobile) ---
 const OrdersTable = ({ orders, onAssign }) => (
     <div className="overflow-x-auto">
         <table className="min-w-full">
@@ -491,7 +485,6 @@ const OrderRow = ({ order, onAssign }) => {
 };
 
 const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
-    // (This modal is already responsive)
     const [selectedPartnerId, setSelectedPartnerId] = useState('');
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -527,14 +520,14 @@ const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
     );
 };
 
-// --- RESPONSIVE: Coupon Table (stacks to cards on mobile) ---
-// --- MODIFIED: Added "Category" column ---
+
+// --- MODIFIED: Coupon Table is now responsive and shows a poster thumbnail ---
 const CouponTable = ({ coupons, onDelete }) => (
     <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 hidden md:table-header-group">
                 <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coupon / Offer</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type & Value</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Purchase</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
@@ -547,9 +540,20 @@ const CouponTable = ({ coupons, onDelete }) => (
                 {coupons.map(coupon => (
                     <tr key={coupon.id} className="block md:table-row border-b md:border-none mb-4 md:mb-0">
                         <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
-                            <div className="text-sm font-bold text-gray-900">{coupon.code}</div>
+                            <div className="flex items-center">
+                                {coupon.poster_url && 
+                                    <div className="flex-shrink-0 h-12 w-12 mr-4">
+                                        <img className="h-12 w-12 rounded-md object-cover" src={coupon.poster_url} alt="Poster" />
+                                    </div>
+                                }
+                                <div>
+                                    <div className="text-sm font-bold text-gray-900">{coupon.code}</div>
+                                    <div className="text-xs text-gray-500 truncate max-w-xs">{coupon.description}</div>
+                                </div>
+                            </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
+                            <span className="md:hidden font-bold text-xs uppercase text-gray-500">Discount: </span>
                             <div className="text-sm text-gray-800">{coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}</div>
                             <div className="text-xs text-gray-500">{coupon.discount_type}</div>
                         </td>
@@ -575,7 +579,7 @@ const CouponTable = ({ coupons, onDelete }) => (
                             </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right block md:table-cell">
-                            <button onClick={() => onDelete(coupon.id, coupon.code)} className="text-red-600 hover:text-red-900 ml-4">Delete</button>
+                            <button onClick={() => onDelete(coupon.id, coupon.code)} className="text-red-600 hover:text-red-900">Delete</button>
                         </td>
                     </tr>
                 ))}

@@ -76,10 +76,9 @@ export default function App() {
             }
         };
         fetchUserData();
-    }, [loggedInUser]); // This only re-runs when the user logs in
+    }, [loggedInUser]);
 
     
-    // --- *** CRITICAL CHANGE HERE *** ---
     // --- MODIFIED: `handleAddToCart` now saves the product.category ---
     const handleAddToCart = (product) => {
         setCartItems(prevItems => {
@@ -133,7 +132,6 @@ export default function App() {
         <>
             {cartMessage && <div className="fixed top-24 right-8 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-[60]">{cartMessage}</div>}
             <Routes>
-                {/* Standalone Admin, Delivery, and Auth Routes */}
                 <Route path="/delivery/login" element={<DeliveryLoginPage />} />
                 <Route 
                     path="/delivery/dashboard" 
@@ -149,10 +147,7 @@ export default function App() {
                 
                 <Route path="/auth" element={loggedInUser ? <Navigate to="/" /> : <AuthPage setLoggedInUser={setLoggedInUser} />} />
                 
-                {/* Main Application Layout */}
                 <Route path="/" element={<Layout loggedInUser={loggedInUser} handleLogout={handleLogout} cartItems={cartItems} />}>
-                    {/* Publicly Accessible Routes */}
-                    
                     <Route index element={<HomePage handleAddToCart={handleAddToCart} dataVersion={dataVersion} />} />
                     
                     <Route path="vendor" element={<VendorPage />} />
@@ -162,7 +157,6 @@ export default function App() {
                     <Route path="help" element={<HelpCenterPage />} />
                     <Route path="privacy" element={<PrivacyPolicyPage />} />
 
-                    {/* Protected Routes - Require Login */}
                     <Route path="cart" element={loggedInUser ? <CartPage cartItems={cartItems} handleQuantityChange={handleQuantityChange} handleRemoveFromCart={handleRemoveFromCart} setCheckoutDetails={setCheckoutDetails} /> : <Navigate to="/auth" replace />} />
                     <Route path="account" element={loggedInUser ? <AccountPage loggedInUser={loggedInUser} orders={orders} ordersLoading={ordersLoading} handleLogout={handleLogout} /> : <Navigate to="/auth" replace />} />
                     <Route path="/account/addresses" element={loggedInUser ? <ManageAddressPage addresses={addresses} setAddresses={setAddresses} /> : <Navigate to="/auth" replace />} />
@@ -171,7 +165,6 @@ export default function App() {
                     <Route path="/order-success" element={loggedInUser ? <OrderSuccessPage /> : <Navigate to="/auth" replace />} />
                 </Route>
 
-                {/* Catch-all Route */}
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
         </>

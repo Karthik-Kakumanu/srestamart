@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 
 const getAuthToken = () => localStorage.getItem('adminToken');
 
-// --- List of all your categories ---
 const CATEGORIES = [
     { value: 'livebirds', label: 'Live Birds' },
     { value: 'meat', label: 'Meat' },
@@ -22,12 +21,18 @@ export default function AddCouponModal({ onClose, onSave }) {
     const [discountValue, setDiscountValue] = useState('');
     const [expiryDate, setExpiryDate] = useState('');
     const [minPurchase, setMinPurchase] = useState('');
+    const [applicableCategory, setApplicableCategory] = useState('');
     
-    // --- NEW: State for the category ---
-    const [applicableCategory, setApplicableCategory] = useState(''); // Default is empty string (for "All Categories")
-    
+    // --- NEW: State for poster and description ---
+    const [description, setDescription] = useState('');
+    const [posterFile, setPosterFile] = useState(null);
+
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    const handleFileChange = (e) => {
+        setPosterFile(e.target.files[0]);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -36,16 +41,35 @@ export default function AddCouponModal({ onClose, onSave }) {
 
         try {
             const token = getAuthToken();
+            if (!token) {
+                setError("Admin token not found. Please log in again.");
+                setIsLoading(false);
+                return;
+            }
             const config = { headers: { 'x-admin-token': token } };
-            
-            // --- MODIFIED: Added `applicable_category` to the data ---
+
+            let posterUrl = null;
+
+            // --- NEW: Step 1 - Upload the poster if it exists ---
+            if (posterFile) {
+                const formData = new FormData();
+                formData.append('productImage', posterFile); // The backend route expects 'productImage'
+                
+                const uploadConfig = { headers: { ...config.headers, 'Content-Type': 'multipart/form-data' } };
+                const uploadResponse = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/upload`, formData, uploadConfig);
+                posterUrl = uploadResponse.data.imageUrl;
+            }
+
+            // --- Step 2: Create the coupon with the new poster URL ---
             const couponData = {
                 code: code.toUpperCase(),
                 discount_type: discountType,
                 discount_value: parseFloat(discountValue),
                 expiry_date: expiryDate,
                 min_purchase_amount: parseFloat(minPurchase) || 0,
-                applicable_category: applicableCategory || null // Send null if empty string
+                applicable_category: applicableCategory || null,
+                poster_url: posterUrl, // Add the poster URL
+                description: description || null // Add the description
             };
 
             await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/coupons`, couponData, config);
@@ -66,9 +90,8 @@ export default function AddCouponModal({ onClose, onSave }) {
             >
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 border-b">
-                        <h2 className="text-xl font-bold text-gray-800">Add New Coupon</h2>
+                        <h2 className="text-xl font-bold text-gray-800">Add New Coupon / Offer</h2>
                     </div>
-                    {/* --- MODIFIED: Grid now has 2 cols, and a new category field --- */}
                     <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto">
                         {/* Coupon Code */}
                         <div className="sm:col-span-1">
@@ -98,8 +121,7 @@ export default function AddCouponModal({ onClose, onSave }) {
                             <label className="text-sm font-medium text-gray-700">Minimum Purchase (₹)</label>
                             <input type="number" step="0.01" placeholder="0.00" value={minPurchase} onChange={e => setMinPurchase(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md p-2" />
                         </div>
-
-                        {/* --- NEW: Applicable Category --- */}
+                        {/* Applicable Category */}
                         <div className="sm:col-span-1">
                             <label className="text-sm font-medium text-gray-700">Applicable Category</label>
                             <select value={applicableCategory} onChange={e => setApplicableCategory(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md p-2">
@@ -108,6 +130,28 @@ export default function AddCouponModal({ onClose, onSave }) {
                                     <option key={cat.value} value={cat.value}>{cat.label}</option>
                                 ))}
                             </select>
+                        </div>
+
+                        {/* --- NEW: Attractive Quote/Description --- */}
+                        <div className="sm:col-span-2">
+                            <label className="text-sm font-medium text-gray-700">Attractive Quote / Description (Optional)</label>
+                            <textarea
+                                value={description}
+                                onChange={e => setDescription(e.target.value)}
+                                rows="2"
+                                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                                placeholder="e.g., Festive offer on all our fresh products!"
+                            ></textarea>
+                        </div>
+
+                        {/* --- NEW: Coupon Poster --- */}
+                        <div className="sm:col-span-2">
+                            <label className="text-sm font-medium text-gray-700">Coupon Poster (Optional)</label>
+                            <input
+                                type="file"
+                                onChange={handleFileChange}
+                                className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+                            />
                         </div>
 
                     </div>
