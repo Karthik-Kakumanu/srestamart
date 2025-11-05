@@ -14,6 +14,8 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
 
+const Razorpay = require('razorpay');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
@@ -60,6 +62,13 @@ const upload = multer({ storage: storage });
 
 // --- TWILIO CLIENT ---
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
 
 // --- AUTHENTICATION MIDDLEWARE ---
 // (All your auth middleware remains exactly the same)
@@ -784,6 +793,118 @@ app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
         res.status(500).json({ success: false, msg: 'Server error. Please try again.' });
     }
 });
+
+
+// ===========================================
+// --- 💳 NEW: RAZORPAY PAYMENT ROUTES ---
+// ===========================================
+
+// --- 1. CREATE RAZORPAY ORDER ID ---
+app.post('/api/payment/create-order', checkUserToken, async (req, res) => {
+    try {
+        const { amount, receipt } = req.body;
+
+        const options = {
+            amount: Math.round(amount * 100), // Amount in paise
+            currency: "INR",
+            receipt: receipt, // e.g., "order_rcptid_11"
+        };
+
+        const order = await razorpay.orders.create(options);
+
+        if (!order) {
+            return res.status(500).json({ msg: "Razorpay order creation failed" });
+        }
+
+        res.json({
+            id: order.id,
+            amount: order.amount,
+            key_id: process.env.RAZORPAY_KEY_ID,
+        });
+
+    } catch (error) {
+        console.error("Error creating Razorpay order:", error);
+        res.status(500).json({ msg: "Server Error", error });
+    }
+});
+
+// --- 2. VERIFY PAYMENT AND CREATE DB ORDER ---
+app.post('/api/payment/verify', checkUserToken, async (req, res) => {
+    try {
+        const {
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            // These are passed from the frontend handler
+            cartItems,
+            shippingAddress,
+            totalAmount 
+        } = req.body;
+        
+        const userId = req.user.id;
+
+        // --- 1. Verify Signature ---
+        const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+        hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
+        const generated_signature = hmac.digest('hex');
+
+        if (generated_signature !== razorpay_signature) {
+            return res.status(400).json({ success: false, msg: "Payment verification failed" });
+        }
+
+        // --- 2. Signature is VERIFIED. Create the order in *our* database ---
+        const addressString = shippingAddress.value.toLowerCase();
+        let deliveryStatus = 'Pending';
+        let deliveryType = 'manual';
+        let expectedDate = null;
+        let status = 'Processing (Paid)'; // Mark as Paid
+        
+        if (addressString.includes('hyderabad')) {
+            deliveryType = 'manual';
+            deliveryStatus = 'Pending';
+        } else if (addressString.includes('telangana') || addressString.includes('andhra pradesh') || addressString.includes('a.p')) {
+            deliveryType = 'automated';
+            deliveryStatus = 'Out for Delivery';
+            status = 'Out for Delivery (Paid)';
+            expectedDate = new Date();
+            expectedDate.setDate(expectedDate.getDate() + 2);
+        } else {
+            deliveryType = 'automated';
+            deliveryStatus = 'Out for Delivery';
+            status = 'Out for Delivery (Paid)';
+            expectedDate = new Date();
+            expectedDate.setDate(expectedDate.getDate() + 4);
+        }
+
+        // This query now uses the new `payment_id` column
+        const orderQuery = `
+          INSERT INTO orders (user_id, items, total_amount, shipping_address, status, delivery_status, delivery_type, expected_delivery_date, payment_id)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id;
+        `;
+        const orderResult = await pool.query(orderQuery, [
+            userId, 
+            JSON.stringify(cartItems), 
+            totalAmount, 
+            shippingAddress, 
+            status, 
+            deliveryStatus, 
+            deliveryType, 
+            expectedDate,
+            razorpay_payment_id // Save the payment ID
+        ]);
+
+        res.json({
+            success: true,
+            orderId: orderResult.rows[0].id,
+            paymentId: razorpay_payment_id,
+        });
+
+    } catch (error) {
+        console.error("Error verifying payment:", error);
+        res.status(500).json({ success: false, msg: "Server Error", error });
+    }
+});
+
 
 
 // ===========================================
