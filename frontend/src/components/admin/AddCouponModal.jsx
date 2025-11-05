@@ -23,7 +23,6 @@ export default function AddCouponModal({ onClose, onSave }) {
     const [minPurchase, setMinPurchase] = useState('');
     const [applicableCategory, setApplicableCategory] = useState('');
     
-    // --- NEW: State for poster and description ---
     const [description, setDescription] = useState('');
     const [posterFile, setPosterFile] = useState(null);
 
@@ -34,48 +33,59 @@ export default function AddCouponModal({ onClose, onSave }) {
         setPosterFile(e.target.files[0]);
     };
 
+    // --- MODIFIED: handleSubmit now has two try/catch blocks ---
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
 
-        try {
-            const token = getAuthToken();
-            if (!token) {
-                setError("Admin token not found. Please log in again.");
-                setIsLoading(false);
-                return;
-            }
-            const config = { headers: { 'x-admin-token': token } };
+        const token = getAuthToken();
+        if (!token) {
+            setError("Admin token not found. Please log in again.");
+            setIsLoading(false);
+            return;
+        }
+        const config = { headers: { 'x-admin-token': token } };
+        
+        let posterUrl = null;
 
-            let posterUrl = null;
-
-            // --- NEW: Step 1 - Upload the poster if it exists ---
-            if (posterFile) {
+        // --- Step 1: Upload poster in its OWN try...catch block ---
+        if (posterFile) {
+            try {
                 const formData = new FormData();
-                formData.append('productImage', posterFile); // The backend route expects 'productImage'
+                formData.append('productImage', posterFile); 
                 
                 const uploadConfig = { headers: { ...config.headers, 'Content-Type': 'multipart/form-data' } };
                 const uploadResponse = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/upload`, formData, uploadConfig);
                 posterUrl = uploadResponse.data.imageUrl;
+            } catch (err) {
+                // Give a specific error for the upload!
+                console.error("Upload error:", err);
+                setError(err.response?.data?.msg || 'ERROR: Failed to upload poster image. Check server/Cloudinary keys.');
+                setIsLoading(false);
+                return; // Stop execution if upload fails
             }
+        }
 
-            // --- Step 2: Create the coupon with the new poster URL ---
+        // --- Step 2: Create coupon in its OWN try...catch block ---
+        try {
             const couponData = {
                 code: code.toUpperCase(),
                 discount_type: discountType,
                 discount_value: parseFloat(discountValue),
                 expiry_date: expiryDate,
                 min_purchase_amount: parseFloat(minPurchase) || 0,
-                applicable_category: applicableCategory || null,
-                poster_url: posterUrl, // Add the poster URL
-                description: description || null // Add the description
+                applicable_category: applicableCategory || null, // This is already correct
+                poster_url: posterUrl,
+                description: description || null
             };
 
             await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/coupons`, couponData, config);
-            onSave(); // This will close the modal and refresh the data in AdminPage
+            onSave(); // This will close the modal and refresh the data
         } catch (err) {
-            setError(err.response?.data?.msg || 'Failed to create coupon.');
+            // This error is now specific to coupon creation
+            console.error("Coupon creation error:", err);
+            setError(err.response?.data?.msg || 'ERROR: Failed to create coupon. (Upload may have succeeded)');
         } finally {
             setIsLoading(false);
         }
@@ -114,12 +124,13 @@ export default function AddCouponModal({ onClose, onSave }) {
                         {/* Discount Value */}
                         <div className="sm:col-span-1">
                             <label className="text-sm font-medium text-gray-700">Discount Value</label>
-                            <input type="number" step="0.01" value={discountValue} onChange={e => setDiscountValue(e.target.value)} required className="mt-1 block w-full border border-gray-300 rounded-md p-2" />
+                            {/* --- ADDED: required and min="0" for better validation --- */}
+                            <input type="number" step="0.01" value={discountValue} min="0" onChange={e => setDiscountValue(e.target.value)} required className="mt-1 block w-full border border-gray-300 rounded-md p-2" />
                         </div>
                         {/* Minimum Purchase */}
                         <div className="sm:col-span-1">
                             <label className="text-sm font-medium text-gray-700">Minimum Purchase (₹)</label>
-                            <input type="number" step="0.01" placeholder="0.00" value={minPurchase} onChange={e => setMinPurchase(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md p-2" />
+                            <input type="number" step="0.01" placeholder="0.00" min="0" value={minPurchase} onChange={e => setMinPurchase(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md p-2" />
                         </div>
                         {/* Applicable Category */}
                         <div className="sm:col-span-1">
@@ -132,7 +143,7 @@ export default function AddCouponModal({ onClose, onSave }) {
                             </select>
                         </div>
 
-                        {/* --- NEW: Attractive Quote/Description --- */}
+                        {/* Attractive Quote/Description */}
                         <div className="sm:col-span-2">
                             <label className="text-sm font-medium text-gray-700">Attractive Quote / Description (Optional)</label>
                             <textarea
@@ -144,18 +155,19 @@ export default function AddCouponModal({ onClose, onSave }) {
                             ></textarea>
                         </div>
 
-                        {/* --- NEW: Coupon Poster --- */}
+                        {/* Coupon Poster */}
                         <div className="sm:col-span-2">
                             <label className="text-sm font-medium text-gray-700">Coupon Poster (Optional)</label>
                             <input
                                 type="file"
                                 onChange={handleFileChange}
+                                accept="image/png, image/jpeg, image/webp"
                                 className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
                             />
                         </div>
 
                     </div>
-                    {error && <div className="px-6 pb-4 text-sm text-red-600">{error}</div>}
+                    {error && <div className="px-6 pb-4 text-sm text-red-600 font-bold">{error}</div>}
                     <div className="p-4 bg-slate-50 flex justify-end gap-3 rounded-b-xl">
                         <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-100">Cancel</button>
                         <button type="submit" disabled={isLoading} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:bg-gray-400">
