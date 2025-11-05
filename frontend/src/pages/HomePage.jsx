@@ -63,7 +63,7 @@ const categoryFeatures = {
         title: "Exquisite Homemade Flavor Symphony",
         subtitle: `"Tradition's taste in every delightful bite."`,
         description: "Crafted with cherished family recipes and natural fermentation, each jar bursts with authentic, healthful flavors that elevate every meal.",
-        imageUrl: "https.i.pinimg.com/736x/01/67/db/0167db2dc357d38a25024206507a8adb.jpg",
+        imageUrl: "https://i.pinimg.com/736x/01/67/db/0167db2dc357d38a25024206507a8adb.jpg",
         features: [ { icon: <Microscope className="text-red-500"/>, title: "Probiotic Powerhouse", text: "Fermented naturally for gut-healthy probiotics that enhance digestion." }, { icon: <Leaf className="text-red-500"/>, title: "Pure Natural Essence", text: "Sun-dried ingredients and premium oils, sans artificial additives." }, { icon: <Shield className="text-red-500"/>, title: "Immunity Fortifier", text: "Packed with antioxidants and Vitamin K for robust immune support." } ]
     },
     dairy: {
@@ -178,7 +178,6 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
             whileHover={{ y: -8 }}
         >
             <div className="w-full aspect-[4/3] overflow-hidden relative">
-                {/* This will now display the fast-loading Cloudinary URL */}
                 <img src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm">New</div>
             </div>
@@ -295,7 +294,8 @@ const Footer = () => (
     </footer>
 );
 
-// --- MODIFIED: Accepts `dataVersion` prop from App.jsx ---
+// This is the main component for your Home Page.
+// It accepts `handleAddToCart` and `dataVersion` as props from App.jsx
 export default function HomePage({ handleAddToCart, dataVersion }) {
     const [products, setProducts] = useState([]);
     const [categories] = useState(CATEGORY_ORDER);
@@ -317,9 +317,10 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
         pickles: "/videos/pickles.mp4",
     };
 
-    // --- MODIFIED: This `useEffect` now listens to `dataVersion` ---
-    // When `dataVersion` changes (because an admin saved a product),
-    // this function will run again, fetching the new product list.
+    // This `useEffect` fetches products.
+    // **IMPORTANT:** It now includes `dataVersion` in its dependency array.
+    // This means it will automatically run again (and fetch new data) 
+    // whenever `dataVersion` is changed by the Admin Page.
     useEffect(() => {
         if (!selectedCategory) {
             setProducts([]);
@@ -336,6 +337,7 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
                 if (res.data && Array.isArray(res.data.products)) {
                     let fetchedProducts = res.data.products.map(p => ({ ...p, category: p.category.toLowerCase().replace(/\s+/g, '') }));
                     
+                    // Your custom sorting logic
                     if (selectedCategory === 'meatpoultry') {
                         fetchedProducts.sort((a, b) => {
                             const aName = a.name.toLowerCase();
@@ -377,9 +379,9 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
         
         fetchProducts();
         
-    // --- This is the key change ---
-    }, [selectedCategory, currentPage, dataVersion]); 
+    }, [selectedCategory, currentPage, dataVersion]); // `dataVersion` is the key
 
+    // All other functions are just for the UI
     const handleVariantChange = (productId, variantId) => {
         setSelectedVariants(prev => ({ ...prev, [productId]: parseInt(variantId, 10) }));
     };
@@ -414,6 +416,7 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
 
     return (
         <div className="relative min-h-screen overflow-x-hidden flex flex-col bg-transparent">
+            {/* Your custom styles, including `.no-scrollbar` */}
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
                 body { font-family: 'Poppins', sans-serif; }
@@ -422,6 +425,8 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
                 .no-scrollbar::-webkit-scrollbar { display: none; }
                 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
+            
+            {/* Background Video */}
             <AnimatePresence>
                 {categoryVideos[selectedCategory] && (
                     <motion.video
@@ -441,6 +446,7 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
             </AnimatePresence>
             
             <main className="flex-grow">
+                {/* --- This is your Sidebar Menu --- */}
                 <AnimatePresence>
                     {isSidebarOpen && (
                         <>
@@ -452,13 +458,17 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
                                 exit="closed"
                                 className="fixed top-0 left-0 h-full w-64 bg-slate-800/80 backdrop-blur-lg shadow-lg z-50 p-6 flex flex-col"
                             >
-                                <div className="flex justify-between items-center mb-8">
+                                <div className="flex justify-between items-center mb-8 flex-shrink-0"> {/* Header part of sidebar */}
                                     <img src={logoIcon} alt="Sresta Mart Logo" className="h-12 w-auto" />
                                     <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-slate-700/50 rounded-full">
                                         <X className="text-gray-200" size={20} />
                                     </button>
                                 </div>
-                                <nav className="flex-grow">
+                                
+                                {/* --- SCROLL FIX IS HERE --- */}
+                                {/* I've added `overflow-y-auto` to make it scroll if content is too tall. */}
+                                {/* I've also added your `no-scrollbar` class to hide the bar. */}
+                                <nav className="flex-grow overflow-y-auto no-scrollbar">
                                     <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Discover Categories</h3>
                                     <ul className="space-y-2">
                                         {categories.map(category => {
@@ -487,7 +497,9 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
                     )}
                 </AnimatePresence>
 
+                {/* --- This is your Main Page Content --- */}
                 <div className="relative z-10">
+                    {/* Header */}
                     <div className="pt-6 sm:pt-8 pb-4 bg-gradient-to-b from-black/50 to-transparent">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
                             <button onClick={() => setIsSidebarOpen(true)} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-sm hover:bg-white/30 transition-all sm:left-6">
@@ -502,6 +514,7 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
                                 </p>
                             </div>
                         </div>
+                        {/* Category Filters */}
                         <div className="mt-4 flex overflow-x-auto sm:justify-center gap-3 px-4 sm:px-6 no-scrollbar">
                             {categories.map(category => {
                                 const buttonClass = `flex-shrink-0 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all duration-300 shadow-md`;
@@ -520,6 +533,7 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
                                 );
                             })}
                         </div>
+                        {/* Search Bar */}
                         <div className="mt-4 max-w-xl mx-auto px-4 sm:px-6">
                             <div className="relative">
                                 <input type="text" placeholder="Search for pure & organic products..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full py-3 px-5 pr-10 rounded-full bg-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-md backdrop-blur-sm text-sm" />
@@ -527,6 +541,8 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
                             </div>
                         </div>
                     </div>
+                    
+                    {/* Product Grid */}
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                         {error && (<motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="bg-red-500/20 backdrop-blur-sm text-red-300 p-4 rounded-lg mb-8 text-center shadow-sm text-sm" > {error} </motion.div>)}
                         <motion.div key={selectedCategory + searchQuery} variants={productGridVariants} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" >
@@ -551,6 +567,8 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
                                 </div>
                             )}
                         </motion.div>
+                        
+                        {/* Pagination */}
                         {!productsLoading && products.length > 0 && totalPages > 1 && (
                             <div className="mt-12 flex justify-center items-center gap-4 flex-wrap">
                                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={goToPreviousPage} disabled={currentPage === 1} className="px-4 py-2 bg-black/20 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black/30 backdrop-blur-sm shadow-sm hover:shadow-md transition-all text-sm">Previous</motion.button>
@@ -558,6 +576,8 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
                                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={goToNextPage} disabled={currentPage === totalPages} className="px-4 py-2 bg-black/20 text-gray-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-black/30 backdrop-blur-sm shadow-sm hover:shadow-md transition-all text-sm">Next</motion.button>
                             </div>
                         )}
+                        
+                        {/* Category Feature Section */}
                         {currentFeatureData && (
                             <CategoryFeatureSection
                                 title={currentFeatureData.title}
