@@ -3,8 +3,52 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Tag, Gift, Loader2 } from 'lucide-react';
 
-// --- MODIFIED: CouponCard now accepts and displays the category ---
+// --- MODIFIED: CouponCard now has two different layouts ---
 const CouponCard = ({ coupon }) => {
+    
+    // --- NEW: If a poster_url exists, show the new poster-style card ---
+    if (coupon.poster_url) {
+        return (
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-2xl shadow-lg overflow-hidden group transition-all duration-300 hover:shadow-xl"
+            >
+                {/* Image poster section */}
+                <div className="w-full aspect-video overflow-hidden">
+                    <img 
+                        src={coupon.poster_url} 
+                        alt={coupon.description || coupon.code} 
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                    />
+                </div>
+                {/* Content section */}
+                <div className="p-6">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
+                        <h2 className="font-bold text-2xl text-gray-800 tracking-widest bg-gray-100 inline-block px-4 py-1 rounded-md border-dashed border-2">{coupon.code}</h2>
+                        {coupon.applicable_category && (
+                            <span className="text-xs font-semibold bg-red-100 text-red-700 px-3 py-1 rounded-full uppercase self-start sm:self-center">
+                                On {coupon.applicable_category}
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-gray-600 mt-2 text-lg">
+                        {coupon.description || `Use code ${coupon.code} at checkout.`}
+                    </p>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 text-sm text-gray-400">
+                        <span className="mb-2 sm:mb-0">
+                            {coupon.min_purchase_amount > 0 && `Minimum purchase: ₹${coupon.min_purchase_amount}`}
+                        </span>
+                        <span>
+                            Expires on: {new Date(coupon.expiry_date).toLocaleDateString()}
+                        </span>
+                    </div>
+                </div>
+            </motion.div>
+        );
+    }
+
+    // --- FALLBACK: If no poster_url, show the original card layout ---
     const isPercentage = coupon.discount_type === 'percentage';
     
     return (
@@ -16,7 +60,6 @@ const CouponCard = ({ coupon }) => {
             <div className="p-8 bg-gradient-to-br from-red-50 to-orange-100 text-center flex flex-col justify-center items-center md:w-1/3">
                 <h3 className="text-5xl font-bold text-red-600">{isPercentage ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}</h3>
                 <p className="text-xl font-semibold text-red-500">OFF</p>
-                {/* --- NEW: Display category --- */}
                 {coupon.applicable_category && (
                     <span className="mt-2 text-xs font-semibold bg-red-100 text-red-700 px-3 py-1 rounded-full uppercase">
                         On {coupon.applicable_category}
@@ -27,7 +70,6 @@ const CouponCard = ({ coupon }) => {
                 <h2 className="font-bold text-2xl text-gray-800 tracking-widest bg-gray-100 inline-block px-4 py-1 rounded-md border-dashed border-2">{coupon.code}</h2>
                 <p className="text-gray-600 mt-4">
                     Get {isPercentage ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`} off on
-                    {/* --- NEW: Wording for category-specific discount --- */}
                     {coupon.applicable_category ? ` our ${coupon.applicable_category} collection` : ' your order'}.
                     {coupon.min_purchase_amount > 0 && ` Minimum purchase of ₹${coupon.min_purchase_amount} required.`}
                 </p>
@@ -39,6 +81,8 @@ const CouponCard = ({ coupon }) => {
     );
 };
 
+
+// The rest of your file stays exactly the same
 export default function CouponsPage({ isFirstOrder }) {
     const [coupons, setCoupons] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -47,7 +91,7 @@ export default function CouponsPage({ isFirstOrder }) {
     useEffect(() => {
         const fetchCoupons = async () => {
             try {
-                // This backend endpoint now returns the `applicable_category`
+                // This backend endpoint now returns the `poster_url`
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/coupons/public`);
                 setCoupons(res.data);
             } catch (err) {
@@ -94,7 +138,7 @@ export default function CouponsPage({ isFirstOrder }) {
                     ) : error ? (
                         <div className="text-center text-red-500 bg-red-50 p-8 rounded-lg">{error}</div>
                     ) : coupons.length > 0 ? (
-                        // The CouponCard component now knows how to display the category
+                        // This map function now works with both types of cards
                         coupons.map(coupon => <CouponCard key={coupon.code} coupon={coupon} />)
                     ) : (
                         !isFirstOrder && (
