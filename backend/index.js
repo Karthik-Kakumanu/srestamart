@@ -351,16 +351,16 @@ app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) =
 // --- COUPON MANAGEMENT (ADMIN) ---
 // (All these routes remain exactly the same)
 app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
-    const { code, discount_type, discount_value, expiry_date, min_purchase_amount } = req.body;
+    const { code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category } = req.body;
     if (!code || !discount_type || !discount_value || !expiry_date) {
         return res.status(400).json({ msg: 'Please provide all required coupon fields.' });
     }
     try {
         const newCoupon = await pool.query(
-            `INSERT INTO coupons (code, discount_type, discount_value, expiry_date, min_purchase_amount)
-             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-            [code.toUpperCase(), discount_type, discount_value, expiry_date, min_purchase_amount || 0]
-        );
+              `INSERT INTO coupons (code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category)
+              VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+              [code.toUpperCase(), discount_type, discount_value, expiry_date, min_purchase_amount || 0, applicable_category || null]
+);
         res.status(201).json(newCoupon.rows[0]);
     } catch (err) {
         console.error('Error creating coupon:', err.message);
@@ -695,7 +695,7 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
 app.get('/api/coupons/public', async (req, res) => {
     try {
         const result = await pool.query(
-            "SELECT code, discount_type, discount_value, expiry_date, min_purchase_amount FROM coupons WHERE is_active = TRUE AND expiry_date >= CURRENT_DATE ORDER BY expiry_date ASC"
+          "SELECT code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category FROM coupons WHERE is_active = TRUE AND expiry_date >= CURRENT_DATE ORDER BY expiry_date ASC"
         );
         res.json(result.rows);
     } catch (err) {
@@ -704,32 +704,80 @@ app.get('/api/coupons/public', async (req, res) => {
     }
 });
 
+// --- MODIFIED: This is now a powerful endpoint that calculates the discount ---
 app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
-    const { couponCode, cartTotal } = req.body;
-    if (!couponCode) return res.status(400).json({ success: false, msg: 'Coupon code is required.' });
+    // It now expects `cartItems` instead of `cartTotal`
+    const { couponCode, cartItems } = req.body;
+    if (!couponCode || !cartItems) return res.status(400).json({ success: false, msg: 'Coupon code and cart items are required.' });
 
     try {
+        // 1. Fetch the coupon
         const result = await pool.query('SELECT * FROM coupons WHERE code = $1', [couponCode.toUpperCase()]);
-        
         if (result.rowCount === 0) {
             return res.status(404).json({ success: false, msg: 'Invalid coupon code.' });
         }
-        
         const coupon = result.rows[0];
 
+        // 2. Check basic validity
         if (!coupon.is_active) {
             return res.status(400).json({ success: false, msg: 'This coupon is no longer active.' });
         }
-
         if (new Date(coupon.expiry_date) < new Date()) {
             return res.status(400).json({ success: false, msg: 'This coupon has expired.' });
         }
 
-        if (Number(cartTotal) < Number(coupon.min_purchase_amount)) {
-            return res.status(400).json({ success: false, msg: `Minimum purchase of ₹${coupon.min_purchase_amount} is required.` });
+        // 3. Determine the "applicable subtotal"
+        let applicableSubtotal = 0;
+        if (coupon.applicable_category) {
+            // Find all product IDs for the given category
+            const productIdsResult = await pool.query(
+                'SELECT id FROM products WHERE LOWER(REPLACE(category, \' \', \'\')) = $1',
+                [coupon.applicable_category.toLowerCase().replace(/\s+/g, '')]
+            );
+            const applicableProductIds = new Set(productIdsResult.rows.map(p => p.id));
+            
+            // Find all variant IDs for those products
+            const variantIdsResult = await pool.query(
+                'SELECT id FROM product_variants WHERE product_id = ANY($1::int[])',
+                [Array.from(applicableProductIds)]
+            );
+            const applicableVariantIds = new Set(variantIdsResult.rows.map(v => v.id));
+
+            // Calculate subtotal *only* for items in that category
+            cartItems.forEach(item => {
+                if (applicableVariantIds.has(item.id)) { // item.id is the variant_id
+                    applicableSubtotal += item.price * item.quantity;
+                }
+            });
+        } else {
+            // Coupon applies to the whole cart
+            cartItems.forEach(item => {
+                applicableSubtotal += item.price * item.quantity;
+            });
+        }
+        
+        // 4. Check minimum purchase against the *applicable* subtotal
+        if (applicableSubtotal === 0 && coupon.applicable_category) {
+             return res.status(400).json({ success: false, msg: `This coupon is only valid for the ${coupon.applicable_category} category.` });
+        }
+        if (applicableSubtotal < coupon.min_purchase_amount) {
+            const categoryName = coupon.applicable_category ? `from the ${coupon.applicable_category} category` : "of items";
+            return res.status(400).json({ success: false, msg: `A minimum purchase of ₹${coupon.min_purchase_amount} ${categoryName} is required.` });
         }
 
-        res.json({ success: true, coupon });
+        // 5. Calculate the discount
+        let discountAmount = 0;
+        if (coupon.discount_type === 'percentage') {
+            discountAmount = applicableSubtotal * (coupon.discount_value / 100);
+        } else { // 'fixed'
+            discountAmount = coupon.discount_value;
+        }
+
+        // Ensure fixed discount doesn't exceed the subtotal
+        discountAmount = Math.min(discountAmount, applicableSubtotal);
+
+        // 6. Return the success, the coupon object, and the calculated amount
+        res.json({ success: true, coupon, discountAmount: parseFloat(discountAmount.toFixed(2)) });
 
     } catch (err) {
         console.error('Error applying coupon:', err.message);

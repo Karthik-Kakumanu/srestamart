@@ -1,11 +1,9 @@
-// pages/CouponsPage.jsx (Full Updated Code)
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Tag, Gift, Loader2 } from 'lucide-react';
 
-// A new component to display each coupon
+// --- MODIFIED: CouponCard now accepts and displays the category ---
 const CouponCard = ({ coupon }) => {
     const isPercentage = coupon.discount_type === 'percentage';
     
@@ -18,11 +16,19 @@ const CouponCard = ({ coupon }) => {
             <div className="p-8 bg-gradient-to-br from-red-50 to-orange-100 text-center flex flex-col justify-center items-center md:w-1/3">
                 <h3 className="text-5xl font-bold text-red-600">{isPercentage ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}</h3>
                 <p className="text-xl font-semibold text-red-500">OFF</p>
+                {/* --- NEW: Display category --- */}
+                {coupon.applicable_category && (
+                    <span className="mt-2 text-xs font-semibold bg-red-100 text-red-700 px-3 py-1 rounded-full uppercase">
+                        On {coupon.applicable_category}
+                    </span>
+                )}
             </div>
             <div className="p-8 flex-grow">
                 <h2 className="font-bold text-2xl text-gray-800 tracking-widest bg-gray-100 inline-block px-4 py-1 rounded-md border-dashed border-2">{coupon.code}</h2>
                 <p className="text-gray-600 mt-4">
-                    Get {isPercentage ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`} off on your order.
+                    Get {isPercentage ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`} off on
+                    {/* --- NEW: Wording for category-specific discount --- */}
+                    {coupon.applicable_category ? ` our ${coupon.applicable_category} collection` : ' your order'}.
                     {coupon.min_purchase_amount > 0 && ` Minimum purchase of ₹${coupon.min_purchase_amount} required.`}
                 </p>
                 <p className="text-sm text-gray-400 mt-4">
@@ -41,6 +47,7 @@ export default function CouponsPage({ isFirstOrder }) {
     useEffect(() => {
         const fetchCoupons = async () => {
             try {
+                // This backend endpoint now returns the `applicable_category`
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/coupons/public`);
                 setCoupons(res.data);
             } catch (err) {
@@ -87,6 +94,7 @@ export default function CouponsPage({ isFirstOrder }) {
                     ) : error ? (
                         <div className="text-center text-red-500 bg-red-50 p-8 rounded-lg">{error}</div>
                     ) : coupons.length > 0 ? (
+                        // The CouponCard component now knows how to display the category
                         coupons.map(coupon => <CouponCard key={coupon.code} coupon={coupon} />)
                     ) : (
                         !isFirstOrder && (

@@ -9,15 +9,15 @@ import AddCouponModal from '../components/admin/AddCouponModal.jsx';
 
 const getAuthToken = () => localStorage.getItem('adminToken'); 
 
-export default function AdminPage() {
+// --- MODIFIED: Accepts `onDataChange` prop from App.jsx ---
+export default function AdminPage({ onDataChange }) {
     const [view, setView] = useState('overview');
     const [products, setProducts] = useState([]);
     const [users, setUsers] = useState([]);
     const [orders, setOrders] = useState([]);
     const [deliveryPartners, setDeliveryPartners] = useState([]);
-    const [coupons, setCoupons] = useState([]); // --- NEW ---
+    const [coupons, setCoupons] = useState([]); 
     const [isLoading, setIsLoading] = useState(true);
-    // --- THIS IS THE CORRECTED LINE ---
     const [error, setError] = useState('');
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -92,13 +92,15 @@ export default function AdminPage() {
         setIsEditModalOpen(true);
     };
     
+    // --- MODIFIED: Calls `onDataChange` ---
     const handleDeleteProduct = async (productId, productName) => {
         if (window.confirm(`Are you sure you want to delete "${productName}"?`)) {
             try {
                 const token = getAuthToken();
                 const config = { headers: { 'x-admin-token': token } };
                 await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/products/${productId}`, config);
-                fetchData();
+                fetchData(); 
+                onDataChange(); // --- Triggers update on HomePage
             } catch (err) {
                 setError(err.response?.data?.msg || 'Failed to delete product.');
             }
@@ -110,18 +112,20 @@ export default function AdminPage() {
             try {
                 const token = getAuthToken();
                 await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/coupons/${couponId}`, { headers: { 'x-admin-token': token } });
-                fetchData(); // Refresh all data
+                fetchData();
             } catch (err) {
                  setError(err.response?.data?.msg || 'Failed to delete coupon.');
             }
         }
     };
     
+    // --- MODIFIED: Calls `onDataChange` ---
     const handleSave = () => {
         setIsEditModalOpen(false);
         setIsAddModalOpen(false);
         setIsAddCouponModalOpen(false);
-        fetchData();
+        fetchData(); 
+        onDataChange(); // --- Triggers update on HomePage
     };
 
     const totalRevenue = useMemo(() => orders.reduce((acc, order) => acc + Number(order.total_amount), 0), [orders]);
@@ -131,7 +135,7 @@ export default function AdminPage() {
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 <header className="mb-8 flex flex-col sm:flex-row justify-between sm:items-center">
                     <div>
-                        <h1 className="text-4xl font-bold text-gray-800">Admin Dashboard</h1>
+                        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Admin Dashboard</h1>
                         <p className="text-gray-500">Welcome to the Sresta Mart control panel.</p>
                     </div>
                     <button onClick={fetchData} disabled={isLoading} className="mt-4 sm:mt-0 flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 disabled:opacity-50 transition-colors">
@@ -142,15 +146,17 @@ export default function AdminPage() {
 
                 {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg" role="alert"><p>{error}</p></div>}
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {/* --- RESPONSIVE: Stacks on mobile --- */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     <StatCard icon={<DollarSign />} title="Total Revenue" value={`₹${totalRevenue.toFixed(2)}`} color="green" />
                     <StatCard icon={<ShoppingCart />} title="Total Orders" value={orders.length} color="orange" />
                     <StatCard icon={<Users />} title="Total Users" value={users.length} color="blue" />
                 </div>
 
                 <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg">
+                    {/* --- RESPONSIVE: Horizontal scroll on mobile --- */}
                     <div className="flex flex-col sm:flex-row items-center justify-between mb-4 border-b border-slate-200">
-                        <div className="flex space-x-2 self-start sm:self-center">
+                        <div className="flex space-x-2 w-full overflow-x-auto pb-2 sm:w-auto sm:overflow-x-visible">
                             <TabButton name="Overview" icon={<BarChart2/>} activeView={view} setView={setView} viewId="overview" />
                             <TabButton name="Products" icon={<Package/>} activeView={view} setView={setView} viewId="products" />
                             <TabButton name="Users" icon={<Users/>} activeView={view} setView={setView} viewId="users" />
@@ -221,12 +227,14 @@ const StatCard = ({ icon, title, value, color }) => {
 };
 
 const TabButton = ({ name, icon, activeView, setView, viewId }) => (
-    <button onClick={() => setView(viewId)} className={`flex items-center px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${activeView === viewId ? 'border-red-600 text-red-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+    // --- RESPONSIVE: Added `flex-shrink-0` to prevent shrinking in scroll container ---
+    <button onClick={() => setView(viewId)} className={`flex-shrink-0 flex items-center px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${activeView === viewId ? 'border-red-600 text-red-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
         {React.cloneElement(icon, { className: "inline-block mr-2 h-4 w-4" })} {name}
     </button>
 );
 
 const OverviewCharts = ({ orders, products }) => {
+    // (This component is already responsive)
     const salesData = useMemo(() => {
         const salesByDay = orders.reduce((acc, order) => {
             const date = new Date(order.created_at).toLocaleDateString('en-CA');
@@ -282,10 +290,11 @@ const OverviewCharts = ({ orders, products }) => {
     );
 };
 
+// --- RESPONSIVE: Product Table (stacks to cards on mobile) ---
 const ProductTable = ({ products, onEdit, onDelete }) => (
     <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 hidden md:table-header-group"> {/* Hide table head on mobile */}
                 <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
@@ -295,11 +304,28 @@ const ProductTable = ({ products, onEdit, onDelete }) => (
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
                 {products.map(product => (
-                    <tr key={product.id}>
-                        <td className="px-6 py-4 whitespace-nowrap"><div className="flex items-center"><div className="flex-shrink-0 h-12 w-12"><img className="h-12 w-12 rounded-md object-cover" src={product.image_url || 'https://placehold.co/100'} alt={product.name} /></div><div className="ml-4"><div className="text-sm font-medium text-gray-900">{product.name}</div><div className="text-xs text-gray-500 max-w-xs truncate">{product.description}</div></div></div></td>
-                        <td className="px-6 py-4 whitespace-nowrap"><span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{product.category}</span></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.variants && product.variants.length > 0 ? (<ul className="space-y-1">{product.variants.map(v => (<li key={v.id} className="text-xs"><span className="font-semibold">{v.label}</span> - ₹{v.price}</li>))}</ul>) : (<span className="text-xs text-red-500">No variants</span>)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <tr key={product.id} className="block md:table-row border-b md:border-none mb-4 md:mb-0">
+                        <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0 h-12 w-12"><img className="h-12 w-12 rounded-md object-cover" src={product.image_url || 'https://placehold.co/100'} alt={product.name} /></div>
+                                <div className="ml-4">
+                                    <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                                    <div className="text-xs text-gray-500 max-w-xs truncate">{product.description}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
+                            <span className="md:hidden font-bold text-xs uppercase text-gray-500">Category: </span>
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{product.category}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 block md:table-cell">
+                            {product.variants && product.variants.length > 0 ? (
+                                <ul className="space-y-1">{product.variants.map(v => (
+                                    <li key={v.id} className="text-xs"><span className="font-semibold">{v.label}</span> - ₹{v.price}</li>
+                                ))}</ul>
+                            ) : (<span className="text-xs text-red-500">No variants</span>)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap block md:table-cell text-right">
                             <button onClick={() => onEdit(product)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
                             <button onClick={() => onDelete(product.id, product.name)} className="text-red-600 hover:text-red-900 ml-4">Delete</button>
                         </td>
@@ -310,17 +336,17 @@ const ProductTable = ({ products, onEdit, onDelete }) => (
     </div>
 );
 
+// --- RESPONSIVE: User Table (stacks to cards on mobile) ---
 const UserTable = ({ users }) => {
     const UserAvatar = ({ name }) => (
         <div className="w-10 h-10 flex-shrink-0 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">
             {name.charAt(0).toUpperCase()}
         </div>
     );
-
     return (
         <div className="overflow-x-auto">
             <table className="min-w-full">
-                <thead className="bg-slate-50">
+                <thead className="bg-slate-50 hidden md:table-header-group">
                     <tr>
                         <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
                         <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</th>
@@ -330,8 +356,8 @@ const UserTable = ({ users }) => {
                 </thead>
                 <tbody className="bg-white divide-y divide-slate-200">
                     {users.map(user => (
-                        <tr key={user.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                        <tr key={user.id} className="block md:table-row border-b md:border-none mb-4 md:mb-0">
+                            <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
                                 <div className="flex items-center">
                                     <UserAvatar name={user.name} />
                                     <div className="ml-4">
@@ -340,15 +366,22 @@ const UserTable = ({ users }) => {
                                     </div>
                                 </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.phone}</td>
-                            <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 block md:table-cell">
+                                <span className="md:hidden font-bold text-xs uppercase text-gray-500">Contact: </span>
+                                {user.phone}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600 max-w-xs block md:table-cell">
+                                <span className="md:hidden font-bold text-xs uppercase text-gray-500">Addresses: </span>
                                 {user.addresses && user.addresses.length > 0 ? (
-                                    <ul className="space-y-1">{user.addresses.map((addr, idx) => (
+                                    <ul className="space-y-1 inline-block md:block">{user.addresses.map((addr, idx) => (
                                         <li key={idx}><strong>{addr.label}:</strong> {addr.value}</li>
                                     ))}</ul>
                                 ) : <span className="text-slate-400 italic">No addresses</span>}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(user.created_at).toLocaleDateString()}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 block md:table-cell">
+                                <span className="md:hidden font-bold text-xs uppercase text-gray-500">Joined: </span>
+                                {new Date(user.created_at).toLocaleDateString()}
+                            </td>
                         </tr>
                     ))}
                 </tbody>
@@ -357,10 +390,11 @@ const UserTable = ({ users }) => {
     );
 };
 
+// --- RESPONSIVE: Orders Table (stacks to cards on mobile) ---
 const OrdersTable = ({ orders, onAssign }) => (
     <div className="overflow-x-auto">
         <table className="min-w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-slate-50 hidden md:table-header-group">
                 <tr>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Order & Customer</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Delivery</th>
@@ -376,93 +410,89 @@ const OrdersTable = ({ orders, onAssign }) => (
 );
 
 const OrderRow = ({ order, onAssign }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const isOutsideHyderabad = order.shipping_address?.value && !order.shipping_address.value.toLowerCase().includes('hyderabad');
+    const isAutomated = order.delivery_type === 'automated';
 
-    // --- NEW: Logic to check if the shipping address is outside Hyderabad ---
-    const isOutsideHyderabad = order.shipping_address?.value && !order.shipping_address.value.toLowerCase().includes('hyderabad');
-
-    const isAutomated = order.delivery_type === 'automated';
-
-    return (
-        <>
-            {/* --- MODIFIED: Conditional styling for the table row --- */}
-            <tr className={
-                isOutsideHyderabad 
-                    ? 'bg-amber-50 border-l-4 border-amber-400 hover:bg-amber-100' 
-                    : 'hover:bg-slate-50'
-            }>
-                <td className="px-6 py-4" onClick={() => setIsExpanded(!isExpanded)}>
-                    <div className="font-medium text-gray-800 cursor-pointer hover:text-red-600">{`Order #${order.id}`}</div>
-                    {/* --- MODIFIED: Added a flex container and the "Outstation" badge --- */}
-                    <div className="flex items-center mt-1">
-                        {isOutsideHyderabad && (
-                            <span className="bg-amber-200 text-amber-800 text-xs font-semibold mr-2 px-2 py-0.5 rounded-full">
-                                Outstation
-                            </span>
-                        )}
-                        <div className="text-xs text-gray-500">{order.customer_name}</div>
-                    </div>
-                </td>
-                <td className="px-6 py-4">
-                    <div className="text-sm text-gray-700">{order.delivery_status}</div>
-                    {isAutomated ? (
-                        <div className="text-xs text-blue-500 flex items-center gap-1">
-                          <Bot size={12} /> Automated
-                        </div>
-                    ) : (
-                        <div className="text-xs text-gray-500">{order.partner_name ? `by ${order.partner_name}` : 'Unassigned'}</div>
-                    )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <div className="font-semibold text-gray-800">₹{Number(order.total_amount).toFixed(2)}</div>
-                    {order.expected_delivery_date ? (
-                        <div className="text-xs text-gray-500">Exp: {new Date(order.expected_delivery_date).toLocaleDateString()}</div>
-                    ) : (
-                        <div className="text-xs text-gray-500">On: {new Date(order.created_at).toLocaleDateString()}</div>
-                    )}
-                </td>
-                <td className="px-6 py-4 text-center">
-                    <button 
-                        onClick={() => onAssign(order)} 
-                        disabled={isAutomated || order.delivery_status !== 'Pending'}
-                        className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                        title={isAutomated ? "This order is handled automatically" : ""}
-                    >
-                      Assign
-                    </button>
-                </td>
-            </tr>
-            {isExpanded && (
-                <tr className="bg-white">
-                    <td colSpan="4" className="p-0">
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-                            <div className="bg-slate-100/80 p-4 m-2 rounded-lg">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                    <div>
-                                        <p className="font-bold text-slate-700">Full Item List:</p>
-                                        <ul className="list-disc list-inside text-slate-600 mt-1">
-                                            {order.items?.map((item, index) => (
-                                                <li key={index}>{item.name} ({item.variantLabel}) - <span className="font-medium">{item.quantity} x ₹{item.price.toFixed(2)}</span></li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-slate-700">Shipping Details:</p>
-                                        <p className="text-slate-600 mt-1">{order.shipping_address?.label}: {order.shipping_address?.value}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </td>
-                </tr>
-            )}
-        </>
-    );
+    return (
+        <>
+            <tr className={`block md:table-row mb-4 md:mb-0 ${
+                isOutsideHyderabad 
+                    ? 'bg-amber-50 border-l-4 border-amber-400' 
+                    : 'border-b md:border-none'
+            }`}>
+                <td className="px-6 py-4 block md:table-cell" onClick={() => setIsExpanded(!isExpanded)}>
+                    <div className="font-medium text-gray-800 cursor-pointer hover:text-red-600">{`Order #${order.id}`}</div>
+                    <div className="flex items-center mt-1">
+                        {isOutsideHyderabad && (
+                            <span className="bg-amber-200 text-amber-800 text-xs font-semibold mr-2 px-2 py-0.5 rounded-full">
+                                Outstation
+                            </span>
+                        )}
+                        <div className="text-xs text-gray-500">{order.customer_name}</div>
+                    </div>
+                </td>
+                <td className="px-6 py-4 block md:table-cell">
+                    <span className="md:hidden font-bold text-xs uppercase text-gray-500">Status: </span>
+                    <div className="text-sm text-gray-700 inline-block md:block">{order.delivery_status}</div>
+                    {isAutomated ? (
+                        <div className="text-xs text-blue-500 flex items-center gap-1">
+                            <Bot size={12} /> Automated
+                        </div>
+                    ) : (
+                        <div className="text-xs text-gray-500">{order.partner_name ? `by ${order.partner_name}` : 'Unassigned'}</div>
+                    )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap block md:table-cell text-left md:text-right">
+                    <div className="font-semibold text-gray-800">₹{Number(order.total_amount).toFixed(2)}</div>
+                    {order.expected_delivery_date ? (
+                        <div className="text-xs text-gray-500">Exp: {new Date(order.expected_delivery_date).toLocaleDateString()}</div>
+                    ) : (
+                        <div className="text-xs text-gray-500">On: {new Date(order.created_at).toLocaleDateString()}</div>
+                    )}
+                </td>
+                <td className="px-6 py-4 block md:table-cell text-left md:text-center">
+                    <button 
+                        onClick={() => onAssign(order)} 
+                        disabled={isAutomated || order.delivery_status !== 'Pending'}
+                        className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                        title={isAutomated ? "This order is handled automatically" : ""}
+                    >
+                        Assign
+                    </button>
+                </td>
+            </tr>
+            {isExpanded && (
+                <tr className="block md:table-row">
+                    <td colSpan="4" className="p-0">
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+                            <div className="bg-slate-100/80 p-4 m-2 rounded-lg">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                    <div>
+                                        <p className="font-bold text-slate-700">Full Item List:</p>
+                                        <ul className="list-disc list-inside text-slate-600 mt-1">
+                                            {order.items?.map((item, index) => (
+                                                <li key={index}>{item.name} ({item.variantLabel}) - <span className="font-medium">{item.quantity} x ₹{item.price.toFixed(2)}</span></li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-700">Shipping Details:</p>
+                                        <p className="text-slate-600 mt-1">{order.shipping_address?.label}: {order.shipping_address?.value}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </td>
+                </tr>
+            )}
+        </>
+    );
 };
 
 const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
+    // (This modal is already responsive)
     const [selectedPartnerId, setSelectedPartnerId] = useState('');
-
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <motion.div 
@@ -497,16 +527,17 @@ const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
     );
 };
 
-
-// --- NEW: CouponTable Component ---
+// --- RESPONSIVE: Coupon Table (stacks to cards on mobile) ---
+// --- MODIFIED: Added "Category" column ---
 const CouponTable = ({ coupons, onDelete }) => (
     <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 hidden md:table-header-group">
                 <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type & Value</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Purchase</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expires On</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -514,22 +545,36 @@ const CouponTable = ({ coupons, onDelete }) => (
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
                 {coupons.map(coupon => (
-                    <tr key={coupon.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={coupon.id} className="block md:table-row border-b md:border-none mb-4 md:mb-0">
+                        <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
                             <div className="text-sm font-bold text-gray-900">{coupon.code}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
                             <div className="text-sm text-gray-800">{coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}</div>
                             <div className="text-xs text-gray-500">{coupon.discount_type}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{coupon.min_purchase_amount}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(coupon.expiry_date).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 block md:table-cell">
+                            <span className="md:hidden font-bold text-xs uppercase text-gray-500">Min. Purchase: </span>
+                            ₹{coupon.min_purchase_amount}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 block md:table-cell">
+                            <span className="md:hidden font-bold text-xs uppercase text-gray-500">Category: </span>
+                            {coupon.applicable_category ? 
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">{coupon.applicable_category}</span> : 
+                                <span className="text-xs text-gray-400">All Categories</span>
+                            }
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 block md:table-cell">
+                            <span className="md:hidden font-bold text-xs uppercase text-gray-500">Expires: </span>
+                            {new Date(coupon.expiry_date).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
+                             <span className="md:hidden font-bold text-xs uppercase text-gray-500">Status: </span>
                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${coupon.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                 {coupon.is_active ? 'Active' : 'Inactive'}
                             </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-right block md:table-cell">
                             <button onClick={() => onDelete(coupon.id, coupon.code)} className="text-red-600 hover:text-red-900 ml-4">Delete</button>
                         </td>
                     </tr>

@@ -2,29 +2,40 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { ArrowRight, ShoppingBag, Truck, Wallet, Tag, XCircle, Loader2 } from 'lucide-react'; // --- MODIFIED: Added more icons
+import { ArrowRight, ShoppingBag, Truck, Wallet, Tag, XCircle, Loader2 } from 'lucide-react';
 
 // --- HELPER FUNCTION TO PARSE WEIGHT FROM VARIANT LABEL ---
 const parseWeightFromLabel = (label) => {
     if (!label || typeof label !== 'string') return 0;
     const lowerLabel = label.toLowerCase();
+    // This regex looks for a number (e.g., 250, 1.5) followed by 'kg' or 'g'
     const match = lowerLabel.match(/(\d*\.?\d+)\s*(kg|g)/);
     if (match) {
         const value = parseFloat(match[1]);
         const unit = match[2];
-        return unit === 'g' ? value / 1000 : value;
+        return unit === 'g' ? value / 1000 : value; // Convert grams to kg
     }
-    return 0;
+    return 0; // Return 0 if no match (e.g., "1 piece")
 };
 
 // --- HELPER FUNCTION FOR SHIPPING CALCULATION ---
 const calculateShipping = (subtotal, address, totalWeight) => {
     if (!address || !address.value || totalWeight === 0) return 0;
     const addressString = address.value.toLowerCase();
-    if (addressString.includes('hyderabad')) return subtotal > 1500 ? 0 : 50 * Math.max(1, totalWeight); // --- MODIFIED: Ensure minimum shipping charge if not free
-    if (addressString.includes('telangana')) return 150 * Math.max(1, totalWeight);
-    if (addressString.includes('andhra pradesh') || addressString.includes('a.p')) return 200 * Math.max(1, totalWeight);
-    return 350 * Math.max(1, totalWeight);
+    
+    // --- More robust calculation ---
+    // Ensure a minimum charge even if weight is low, but respect free shipping
+    const weightInKg = Math.max(1, Math.ceil(totalWeight)); // Always charge for at least 1kg
+    
+    if (addressString.includes('hyderabad')) {
+        // Free shipping over 1500
+        return subtotal > 1500 ? 0 : 50 * weightInKg; 
+    }
+    if (addressString.includes('telangana')) return 150 * weightInKg;
+    if (addressString.includes('andhra pradesh') || addressString.includes('a.p')) return 200 * weightInKg;
+    
+    // Default for rest of India
+    return 350 * weightInKg;
 };
 
 
@@ -34,44 +45,61 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
     
     // --- NEW: State for coupon functionality ---
     const [couponCode, setCouponCode] = useState('');
-    const [appliedCoupon, setAppliedCoupon] = useState(null);
+    const [appliedCoupon, setAppliedCoupon] = useState(null); // Stores the full coupon object
+    const [appliedDiscount, setAppliedDiscount] = useState(0); // Stores the calculated discount
     const [couponError, setCouponError] = useState('');
     const [couponSuccess, setCouponSuccess] = useState('');
     const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
 
     
-    // --- MODIFIED: useMemo now calculates coupon discounts ---
+    // --- MODIFIED: useMemo now uses the state for discounts ---
     const { firstOrderDiscount, couponDiscount, shippingCost, finalTotal, totalWeight, subtotal } = useMemo(() => {
         const subtotal = checkoutDetails?.totalAmount || 0;
         
+        // 1. Calculate First Order Discount
         const firstOrderDiscount = isFirstOrder ? subtotal * 0.10 : 0;
         
-        let couponDiscount = 0;
-        if (appliedCoupon) {
-            if (appliedCoupon.discount_type === 'percentage') {
-                couponDiscount = subtotal * (appliedCoupon.discount_value / 100);
-            } else { // 'fixed'
-                couponDiscount = appliedCoupon.discount_value;
-            }
-        }
+        // 2. Get Coupon Discount (it's now stored in state)
+        const couponDiscount = appliedDiscount || 0;
         
+        // 3. Calculate total discount and apply it
         const totalDiscount = firstOrderDiscount + couponDiscount;
         const discountedSubtotal = subtotal - totalDiscount;
 
+        // 4. Calculate Weight
         const totalWeight = checkoutDetails?.items.reduce((acc, item) => {
             const weightPerUnit = parseWeightFromLabel(item.variantLabel);
             return acc + (weightPerUnit * item.quantity);
         }, 0) || 0;
 
+        // 5. Calculate Shipping
         const shippingCost = calculateShipping(subtotal, checkoutDetails?.shippingAddress, totalWeight);
 
+        // 6. Calculate Final Total
         const finalTotal = discountedSubtotal + shippingCost;
 
-        return { firstOrderDiscount, couponDiscount, shippingCost, finalTotal, totalWeight, subtotal };
-    }, [isFirstOrder, checkoutDetails, appliedCoupon]);
+        return { 
+            firstOrderDiscount, 
+            couponDiscount, // This is `appliedDiscount`
+            shippingCost, 
+            finalTotal: Math.max(0, finalTotal), // Ensure total is not negative
+            totalWeight, 
+            subtotal 
+        };
+    }, [isFirstOrder, checkoutDetails, appliedDiscount]); // Re-runs when appliedDiscount changes
 
     if (!checkoutDetails || checkoutDetails.items.length === 0) {
-        return ( <div className="flex-grow bg-slate-50 flex items-center justify-center p-4"> {/* ... (Error display unchanged) ... */} </div> );
+        return ( 
+            <div className="flex-grow bg-slate-50 flex items-center justify-center p-4">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold text-red-600">Your Cart is Empty</h1>
+                    <p className="text-gray-500 mt-2">There are no items to check out.</p>
+                    <Link to="/" className="mt-4 inline-block bg-red-600 text-white font-bold py-2 px-4 rounded-lg">
+                        Go Shopping
+                    </Link>
+                </div>
+            </div> 
+        );
     }
 
     // --- NEW: Function to handle applying the coupon ---
@@ -85,19 +113,23 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
         setCouponSuccess('');
         try {
             const token = localStorage.getItem('token');
+            // --- MODIFIED: Send the full cartItems array ---
             const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/coupons/apply`, {
                 couponCode: couponCode,
-                cartTotal: subtotal
+                cartItems: checkoutDetails.items // Send the cart
             }, {
                 headers: { 'x-auth-token': token }
             });
 
             if (res.data.success) {
+                // --- MODIFIED: Store the coupon and the calculated discount ---
                 setAppliedCoupon(res.data.coupon);
-                setCouponSuccess("Coupon applied successfully!");
+                setAppliedDiscount(res.data.discountAmount);
+                setCouponSuccess(`Coupon '${res.data.coupon.code}' applied!`);
             }
         } catch (error) {
             setAppliedCoupon(null);
+            setAppliedDiscount(0);
             setCouponError(error.response?.data?.msg || "An error occurred.");
         } finally {
             setIsCheckingCoupon(false);
@@ -107,6 +139,7 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
     // --- NEW: Function to remove an applied coupon ---
     const handleRemoveCoupon = () => {
         setAppliedCoupon(null);
+        setAppliedDiscount(0); // Reset the discount
         setCouponCode('');
         setCouponError('');
         setCouponSuccess('');
@@ -183,11 +216,11 @@ export default function PaymentPage({ user, checkoutDetails, handleClearCart, is
                                     value={couponCode}
                                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                                     className="w-full border border-gray-300 rounded-md p-2 text-sm"
-                                    disabled={!!appliedCoupon}
+                                    disabled={!!appliedCoupon} // Disable if coupon is applied
                                 />
                                 <button 
                                     onClick={handleApplyCoupon}
-                                    disabled={isCheckingCoupon || !!appliedCoupon}
+                                    disabled={isCheckingCoupon || !!appliedCoupon} // Disable if checking or applied
                                     className="px-4 py-2 text-sm font-medium text-white bg-gray-800 rounded-md hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center w-28"
                                 >
                                     {isCheckingCoupon ? <Loader2 className="animate-spin" size={20}/> : 'Apply'}
