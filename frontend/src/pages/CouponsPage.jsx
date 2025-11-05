@@ -6,24 +6,27 @@ import { Tag, Gift, Loader2 } from 'lucide-react';
 // --- MODIFIED: CouponCard now has two different layouts ---
 const CouponCard = ({ coupon }) => {
     
-    // --- NEW: If a poster_url exists, show the new poster-style card ---
+    // --- NEW: If a poster_url exists, show the poster on the left side ---
     if (coupon.poster_url) {
         return (
             <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden group transition-all duration-300 hover:shadow-xl"
+                // Use the same horizontal layout classes as the fallback
+                className="bg-white rounded-2xl shadow-lg flex flex-col md:flex-row overflow-hidden group transition-all duration-300 hover:shadow-xl"
             >
-                {/* Image poster section */}
-                <div className="w-full aspect-video overflow-hidden">
+                {/* Image poster section (replaces the old percentage box) */}
+                <div className="md:w-1/3 w-full md:flex-shrink-0">
                     <img 
                         src={coupon.poster_url} 
                         alt={coupon.description || coupon.code} 
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                        // Image will be a fixed height on mobile, and fill the container on desktop
+                        className="w-full h-48 md:h-full object-cover" 
                     />
                 </div>
+                
                 {/* Content section */}
-                <div className="p-6">
+                <div className="p-8 flex-grow">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
                         <h2 className="font-bold text-2xl text-gray-800 tracking-widest bg-gray-100 inline-block px-4 py-1 rounded-md border-dashed border-2">{coupon.code}</h2>
                         {coupon.applicable_category && (
@@ -32,7 +35,7 @@ const CouponCard = ({ coupon }) => {
                             </span>
                         )}
                     </div>
-                    <p className="text-gray-600 mt-2 text-lg">
+                    <p className="text-gray-600 mt-2 text-base">
                         {coupon.description || `Use code ${coupon.code} at checkout.`}
                     </p>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 text-sm text-gray-400">
@@ -85,13 +88,12 @@ const CouponCard = ({ coupon }) => {
 // The rest of your file stays exactly the same
 export default function CouponsPage({ isFirstOrder }) {
     const [coupons, setCoupons] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const [loading, setLoading] =  useState(true);
+    const [error, setError] =  useState('');
 
     useEffect(() => {
         const fetchCoupons = async () => {
             try {
-                // This backend endpoint now returns the `poster_url`
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/coupons/public`);
                 setCoupons(res.data);
             } catch (err) {
@@ -138,7 +140,6 @@ export default function CouponsPage({ isFirstOrder }) {
                     ) : error ? (
                         <div className="text-center text-red-500 bg-red-50 p-8 rounded-lg">{error}</div>
                     ) : coupons.length > 0 ? (
-                        // This map function now works with both types of cards
                         coupons.map(coupon => <CouponCard key={coupon.code} coupon={coupon} />)
                     ) : (
                         !isFirstOrder && (
