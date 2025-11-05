@@ -361,15 +361,21 @@ app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) =
 // (All these routes remain exactly the same)
 app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
     const { code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description } = req.body;
-    if (!code || !discount_type || !discount_value || !expiry_date) {
-        return res.status(400).json({ msg: 'Please provide all required coupon fields.' });
+    if (!code || !discount_type || discount_value === undefined || discount_value === null || !expiry_date) {
+        return res.status(400).json({ msg: 'Please provide all required coupon fields (Code, Type, Value, Expiry).' });
     }
+
     try {
+        // --- FIXED: Coerce empty string for category to NULL for proper database storage ---
+        const finalCategory = applicable_category ? applicable_category : null;
+
         const newCoupon = await pool.query(
-    `INSERT INTO coupons (code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-    [code.toUpperCase(), discount_type, discount_value, expiry_date, min_purchase_amount || 0, applicable_category || null, poster_url || null, description || null]
-);
+            `INSERT INTO coupons (code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+            // Use the new finalCategory variable here
+            [code.toUpperCase(), discount_type, discount_value, expiry_date, min_purchase_amount || 0, finalCategory, poster_url || null, description || null]
+        );
+
         res.status(201).json(newCoupon.rows[0]);
     } catch (err) {
         console.error('Error creating coupon:', err.message);
