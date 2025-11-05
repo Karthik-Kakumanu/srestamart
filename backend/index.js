@@ -1,5 +1,3 @@
-// backend/index.js
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -9,8 +7,12 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const twilio = require('twilio');
 const crypto = require('crypto');
+const { Resend } = require('resend');
+
+// --- NEW IMPORTS FOR CLOUDINARY ---
 const multer = require('multer');
-const { Resend } = require('resend'); // Import Resend
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,23 +32,37 @@ const pool = new Pool({
 app.use(cors());
 app.use(bodyParser.json());
 
-// --- STATIC ASSETS & FILE UPLOAD SETUP ---
-app.use('/images/products', express.static(path.join(__dirname, 'public/products')));
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'public/products'); 
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
+// --- CLOUDINARY CONFIGURATION (NEW) ---
+// This tells Cloudinary who you are, using the keys from your Render Environment
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// --- MULTER/STORAGE CONFIGURATION (REPLACED) ---
+// This tells multer to upload files to Cloudinary instead of your local disk
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'sresta-mart-products', // A folder to keep your images organized
+    format: async (req, file) => 'webp', // Auto-converts to a fast, modern format
+    public_id: (req, file) => Date.now() + '-' + file.originalname.split('.').slice(0, -1).join('.'), // Creates a unique filename
+  },
+});
+
+// This initializes multer with your new Cloudinary storage
 const upload = multer({ storage: storage });
+
+// --- (OLD) STATIC ASSETS & FILE UPLOAD SETUP ---
+// We no longer need this line, as images are not served from the backend disk
+// app.use('/images/products', express.static(path.join(__dirname, 'public/products')));
 
 // --- TWILIO CLIENT ---
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 // --- AUTHENTICATION MIDDLEWARE ---
+// (All your auth middleware remains exactly the same)
 const checkAdminToken = (req, res, next) => {
   const token = req.header('x-admin-token');
   if (!token) return res.status(401).json({ msg: 'No admin token, authorization denied' });
@@ -80,6 +96,7 @@ const checkUserToken = (req, res, next) => {
 // ===================================
 
 app.post('/api/admin/login', (req, res) => {
+  // (This route remains exactly the same)
   const { username, password } = req.body;
   if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
     const payload = { id: 'admin', username: username, role: 'admin' };
@@ -90,15 +107,21 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
+// --- ADMIN UPLOAD ROUTE (MODIFIED) ---
+// This is now much simpler. 'upload.single' does all the work.
 app.post('/api/admin/upload', checkAdminToken, upload.single('productImage'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ msg: 'No file uploaded.' });
     }
-    const imageUrl = `${req.protocol}://${req.get('host')}/images/products/${req.file.filename}`;
-    res.json({ success: true, imageUrl: imageUrl });
+    // req.file.path is the new, permanent, https://... Cloudinary URL
+    // Your frontend (AddProductModal) already expects this `imageUrl` response
+    res.json({ success: true, imageUrl: req.file.path });
 });
 
 // --- Product Management (Admin) ---
+// (All your other admin routes: get products, create products, edit, delete, etc.)
+// (remain 100% the same. Your frontend already sends the `image_url` as text,)
+// (so this route doesn't even know or care where the image came from.)
 app.get('/api/admin/products', checkAdminToken, async (req, res) => {
     try {
         const query = `
@@ -147,6 +170,7 @@ app.post('/api/admin/products', checkAdminToken, async (req, res) => {
   try {
     await client.query('BEGIN');
     const newProductQuery = `INSERT INTO products (name, description, category, image_url) VALUES ($1, $2, $3, $4) RETURNING *`;
+    // product.image_url is the Cloudinary URL from the frontend
     const newProduct = await client.query(newProductQuery, [product.name, product.description || '', product.category, product.image_url || null]);
     const createdProduct = newProduct.rows[0];
     if (variant && variant.label && variant.price) {
@@ -206,6 +230,7 @@ app.delete('/api/admin/products/:id', checkAdminToken, async (req, res) => {
 
 
 // --- Variant Management (Admin) ---
+// (All these routes remain exactly the same)
 app.post('/api/admin/variants', checkAdminToken, async (req, res) => {
     const { product_id, label, price } = req.body;
     if (!product_id || !label || price === undefined) {
@@ -260,6 +285,7 @@ app.delete('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
 });
 
 // --- User Management (Admin) ---
+// (All these routes remain exactly the same)
 app.get('/api/admin/users', checkAdminToken, async (req, res) => {
   try {
     const usersResult = await pool.query('SELECT id, name, phone, created_at, is_admin, addresses FROM users ORDER BY id ASC');
@@ -271,6 +297,7 @@ app.get('/api/admin/users', checkAdminToken, async (req, res) => {
 });
 
 // --- Order Management (Admin) ---
+// (All these routes remain exactly the same)
 app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
   try {
     const query = `
@@ -322,6 +349,7 @@ app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) =
 
 
 // --- COUPON MANAGEMENT (ADMIN) ---
+// (All these routes remain exactly the same)
 app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
     const { code, discount_type, discount_value, expiry_date, min_purchase_amount } = req.body;
     if (!code || !discount_type || !discount_value || !expiry_date) {
@@ -355,7 +383,7 @@ app.get('/api/admin/coupons', checkAdminToken, async (req, res) => {
 
 app.put('/api/admin/coupons/:id', checkAdminToken, async (req, res) => {
     const { id } = req.params;
-    const { is_active } = req.body; // Example: only updating active status for now
+    const { is_active } = req.body; 
     try {
         const updatedCoupon = await pool.query(
             'UPDATE coupons SET is_active = $1 WHERE id = $2 RETURNING *',
@@ -388,6 +416,7 @@ app.delete('/api/admin/coupons/:id', checkAdminToken, async (req, res) => {
 // ===================================
 // --- 👤 USER & PUBLIC API ROUTES ---
 // ===================================
+// (All these routes remain exactly the same)
 
 // --- Auth (User) ---
 app.post('/api/register', async (req, res) => {
@@ -648,7 +677,7 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
   SELECT
     o.*,
     dp.name as partner_name,
-    dp.phone as partner_phone -- <<< ADD THIS LINE
+    dp.phone as partner_phone
   FROM orders o
   LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
   WHERE o.user_id = $1
@@ -712,6 +741,7 @@ app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
 // ===========================================
 // --- 🚚 DELIVERY PARTNER API ROUTES ---
 // ===========================================
+// (All these routes remain exactly the same)
 
 // Partner Login
 app.post('/api/delivery/login', async (req, res) => {
@@ -823,7 +853,6 @@ app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req,
     }
 });
 
-// Add this new endpoint to your backend/index.js file
 
 app.get('/api/orders/:orderId/location', checkUserToken, async (req, res) => {
   const { orderId } = req.params;
@@ -841,8 +870,7 @@ app.get('/api/orders/:orderId/location', checkUserToken, async (req, res) => {
     if (result.rowCount === 0 || !result.rows[0].last_known_location) {
       return res.status(404).json({ msg: 'Location not available for this order yet.' });
     }
-
-    // The location is stored as a JSON string, so we parse it before sending
+    
     res.json(result.rows[0].last_known_location);
 
   } catch (err) {
@@ -855,6 +883,7 @@ app.get('/api/orders/:orderId/location', checkUserToken, async (req, res) => {
 // ===================================
 // --- 📧 INQUIRY & EMAIL API ROUTE ---
 // ===================================
+// (This route remains exactly the same)
 
 app.post('/api/inquiry', async (req, res) => {
     const { inquiryType, formData } = req.body;
@@ -911,6 +940,7 @@ app.post('/api/inquiry', async (req, res) => {
 // ===================================
 // --- 🖥️ SERVE FRONTEND & START SERVER ---
 // ===================================
+// (This section remains exactly the same)
 const frontendDistPath = path.join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(frontendDistPath));
 app.get('*', (req, res) => {

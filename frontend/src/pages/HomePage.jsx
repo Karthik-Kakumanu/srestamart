@@ -63,7 +63,7 @@ const categoryFeatures = {
         title: "Exquisite Homemade Flavor Symphony",
         subtitle: `"Tradition's taste in every delightful bite."`,
         description: "Crafted with cherished family recipes and natural fermentation, each jar bursts with authentic, healthful flavors that elevate every meal.",
-        imageUrl: "https://i.pinimg.com/736x/01/67/db/0167db2dc357d38a25024206507a8adb.jpg",
+        imageUrl: "https.i.pinimg.com/736x/01/67/db/0167db2dc357d38a25024206507a8adb.jpg",
         features: [ { icon: <Microscope className="text-red-500"/>, title: "Probiotic Powerhouse", text: "Fermented naturally for gut-healthy probiotics that enhance digestion." }, { icon: <Leaf className="text-red-500"/>, title: "Pure Natural Essence", text: "Sun-dried ingredients and premium oils, sans artificial additives." }, { icon: <Shield className="text-red-500"/>, title: "Immunity Fortifier", text: "Packed with antioxidants and Vitamin K for robust immune support." } ]
     },
     dairy: {
@@ -178,6 +178,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
             whileHover={{ y: -8 }}
         >
             <div className="w-full aspect-[4/3] overflow-hidden relative">
+                {/* This will now display the fast-loading Cloudinary URL */}
                 <img src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm">New</div>
             </div>
@@ -239,7 +240,6 @@ const SkeletonCard = () => (
     </div>
 );
 
-// UPDATED: Footer with responsive grid for "Quick Links"
 const Footer = () => (
     <footer className="bg-slate-900/70 text-gray-300 backdrop-blur-lg mt-auto relative z-10 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -266,7 +266,6 @@ const Footer = () => (
                 </div>
                 <div>
                     <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
-                    {/* FIXED: This now uses a grid to organize links side-by-side */}
                     <div className="grid grid-cols-2 gap-2 text-sm">
                         <Link to="/about-us" className="hover:text-red-400 transition-colors">About Us</Link>
                         <Link to="/privacy" className="hover:text-red-400 transition-colors">Privacy Policy</Link>
@@ -296,7 +295,8 @@ const Footer = () => (
     </footer>
 );
 
-export default function HomePage({ handleAddToCart }) {
+// --- MODIFIED: Accepts `dataVersion` prop from App.jsx ---
+export default function HomePage({ handleAddToCart, dataVersion }) {
     const [products, setProducts] = useState([]);
     const [categories] = useState(CATEGORY_ORDER);
     const [selectedCategory, setSelectedCategory] = useState(CATEGORY_ORDER[0]);
@@ -317,6 +317,9 @@ export default function HomePage({ handleAddToCart }) {
         pickles: "/videos/pickles.mp4",
     };
 
+    // --- MODIFIED: This `useEffect` now listens to `dataVersion` ---
+    // When `dataVersion` changes (because an admin saved a product),
+    // this function will run again, fetching the new product list.
     useEffect(() => {
         if (!selectedCategory) {
             setProducts([]);
@@ -329,8 +332,10 @@ export default function HomePage({ handleAddToCart }) {
             try {
                 const apiCategory = selectedCategory === 'meatpoultry' ? 'livebirds' : selectedCategory;
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?page=${currentPage}&limit=12&category=${apiCategory}`);
+                
                 if (res.data && Array.isArray(res.data.products)) {
                     let fetchedProducts = res.data.products.map(p => ({ ...p, category: p.category.toLowerCase().replace(/\s+/g, '') }));
+                    
                     if (selectedCategory === 'meatpoultry') {
                         fetchedProducts.sort((a, b) => {
                             const aName = a.name.toLowerCase();
@@ -349,8 +354,10 @@ export default function HomePage({ handleAddToCart }) {
                         };
                         fetchedProducts.sort((a, b) => getRank(a.name) - getRank(b.name));
                     }
+                    
                     setProducts(fetchedProducts);
                     setTotalPages(res.data.totalPages);
+                    
                     const initialVariants = {};
                     fetchedProducts.forEach(p => {
                         if (p.variants && p.variants.length > 0) {
@@ -367,8 +374,11 @@ export default function HomePage({ handleAddToCart }) {
                 setProductsLoading(false);
             }
         };
+        
         fetchProducts();
-    }, [selectedCategory, currentPage]);
+        
+    // --- This is the key change ---
+    }, [selectedCategory, currentPage, dataVersion]); 
 
     const handleVariantChange = (productId, variantId) => {
         setSelectedVariants(prev => ({ ...prev, [productId]: parseInt(variantId, 10) }));
@@ -478,7 +488,6 @@ export default function HomePage({ handleAddToCart }) {
                 </AnimatePresence>
 
                 <div className="relative z-10">
-                    {/* UPDATED: Header section with corrected spacing and static text */}
                     <div className="pt-6 sm:pt-8 pb-4 bg-gradient-to-b from-black/50 to-transparent">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
                             <button onClick={() => setIsSidebarOpen(true)} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-sm hover:bg-white/30 transition-all sm:left-6">
@@ -489,7 +498,7 @@ export default function HomePage({ handleAddToCart }) {
                                     SRESTA MART
                                 </h1>
                                 <p className="mt-1 text-sm sm:text-base text-white/90 text-shadow max-w-2xl mx-auto">
-                                   Tasty, Tangy And Always Fresh.
+                                    Tasty, Tangy And Always Fresh.
                                 </p>
                             </div>
                         </div>
@@ -520,7 +529,6 @@ export default function HomePage({ handleAddToCart }) {
                     </div>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                         {error && (<motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="bg-red-500/20 backdrop-blur-sm text-red-300 p-4 rounded-lg mb-8 text-center shadow-sm text-sm" > {error} </motion.div>)}
-                        {/* UPDATED: Product grid now uses 3 columns on medium screens and up */}
                         <motion.div key={selectedCategory + searchQuery} variants={productGridVariants} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" >
                             {productsLoading ? (
                                 Array.from({ length: 8 }).map((_, index) => <SkeletonCard key={index} />)
@@ -567,4 +575,3 @@ export default function HomePage({ handleAddToCart }) {
         </div>
     );
 }
-
