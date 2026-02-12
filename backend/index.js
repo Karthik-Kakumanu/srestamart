@@ -34,8 +34,9 @@ const pool = new Pool({
     rejectUnauthorized: false // Fixes "unsupported protocol" error
   },
   // --- STABILITY SETTINGS ---
-  connectionTimeoutMillis: 5000, // Wait 5s before timing out a new connection
+  connectionTimeoutMillis: 50000, // Wait 5s before timing out a new connection
   idleTimeoutMillis: 30000,      // Close idle clients after 30s
+  max: 20,
 });
 
 // Prevent the app from crashing if a database connection drops unexpectedly
