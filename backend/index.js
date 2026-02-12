@@ -9,7 +9,7 @@ const twilio = require('twilio');
 const crypto = require('crypto');
 const { Resend } = require('resend');
 
-// --- NEW IMPORTS FOR CLOUDINARY ---
+// --- IMPORTS FOR CLOUDINARY ---
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
@@ -23,55 +23,59 @@ const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 // Initialize Resend with your API Key
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// --- DATABASE CONNECTION ---
+// ==========================================
+// --- 🔌 DATABASE CONNECTION (UPDATED) ---
+// ==========================================
 const { Pool } = require('pg');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { 
+    rejectUnauthorized: false // Fixes "unsupported protocol" error
+  },
+  // --- STABILITY SETTINGS ---
+  connectionTimeoutMillis: 5000, // Wait 5s before timing out a new connection
+  idleTimeoutMillis: 30000,      // Close idle clients after 30s
+});
+
+// Prevent the app from crashing if a database connection drops unexpectedly
+pool.on('error', (err, client) => {
+  console.error('Unexpected error on idle client', err);
+  // Do not exit the process; let the pool reconnect
 });
 
 // --- CORE MIDDLEWARE ---
 app.use(cors());
 app.use(bodyParser.json());
 
-// --- CLOUDINARY CONFIGURATION (NEW) ---
-// This tells Cloudinary who you are, using the keys from your Render Environment
+// --- CLOUDINARY CONFIGURATION ---
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// --- MULTER/STORAGE CONFIGURATION (REPLACED) ---
-// This tells multer to upload files to Cloudinary instead of your local disk
+// --- MULTER/STORAGE CONFIGURATION ---
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'sresta-mart-products', // A folder to keep your images organized
-    format: async (req, file) => 'webp', // Auto-converts to a fast, modern format
-    public_id: (req, file) => Date.now() + '-' + file.originalname.split('.').slice(0, -1).join('.'), // Creates a unique filename
+    folder: 'sresta-mart-products',
+    format: async (req, file) => 'webp',
+    public_id: (req, file) => Date.now() + '-' + file.originalname.split('.').slice(0, -1).join('.'),
   },
 });
 
-// This initializes multer with your new Cloudinary storage
 const upload = multer({ storage: storage });
-
-// --- (OLD) STATIC ASSETS & FILE UPLOAD SETUP ---
-// We no longer need this line, as images are not served from the backend disk
-// app.use('/images/products', express.static(path.join(__dirname, 'public/products')));
 
 // --- TWILIO CLIENT ---
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-
 // --- AUTHENTICATION MIDDLEWARE ---
-// (All your auth middleware remains exactly the same)
 const checkAdminToken = (req, res, next) => {
   const token = req.header('x-admin-token');
   if (!token) return res.status(401).json({ msg: 'No admin token, authorization denied' });
@@ -81,6 +85,7 @@ const checkAdminToken = (req, res, next) => {
     else { throw new Error('Invalid token type'); }
   } catch (e) { res.status(401).json({ msg: 'Admin token is not valid' }); }
 };
+
 const checkPartnerToken = (req, res, next) => {
   const token = req.header('x-partner-token');
   if (!token) return res.status(401).json({ msg: 'No token, authorization denied' });
@@ -90,6 +95,7 @@ const checkPartnerToken = (req, res, next) => {
     else { throw new Error('Invalid token type'); }
   } catch (e) { res.status(401).json({ msg: 'Token is not valid' }); }
 };
+
 const checkUserToken = (req, res, next) => {
   const token = req.header('x-auth-token');
   if (!token) return res.status(401).json({ msg: 'No token, authorization denied' });
@@ -105,7 +111,6 @@ const checkUserToken = (req, res, next) => {
 // ===================================
 
 app.post('/api/admin/login', (req, res) => {
-  // (This route remains exactly the same)
   const { username, password } = req.body;
   if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
     const payload = { id: 'admin', username: username, role: 'admin' };
@@ -116,21 +121,13 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
-// --- ADMIN UPLOAD ROUTE (MODIFIED) ---
-// This is now much simpler. 'upload.single' does all the work.
 app.post('/api/admin/upload', checkAdminToken, upload.single('productImage'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ msg: 'No file uploaded.' });
     }
-    // req.file.path is the new, permanent, https://... Cloudinary URL
-    // Your frontend (AddProductModal) already expects this `imageUrl` response
     res.json({ success: true, imageUrl: req.file.path });
 });
 
-// --- Product Management (Admin) ---
-// (All your other admin routes: get products, create products, edit, delete, etc.)
-// (remain 100% the same. Your frontend already sends the `image_url` as text,)
-// (so this route doesn't even know or care where the image came from.)
 app.get('/api/admin/products', checkAdminToken, async (req, res) => {
     try {
         const query = `
@@ -179,7 +176,6 @@ app.post('/api/admin/products', checkAdminToken, async (req, res) => {
   try {
     await client.query('BEGIN');
     const newProductQuery = `INSERT INTO products (name, description, category, image_url) VALUES ($1, $2, $3, $4) RETURNING *`;
-    // product.image_url is the Cloudinary URL from the frontend
     const newProduct = await client.query(newProductQuery, [product.name, product.description || '', product.category, product.image_url || null]);
     const createdProduct = newProduct.rows[0];
     if (variant && variant.label && variant.price) {
@@ -237,9 +233,6 @@ app.delete('/api/admin/products/:id', checkAdminToken, async (req, res) => {
     }
 });
 
-
-// --- Variant Management (Admin) ---
-// (All these routes remain exactly the same)
 app.post('/api/admin/variants', checkAdminToken, async (req, res) => {
     const { product_id, label, price } = req.body;
     if (!product_id || !label || price === undefined) {
@@ -293,8 +286,6 @@ app.delete('/api/admin/variants/:id', checkAdminToken, async (req, res) => {
     }
 });
 
-// --- User Management (Admin) ---
-// (All these routes remain exactly the same)
 app.get('/api/admin/users', checkAdminToken, async (req, res) => {
   try {
     const usersResult = await pool.query('SELECT id, name, phone, created_at, is_admin, addresses FROM users ORDER BY id ASC');
@@ -305,8 +296,6 @@ app.get('/api/admin/users', checkAdminToken, async (req, res) => {
   }
 });
 
-// --- Order Management (Admin) ---
-// (All these routes remain exactly the same)
 app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
   try {
     const query = `
@@ -356,30 +345,25 @@ app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) =
   }
 });
 
-
-// --- COUPON MANAGEMENT (ADMIN) ---
-// (All these routes remain exactly the same)
 app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
-    const { code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description } = req.body;
+    const { code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description } = req.body;
     if (!code || !discount_type || discount_value === undefined || discount_value === null || !expiry_date) {
         return res.status(400).json({ msg: 'Please provide all required coupon fields (Code, Type, Value, Expiry).' });
     }
 
     try {
-        // --- FIXED: Coerce empty string for category to NULL for proper database storage ---
         const finalCategory = applicable_category ? applicable_category : null;
 
         const newCoupon = await pool.query(
             `INSERT INTO coupons (code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-            // Use the new finalCategory variable here
             [code.toUpperCase(), discount_type, discount_value, expiry_date, min_purchase_amount || 0, finalCategory, poster_url || null, description || null]
         );
 
         res.status(201).json(newCoupon.rows[0]);
     } catch (err) {
         console.error('Error creating coupon:', err.message);
-        if (err.code === '23505') { // Unique constraint violation
+        if (err.code === '23505') {
             return res.status(400).json({ msg: 'This coupon code already exists.' });
         }
         res.status(500).send('Server Error');
@@ -387,8 +371,8 @@ app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
 });
 
 app.get('/api/admin/coupons', checkAdminToken, async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM coupons ORDER BY created_at DESC');
+    try {
+        const result = await pool.query('SELECT * FROM coupons ORDER BY created_at DESC');
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching coupons for admin:', err.message);
@@ -427,13 +411,10 @@ app.delete('/api/admin/coupons/:id', checkAdminToken, async (req, res) => {
     }
 });
 
-
 // ===================================
 // --- 👤 USER & PUBLIC API ROUTES ---
 // ===================================
-// (All these routes remain exactly the same)
 
-// --- Auth (User) ---
 app.post('/api/register', async (req, res) => {
   const { name, phone, password } = req.body;
   if (!name || !phone || !password) return res.status(400).json({ msg: 'Please enter all fields' });
@@ -481,7 +462,7 @@ app.post('/api/forgot-password-twilio', async (req, res) => {
         }
         
         const otp = crypto.randomInt(100000, 999999).toString();
-        const expires = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 minutes
+        const expires = new Date(Date.now() + 10 * 60 * 1000);
         
         await pool.query(
             'UPDATE users SET reset_password_otp = $1, reset_password_expires = $2 WHERE phone = $3',
@@ -527,7 +508,6 @@ app.post('/api/reset-password-twilio', async (req, res) => {
     }
 });
 
-// --- Public Products (Paginated) ---
 app.get('/api/products', async (req, res) => {
   try {
     const category = req.query.category; 
@@ -590,8 +570,6 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-
-// --- Addresses (User) ---
 app.get('/api/addresses', checkUserToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT addresses FROM users WHERE id = $1', [req.user.id]);
@@ -619,8 +597,6 @@ app.post('/api/addresses', checkUserToken, async (req, res) => {
   }
 });
 
-
-// --- Order Creation ---
 app.post('/api/orders', checkUserToken, async (req, res) => {
   const { userId, cartItems, shippingAddress, totalAmount } = req.body;
   if (req.user.id !== userId) return res.status(403).json({ msg: 'User not authorized.' });
@@ -684,7 +660,6 @@ app.put('/api/orders/:orderId/mark-delivered', checkUserToken, async (req, res) 
     }
 });
 
-
 app.get('/api/orders', checkUserToken, async (req, res) => {
   const userId = req.user.id;
   try {
@@ -706,12 +681,11 @@ app.get('/api/orders', checkUserToken, async (req, res) => {
   }
 });
 
-// --- PUBLIC COUPON ROUTES ---
 app.get('/api/coupons/public', async (req, res) => {
-    try {
-        const result = await pool.query(
-          "SELECT code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description FROM coupons WHERE is_active = TRUE AND expiry_date >= CURRENT_DATE ORDER BY expiry_date ASC"
-        );
+    try {
+        const result = await pool.query(
+          "SELECT code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description FROM coupons WHERE is_active = TRUE AND expiry_date >= CURRENT_DATE ORDER BY expiry_date ASC"
+        );
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching public coupons:', err.message);
@@ -719,21 +693,17 @@ app.get('/api/coupons/public', async (req, res) => {
     }
 });
 
-// --- MODIFIED: This is now a powerful endpoint that calculates the discount ---
 app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
-    // It now expects `cartItems` instead of `cartTotal`
     const { couponCode, cartItems } = req.body;
     if (!couponCode || !cartItems) return res.status(400).json({ success: false, msg: 'Coupon code and cart items are required.' });
 
     try {
-        // 1. Fetch the coupon
         const result = await pool.query('SELECT * FROM coupons WHERE code = $1', [couponCode.toUpperCase()]);
         if (result.rowCount === 0) {
             return res.status(404).json({ success: false, msg: 'Invalid coupon code.' });
         }
         const coupon = result.rows[0];
 
-        // 2. Check basic validity
         if (!coupon.is_active) {
             return res.status(400).json({ success: false, msg: 'This coupon is no longer active.' });
         }
@@ -741,37 +711,31 @@ app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
             return res.status(400).json({ success: false, msg: 'This coupon has expired.' });
         }
 
-        // 3. Determine the "applicable subtotal"
         let applicableSubtotal = 0;
         if (coupon.applicable_category) {
-            // Find all product IDs for the given category
             const productIdsResult = await pool.query(
                 'SELECT id FROM products WHERE LOWER(REPLACE(category, \' \', \'\')) = $1',
                 [coupon.applicable_category.toLowerCase().replace(/\s+/g, '')]
             );
             const applicableProductIds = new Set(productIdsResult.rows.map(p => p.id));
             
-            // Find all variant IDs for those products
             const variantIdsResult = await pool.query(
                 'SELECT id FROM product_variants WHERE product_id = ANY($1::int[])',
                 [Array.from(applicableProductIds)]
             );
             const applicableVariantIds = new Set(variantIdsResult.rows.map(v => v.id));
 
-            // Calculate subtotal *only* for items in that category
             cartItems.forEach(item => {
-                if (applicableVariantIds.has(item.id)) { // item.id is the variant_id
+                if (applicableVariantIds.has(item.id)) {
                     applicableSubtotal += item.price * item.quantity;
                 }
             });
         } else {
-            // Coupon applies to the whole cart
             cartItems.forEach(item => {
                 applicableSubtotal += item.price * item.quantity;
             });
         }
         
-        // 4. Check minimum purchase against the *applicable* subtotal
         if (applicableSubtotal === 0 && coupon.applicable_category) {
              return res.status(400).json({ success: false, msg: `This coupon is only valid for the ${coupon.applicable_category} category.` });
         }
@@ -780,18 +744,15 @@ app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
             return res.status(400).json({ success: false, msg: `A minimum purchase of ₹${coupon.min_purchase_amount} ${categoryName} is required.` });
         }
 
-        // 5. Calculate the discount
         let discountAmount = 0;
         if (coupon.discount_type === 'percentage') {
             discountAmount = applicableSubtotal * (coupon.discount_value / 100);
-        } else { // 'fixed'
+        } else {
             discountAmount = coupon.discount_value;
         }
 
-        // Ensure fixed discount doesn't exceed the subtotal
         discountAmount = Math.min(discountAmount, applicableSubtotal);
 
-        // 6. Return the success, the coupon object, and the calculated amount
         res.json({ success: true, coupon, discountAmount: parseFloat(discountAmount.toFixed(2)) });
 
     } catch (err) {
@@ -800,20 +761,18 @@ app.post('/api/coupons/apply', checkUserToken, async (req, res) => {
     }
 });
 
-
 // ===========================================
-// --- 💳 NEW: RAZORPAY PAYMENT ROUTES ---
+// --- 💳 RAZORPAY PAYMENT ROUTES ---
 // ===========================================
 
-// --- 1. CREATE RAZORPAY ORDER ID ---
 app.post('/api/payment/create-order', checkUserToken, async (req, res) => {
     try {
         const { amount, receipt } = req.body;
 
         const options = {
-            amount: Math.round(amount * 100), // Amount in paise
+            amount: Math.round(amount * 100),
             currency: "INR",
-            receipt: receipt, // e.g., "order_rcptid_11"
+            receipt: receipt,
         };
 
         const order = await razorpay.orders.create(options);
@@ -834,14 +793,12 @@ app.post('/api/payment/create-order', checkUserToken, async (req, res) => {
     }
 });
 
-// --- 2. VERIFY PAYMENT AND CREATE DB ORDER ---
 app.post('/api/payment/verify', checkUserToken, async (req, res) => {
     try {
         const {
             razorpay_order_id,
             razorpay_payment_id,
             razorpay_signature,
-            // These are passed from the frontend handler
             cartItems,
             shippingAddress,
             totalAmount 
@@ -849,7 +806,6 @@ app.post('/api/payment/verify', checkUserToken, async (req, res) => {
         
         const userId = req.user.id;
 
-        // --- 1. Verify Signature ---
         const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
         hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
         const generated_signature = hmac.digest('hex');
@@ -858,12 +814,11 @@ app.post('/api/payment/verify', checkUserToken, async (req, res) => {
             return res.status(400).json({ success: false, msg: "Payment verification failed" });
         }
 
-        // --- 2. Signature is VERIFIED. Create the order in *our* database ---
         const addressString = shippingAddress.value.toLowerCase();
         let deliveryStatus = 'Pending';
         let deliveryType = 'manual';
         let expectedDate = null;
-        let status = 'Processing (Paid)'; // Mark as Paid
+        let status = 'Processing (Paid)';
         
         if (addressString.includes('hyderabad')) {
             deliveryType = 'manual';
@@ -882,7 +837,6 @@ app.post('/api/payment/verify', checkUserToken, async (req, res) => {
             expectedDate.setDate(expectedDate.getDate() + 4);
         }
 
-        // This query now uses the new `payment_id` column
         const orderQuery = `
           INSERT INTO orders (user_id, items, total_amount, shipping_address, status, delivery_status, delivery_type, expected_delivery_date, payment_id)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id;
@@ -896,7 +850,7 @@ app.post('/api/payment/verify', checkUserToken, async (req, res) => {
             deliveryStatus, 
             deliveryType, 
             expectedDate,
-            razorpay_payment_id // Save the payment ID
+            razorpay_payment_id
         ]);
 
         res.json({
@@ -911,14 +865,10 @@ app.post('/api/payment/verify', checkUserToken, async (req, res) => {
     }
 });
 
-
-
 // ===========================================
 // --- 🚚 DELIVERY PARTNER API ROUTES ---
 // ===========================================
-// (All these routes remain exactly the same)
 
-// Partner Login
 app.post('/api/delivery/login', async (req, res) => {
   const { phone, password } = req.body;
   if (!phone || !password) {
@@ -965,8 +915,6 @@ app.put('/api/delivery/location', checkPartnerToken, async (req, res) => {
     }
 });
 
-
-// Get Assigned Orders for a Partner
 app.get('/api/delivery/orders', checkPartnerToken, async (req, res) => {
   try {
     const partnerId = req.partner.id;
@@ -1028,7 +976,6 @@ app.put('/api/delivery/orders/:orderId/complete', checkPartnerToken, async (req,
     }
 });
 
-
 app.get('/api/orders/:orderId/location', checkUserToken, async (req, res) => {
   const { orderId } = req.params;
   const userId = req.user.id;
@@ -1054,11 +1001,9 @@ app.get('/api/orders/:orderId/location', checkUserToken, async (req, res) => {
   }
 });
 
-
 // ===================================
 // --- 📧 INQUIRY & EMAIL API ROUTE ---
 // ===================================
-// (This route remains exactly the same)
 
 app.post('/api/inquiry', async (req, res) => {
     const { inquiryType, formData } = req.body;
@@ -1091,7 +1036,7 @@ app.post('/api/inquiry', async (req, res) => {
         console.log('Attempting to send email via Resend...');
 
         const { data, error } = await resend.emails.send({
-            from: 'Sresta Mart Inquiries <noreply@srestamart.com>', // Replace with your verified domain email
+            from: 'Sresta Mart Inquiries <noreply@srestamart.com>',
             to: ['srestamart@gmail.com'],
             subject: subject,
             html: emailBody,
@@ -1111,11 +1056,9 @@ app.post('/api/inquiry', async (req, res) => {
     }
 });
 
-
 // ===================================
 // --- 🖥️ SERVE FRONTEND & START SERVER ---
 // ===================================
-// (This section remains exactly the same)
 const frontendDistPath = path.join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(frontendDistPath));
 app.get('*', (req, res) => {
