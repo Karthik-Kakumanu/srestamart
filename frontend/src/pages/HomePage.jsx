@@ -159,14 +159,27 @@ const itemVariants = {
     }
 };
 
+const isForcedOutOfStockProduct = (product) => {
+    const normalizedCategory = (product?.category || '').toLowerCase().replace(/\s+/g, '');
+    const normalizedName = (product?.name || '').toLowerCase();
+    const isMilletProduct = normalizedCategory === 'millets';
+    const isBlockedDairyMilk =
+        normalizedCategory === 'dairy' &&
+        (normalizedName.includes('cow milk') || normalizedName.includes('buffalo milk'));
+
+    return isMilletProduct || isBlockedDairyMilk;
+};
+
 const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAddToCart, productDetailsData }) => {
     const hasVariants = product.variants && product.variants.length > 0;
     const selectedVariantId = selectedVariants[product.id] || (hasVariants ? product.variants[0].id : null);
     const currentVariant = hasVariants ? product.variants.find(v => v.id === selectedVariantId) : null;
     const currentPrice = currentVariant ? currentVariant.price : 'N/A';
+    const isForcedOutOfStock = isForcedOutOfStockProduct(product);
+    const canAddToCart = Boolean(currentVariant) && !isForcedOutOfStock;
     
     const handleAddToCartClick = (e) => {
-        if (!currentVariant) return;
+        if (!canAddToCart) return;
         const details = productDetailsData[currentVariant.id] || {};
         handleAddToCart({ ...product, selectedVariant: currentVariant, details: details }, e);
     };
@@ -205,14 +218,20 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                 <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-300/70">
                     {hasVariants ? (
                         <>
-                            <span className="text-lg font-bold text-red-600">₹{currentPrice}</span>
+                            {isForcedOutOfStock ? (
+                                <span className="text-xs sm:text-sm font-semibold text-red-700 bg-red-100 px-2.5 py-1 rounded-full">
+                                    Out of Stock
+                                </span>
+                            ) : (
+                                <span className="text-lg font-bold text-red-600">₹{currentPrice}</span>
+                            )}
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handleAddToCartClick}
                                 className="flex items-center gap-1.5 text-white px-3 py-1.5 text-xs font-semibold rounded-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 disabled:bg-gray-400 transition-all shadow-md hover:shadow-lg"
-                                disabled={!currentVariant}
+                                disabled={!canAddToCart}
                             >
-                                <ShoppingCart size={14} /> Add
+                                <ShoppingCart size={14} /> {isForcedOutOfStock ? 'Out of Stock' : 'Add'}
                             </motion.button>
                         </>
                     ) : (
