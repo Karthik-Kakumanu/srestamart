@@ -27,10 +27,10 @@ export default function AdminPage({ onDataChange }) {
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [assigningOrder, setAssigningOrder] = useState(null);
 
-    const fetchData = async () => {
+    const fetchData = async ({ silent = false } = {}) => {
         const shouldShowLoader = products.length === 0 && users.length === 0 && orders.length === 0;
-        if (shouldShowLoader) setIsLoading(true);
-        setError('');
+        if (!silent && shouldShowLoader) setIsLoading(true);
+        if (!silent) setError('');
         const token = getAuthToken();
         if (!token) {
             setError("Admin authorization token not found.");
@@ -58,6 +58,11 @@ export default function AdminPage({ onDataChange }) {
 
     useEffect(() => {
         fetchData();
+        const syncInterval = setInterval(() => {
+            fetchData({ silent: true });
+        }, 3000);
+
+        return () => clearInterval(syncInterval);
     }, []);
     
     const handleAssignClick = (order) => {

@@ -42,6 +42,49 @@ const createMailTransporter = () => {
   });
 };
 
+const parseEmailAddress = (value) => {
+  const fallback = { email: 'orders@srestamart.com', name: 'Sresta Mart Orders' };
+  if (!value) return fallback;
+
+  const match = String(value).match(/^(.*?)\s*<([^>]+)>$/);
+  if (match) {
+    return {
+      name: match[1].trim() || fallback.name,
+      email: match[2].trim()
+    };
+  }
+
+  return { email: String(value).trim(), name: fallback.name };
+};
+
+const sendMailtrapApiEmail = async ({ from, to, subject, text, html }) => {
+  const apiToken = process.env.MAILTRAP_API_TOKEN || process.env.MAILTRAP_PASS;
+  if (!apiToken) return false;
+
+  const fromAddress = parseEmailAddress(from);
+  const response = await fetch('https://send.api.mailtrap.io/api/send', {
+    method: 'POST',
+    headers: {
+      'Api-Token': apiToken,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: fromAddress,
+      to: [{ email: to }],
+      subject,
+      text,
+      html
+    })
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Mailtrap API failed (${response.status}): ${errorBody}`);
+  }
+
+  return true;
+};
+
 const escapeHtml = (value) => String(value ?? '')
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
@@ -50,12 +93,6 @@ const escapeHtml = (value) => String(value ?? '')
   .replace(/'/g, '&#39;');
 
 const sendNewOrderNotification = async (orderId) => {
-  const transporter = createMailTransporter();
-  if (!transporter) {
-    console.warn('Mailtrap SMTP is not configured. Skipping new order notification.');
-    return;
-  }
-
   const orderResult = await pool.query(
     `SELECT
       o.id, o.total_amount, o.status, o.delivery_status, o.delivery_type,
@@ -109,13 +146,28 @@ const sendNewOrderNotification = async (orderId) => {
 
   const textItems = items.map((item) => `- ${item.name} ${item.variantLabel ? `(${item.variantLabel})` : ''}: ${item.quantity} x Rs.${Number(item.price || 0).toFixed(2)}`).join('\n');
 
-  await transporter.sendMail({
+  const emailPayload = {
     from: process.env.MAIL_FROM_EMAIL || 'Sresta Mart Orders <orders@srestamart.com>',
     to: ORDER_NOTIFICATION_EMAIL,
     subject: `New order received - #${order.id}`,
     text: `New Sresta Mart order #${order.id}\nCustomer: ${order.customer_name} (${order.customer_phone})\nTotal: Rs.${Number(order.total_amount || 0).toFixed(2)}\nAddress: ${order.shipping_address?.label}: ${order.shipping_address?.value}\n\nItems:\n${textItems || 'No item details available.'}`,
     html,
-  });
+  };
+
+  const sentByApi = await sendMailtrapApiEmail(emailPayload);
+  if (sentByApi) {
+    console.log(`New order notification sent via Mailtrap API for order ${order.id}.`);
+    return;
+  }
+
+  const transporter = createMailTransporter();
+  if (!transporter) {
+    console.warn('Mailtrap email is not configured. Skipping new order notification.');
+    return;
+  }
+
+  await transporter.sendMail(emailPayload);
+  console.log(`New order notification sent via Mailtrap SMTP for order ${order.id}.`);
 };
 
 // ==========================================
