@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Users, Package, RefreshCw, PlusCircle, ShoppingCart, ChevronDown, DollarSign, BarChart2, UserCheck, Tag, Bot } from 'lucide-react';
+import { Users, Package, RefreshCw, PlusCircle, ShoppingCart, ChevronDown, DollarSign, BarChart2, UserCheck, Tag, Bot, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import EditProductModal from '../components/admin/EditProductModal.jsx';
@@ -84,6 +84,23 @@ export default function AdminPage({ onDataChange }) {
             fetchData();
         } catch (err) {
             alert("Failed to assign order. Please try again.");
+        }
+    };
+
+    const handleDeleteOrder = async (orderId) => {
+        if (!window.confirm(`Are you sure you want to delete Order #${orderId}?`)) {
+            return;
+        }
+
+        try {
+            const token = getAuthToken();
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/orders/${orderId}`, {
+                headers: { 'x-admin-token': token }
+            });
+            fetchData();
+            onDataChange?.();
+        } catch (err) {
+            setError(err.response?.data?.msg || 'Failed to delete order.');
         }
     };
 
@@ -180,7 +197,7 @@ export default function AdminPage({ onDataChange }) {
                                 view === 'overview' ? <OverviewCharts orders={orders} products={products} /> :
                                 view === 'products' ? <ProductTable products={products} onEdit={handleEditProduct} onDelete={handleDeleteProduct} /> :
                                 view === 'users' ? <UserTable users={users} /> :
-                                view === 'orders' ? <OrdersTable orders={orders} onAssign={handleAssignClick} /> :
+                                view === 'orders' ? <OrdersTable orders={orders} onAssign={handleAssignClick} onDelete={handleDeleteOrder} /> :
                                 <CouponTable coupons={coupons} onDelete={handleDeleteCoupon} />
                             }
                         </motion.div>
@@ -385,7 +402,7 @@ const UserTable = ({ users }) => {
     );
 };
 
-const OrdersTable = ({ orders, onAssign }) => (
+const OrdersTable = ({ orders, onAssign, onDelete }) => (
     <div className="overflow-x-auto">
         <table className="min-w-full">
             <thead className="bg-slate-50 hidden md:table-header-group">
@@ -397,13 +414,13 @@ const OrdersTable = ({ orders, onAssign }) => (
                 </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
-                {orders.map(order => <OrderRow key={order.id} order={order} onAssign={onAssign} />)}
+                {orders.map(order => <OrderRow key={order.id} order={order} onAssign={onAssign} onDelete={onDelete} />)}
             </tbody>
         </table>
     </div>
 );
 
-const OrderRow = ({ order, onAssign }) => {
+const OrderRow = ({ order, onAssign, onDelete }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const isOutsideHyderabad = order.shipping_address?.value && !order.shipping_address.value.toLowerCase().includes('hyderabad');
     const isAutomated = order.delivery_type === 'automated';
@@ -446,14 +463,22 @@ const OrderRow = ({ order, onAssign }) => {
                     )}
                 </td>
                 <td className="px-6 py-4 block md:table-cell text-left md:text-center">
-                    <button 
-                        onClick={() => onAssign(order)} 
-                        disabled={isAutomated || order.delivery_status !== 'Pending'}
-                        className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                        title={isAutomated ? "This order is handled automatically" : ""}
-                    >
-                        Assign
-                    </button>
+                    <div className="flex flex-wrap justify-start md:justify-center gap-2">
+                        <button 
+                            onClick={() => onAssign(order)} 
+                            disabled={isAutomated || order.delivery_status !== 'Pending'}
+                            className="bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                            title={isAutomated ? "This order is handled automatically" : ""}
+                        >
+                            Assign
+                        </button>
+                        <button
+                            onClick={() => onDelete(order.id)}
+                            className="inline-flex items-center gap-1 bg-red-50 text-red-600 text-xs font-bold py-1 px-3 rounded-full hover:bg-red-100 transition-colors"
+                        >
+                            <Trash2 size={12} /> Delete
+                        </button>
+                    </div>
                 </td>
             </tr>
             {isExpanded && (

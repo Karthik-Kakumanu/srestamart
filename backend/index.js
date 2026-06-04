@@ -8,6 +8,7 @@ const path = require('path');
 const twilio = require('twilio');
 const crypto = require('crypto');
 const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 // --- IMPORTS FOR CLOUDINARY ---
 const multer = require('multer');
@@ -22,6 +23,100 @@ const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 
 // Initialize Resend with your API Key
 const resend = new Resend(process.env.RESEND_API_KEY);
+const ORDER_NOTIFICATION_EMAIL = process.env.ORDER_NOTIFICATION_EMAIL || 'srestamart@gmail.com';
+
+const createMailTransporter = () => {
+  const { MAILTRAP_HOST, MAILTRAP_PORT, MAILTRAP_USER, MAILTRAP_PASS } = process.env;
+  if (!MAILTRAP_HOST || !MAILTRAP_PORT || !MAILTRAP_USER || !MAILTRAP_PASS) {
+    return null;
+  }
+
+  return nodemailer.createTransport({
+    host: MAILTRAP_HOST,
+    port: Number(MAILTRAP_PORT),
+    secure: Number(MAILTRAP_PORT) === 465,
+    auth: {
+      user: MAILTRAP_USER,
+      pass: MAILTRAP_PASS,
+    },
+  });
+};
+
+const escapeHtml = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+const sendNewOrderNotification = async (orderId) => {
+  const transporter = createMailTransporter();
+  if (!transporter) {
+    console.warn('Mailtrap SMTP is not configured. Skipping new order notification.');
+    return;
+  }
+
+  const orderResult = await pool.query(
+    `SELECT
+      o.id, o.total_amount, o.status, o.delivery_status, o.delivery_type,
+      o.expected_delivery_date, o.created_at, o.items, o.shipping_address,
+      u.name as customer_name, u.phone as customer_phone
+    FROM orders o
+    JOIN users u ON o.user_id = u.id
+    WHERE o.id = $1`,
+    [orderId]
+  );
+
+  if (orderResult.rowCount === 0) {
+    console.warn(`Order ${orderId} not found for email notification.`);
+    return;
+  }
+
+  const order = orderResult.rows[0];
+  const items = Array.isArray(order.items) ? order.items : [];
+  const itemRows = items.map((item) => `
+    <tr>
+      <td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(item.name)} ${item.variantLabel ? `(${escapeHtml(item.variantLabel)})` : ''}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${escapeHtml(item.quantity)}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">Rs.${Number(item.price || 0).toFixed(2)}</td>
+    </tr>
+  `).join('');
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.5;color:#222;">
+      <h2 style="color:#dc2626;">New Sresta Mart Order #${escapeHtml(order.id)}</h2>
+      <p>A new order has been placed on the website.</p>
+      <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+        <tr><td style="padding:6px;font-weight:bold;">Customer</td><td style="padding:6px;">${escapeHtml(order.customer_name)} (${escapeHtml(order.customer_phone)})</td></tr>
+        <tr><td style="padding:6px;font-weight:bold;">Total</td><td style="padding:6px;">Rs.${Number(order.total_amount || 0).toFixed(2)}</td></tr>
+        <tr><td style="padding:6px;font-weight:bold;">Status</td><td style="padding:6px;">${escapeHtml(order.status)} / ${escapeHtml(order.delivery_status)}</td></tr>
+        <tr><td style="padding:6px;font-weight:bold;">Delivery Type</td><td style="padding:6px;">${escapeHtml(order.delivery_type || 'manual')}</td></tr>
+        <tr><td style="padding:6px;font-weight:bold;">Address</td><td style="padding:6px;">${escapeHtml(order.shipping_address?.label)}: ${escapeHtml(order.shipping_address?.value)}</td></tr>
+      </table>
+      <h3 style="margin-top:20px;">Items</h3>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="padding:8px;text-align:left;border-bottom:2px solid #ddd;">Item</th>
+            <th style="padding:8px;text-align:center;border-bottom:2px solid #ddd;">Qty</th>
+            <th style="padding:8px;text-align:right;border-bottom:2px solid #ddd;">Price</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows || '<tr><td colspan="3" style="padding:8px;">No item details available.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+
+  const textItems = items.map((item) => `- ${item.name} ${item.variantLabel ? `(${item.variantLabel})` : ''}: ${item.quantity} x Rs.${Number(item.price || 0).toFixed(2)}`).join('\n');
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM_EMAIL || 'Sresta Mart Orders <orders@srestamart.com>',
+    to: ORDER_NOTIFICATION_EMAIL,
+    subject: `New order received - #${order.id}`,
+    text: `New Sresta Mart order #${order.id}\nCustomer: ${order.customer_name} (${order.customer_phone})\nTotal: Rs.${Number(order.total_amount || 0).toFixed(2)}\nAddress: ${order.shipping_address?.label}: ${order.shipping_address?.value}\n\nItems:\n${textItems || 'No item details available.'}`,
+    html,
+  });
+};
 
 // ==========================================
 // --- 🔌 DATABASE CONNECTION (UPDATED) ---
@@ -346,6 +441,20 @@ app.put('/api/admin/orders/:orderId/assign', checkAdminToken, async (req, res) =
   }
 });
 
+app.delete('/api/admin/orders/:orderId', checkAdminToken, async (req, res) => {
+  const { orderId } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM orders WHERE id = $1 RETURNING id', [orderId]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ msg: 'Order not found.' });
+    }
+    res.json({ msg: 'Order deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting order:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 app.post('/api/admin/coupons', checkAdminToken, async (req, res) => {
     const { code, discount_type, discount_value, expiry_date, min_purchase_amount, applicable_category, poster_url, description } = req.body;
     if (!code || !discount_type || discount_value === undefined || discount_value === null || !expiry_date) {
@@ -631,7 +740,11 @@ app.post('/api/orders', checkUserToken, async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;
     `;
     const orderResult = await pool.query(orderQuery, [userId, JSON.stringify(cartItems), totalAmount, shippingAddress, status, deliveryStatus, deliveryType, expectedDate]);
-    res.status(201).json({ success: true, orderId: orderResult.rows[0].id, message: 'Order placed successfully!' });
+    const orderId = orderResult.rows[0].id;
+    sendNewOrderNotification(orderId).catch((emailError) => {
+      console.error('Error sending new order notification:', emailError.message);
+    });
+    res.status(201).json({ success: true, orderId, message: 'Order placed successfully!' });
   } catch (err) {
     console.error('Error creating order:', err.message);
     res.status(500).json({ msg: 'Server Error while creating order' });
@@ -853,10 +966,14 @@ app.post('/api/payment/verify', checkUserToken, async (req, res) => {
             expectedDate,
             razorpay_payment_id
         ]);
+        const orderId = orderResult.rows[0].id;
+        sendNewOrderNotification(orderId).catch((emailError) => {
+            console.error('Error sending new order notification:', emailError.message);
+        });
 
         res.json({
             success: true,
-            orderId: orderResult.rows[0].id,
+            orderId,
             paymentId: razorpay_payment_id,
         });
 
