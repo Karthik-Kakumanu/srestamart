@@ -91,6 +91,31 @@ const sendMailtrapApiEmail = async ({ from, to, subject, text, html }) => {
   return true;
 };
 
+const sendResendEmail = async ({ from, to, subject, text, html }) => {
+  if (!process.env.RESEND_API_KEY) return false;
+
+  const recipients = String(to)
+    .split(',')
+    .map((email) => email.trim())
+    .filter(Boolean);
+
+  if (recipients.length === 0) return false;
+
+  const { error } = await resend.emails.send({
+    from,
+    to: recipients,
+    subject,
+    text,
+    html,
+  });
+
+  if (error) {
+    throw new Error(`Resend failed: ${JSON.stringify(error)}`);
+  }
+
+  return true;
+};
+
 const escapeHtml = (value) => String(value ?? '')
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
@@ -160,10 +185,24 @@ const sendNewOrderNotification = async (orderId) => {
     html,
   };
 
-  const sentByApi = await sendMailtrapApiEmail(emailPayload);
-  if (sentByApi) {
-    console.log(`New order notification sent via Mailtrap API for order ${order.id}.`);
-    return;
+  try {
+    const sentByApi = await sendMailtrapApiEmail(emailPayload);
+    if (sentByApi) {
+      console.log(`New order notification sent via Mailtrap API for order ${order.id}.`);
+      return;
+    }
+  } catch (mailtrapError) {
+    console.error('Mailtrap API order notification failed:', mailtrapError.message);
+  }
+
+  try {
+    const sentByResend = await sendResendEmail(emailPayload);
+    if (sentByResend) {
+      console.log(`New order notification sent via Resend for order ${order.id}.`);
+      return;
+    }
+  } catch (resendError) {
+    console.error('Resend order notification failed:', resendError.message);
   }
 
   const transporter = createMailTransporter();
@@ -198,6 +237,17 @@ pool.on('error', (err, client) => {
   // Do not exit the process; let the pool reconnect
 });
 
+const ensureProductStockColumn = async () => {
+  try {
+    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS in_stock BOOLEAN NOT NULL DEFAULT TRUE');
+    console.log('Product stock column is ready.');
+  } catch (err) {
+    console.error('Error ensuring product stock column:', err.message);
+  }
+};
+
+ensureProductStockColumn();
+
 // --- CORE MIDDLEWARE ---
 app.use(cors());
 app.use(bodyParser.json());
@@ -231,6 +281,7 @@ const mapProductsWithVariants = (rows) => {
                 description: row.description,
                 category: row.category,
                 image_url: row.image_url,
+                in_stock: row.in_stock !== false,
                 variants: []
             });
         }
@@ -310,7 +361,7 @@ app.get('/api/admin/products', checkAdminToken, async (req, res) => {
     try {
         const query = `
             SELECT 
-                p.id, p.name, p.description, p.category, p.image_url,
+                p.id, p.name, p.description, p.category, p.image_url, p.in_stock,
                 v.id as variant_id, v.label, v.price
             FROM products p
             LEFT JOIN product_variants v ON p.id = v.product_id
@@ -333,8 +384,8 @@ app.post('/api/admin/products', checkAdminToken, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const newProductQuery = `INSERT INTO products (name, description, category, image_url) VALUES ($1, $2, $3, $4) RETURNING *`;
-    const newProduct = await client.query(newProductQuery, [product.name, product.description || '', product.category, product.image_url || null]);
+    const newProductQuery = `INSERT INTO products (name, description, category, image_url, in_stock) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
+    const newProduct = await client.query(newProductQuery, [product.name, product.description || '', product.category, product.image_url || null, product.in_stock !== false]);
     const createdProduct = newProduct.rows[0];
     if (variant && variant.label && variant.price) {
       const newVariantQuery = `INSERT INTO product_variants (product_id, label, price) VALUES ($1, $2, $3)`;
@@ -352,11 +403,11 @@ app.post('/api/admin/products', checkAdminToken, async (req, res) => {
 });
 
 app.put('/api/admin/products/:id', checkAdminToken, async (req, res) => {
-  const { name, description, category, image_url } = req.body;
+  const { name, description, category, image_url, in_stock } = req.body;
   try {
     const updatedProduct = await pool.query(
-      'UPDATE products SET name = $1, description = $2, category = $3, image_url = $4 WHERE id = $5 RETURNING *',
-      [name, description, category, image_url, req.params.id]
+      'UPDATE products SET name = $1, description = $2, category = $3, image_url = $4, in_stock = COALESCE($5, in_stock) WHERE id = $6 RETURNING *',
+      [name, description, category, image_url, in_stock, req.params.id]
     );
     if (updatedProduct.rows.length === 0) {
         return res.status(404).json({ msg: 'Product not found.' });
@@ -476,11 +527,32 @@ app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
   }
 });
 
+app.patch('/api/admin/products/:id/stock', checkAdminToken, async (req, res) => {
+  const { in_stock } = req.body;
+  if (typeof in_stock !== 'boolean') {
+    return res.status(400).json({ msg: 'in_stock must be true or false.' });
+  }
+
+  try {
+    const updatedProduct = await pool.query(
+      'UPDATE products SET in_stock = $1 WHERE id = $2 RETURNING id, in_stock',
+      [in_stock, req.params.id]
+    );
+    if (updatedProduct.rows.length === 0) {
+      return res.status(404).json({ msg: 'Product not found.' });
+    }
+    res.json(updatedProduct.rows[0]);
+  } catch (err) {
+    console.error('Error updating product stock:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 app.get('/api/admin/dashboard', checkAdminToken, async (req, res) => {
   try {
     const productsQuery = `
       SELECT 
-        p.id, p.name, p.description, p.category, p.image_url,
+        p.id, p.name, p.description, p.category, p.image_url, p.in_stock,
         v.id as variant_id, v.label, v.price
       FROM products p
       LEFT JOIN product_variants v ON p.id = v.product_id
@@ -756,7 +828,7 @@ app.get('/api/products', async (req, res) => {
     }
 
     const productsAndVariantsQuery = `
-      SELECT p.id, p.name, p.description, p.category, p.image_url, v.id as variant_id, v.label, v.price
+      SELECT p.id, p.name, p.description, p.category, p.image_url, p.in_stock, v.id as variant_id, v.label, v.price
       FROM products p
       LEFT JOIN product_variants v ON p.id = v.product_id
       WHERE p.id = ANY($1::int[])
@@ -769,6 +841,7 @@ app.get('/api/products', async (req, res) => {
       if (!productsMap.has(row.id)) {
         productsMap.set(row.id, {
           id: row.id, name: row.name, description: row.description, category: row.category,
+          in_stock: row.in_stock !== false,
           image_url: row.image_url, variants: []
         });
       }

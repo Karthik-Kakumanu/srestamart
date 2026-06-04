@@ -54,12 +54,15 @@ export default function App() {
     };
 
     useEffect(() => {
+        let isSyncing = false;
+
         const fetchUserData = async () => {
             const token = localStorage.getItem('token');
-            if (loggedInUser && token) {
+            if (loggedInUser && token && !isSyncing) {
+                isSyncing = true;
                 const config = { headers: { 'x-auth-token': token } };
                 try {
-                    setOrdersLoading(true);
+                    setOrdersLoading(prev => prev && orders.length === 0);
                     const [ordersRes, addressesRes] = await Promise.all([
                         axios.get(`${import.meta.env.VITE_API_URL}/api/orders`, config),
                         axios.get(`${import.meta.env.VITE_API_URL}/api/addresses`, config)
@@ -72,13 +75,18 @@ export default function App() {
                     if (error.response && error.response.status === 401) handleLogout();
                 } finally {
                     setOrdersLoading(false);
+                    isSyncing = false;
                 }
             } else {
                 setOrdersLoading(false);
             }
         };
+
         fetchUserData();
-    }, [loggedInUser]);
+        const userSyncInterval = setInterval(fetchUserData, 800);
+
+        return () => clearInterval(userSyncInterval);
+    }, [loggedInUser, orders.length]);
 
     
     // --- MODIFIED: `handleAddToCart` now saves the product.category ---

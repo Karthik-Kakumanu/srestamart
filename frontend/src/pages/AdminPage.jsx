@@ -19,6 +19,7 @@ export default function AdminPage({ onDataChange }) {
     const [coupons, setCoupons] = useState([]); 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [productCategoryFilter, setProductCategoryFilter] = useState('all');
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
@@ -56,29 +57,13 @@ export default function AdminPage({ onDataChange }) {
         }
     };
 
-    const syncOrders = async () => {
-        const token = getAuthToken();
-        if (!token) return;
-
-        try {
-            const ordersRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/orders`, {
-                headers: { 'x-admin-token': token }
-            });
-            setOrders(ordersRes.data);
-        } catch (err) {
-            console.error('Fast order sync failed:', err);
-        }
-    };
-
     useEffect(() => {
         fetchData();
-        const orderSyncInterval = setInterval(syncOrders, 800);
         const dashboardSyncInterval = setInterval(() => {
             fetchData({ silent: true });
-        }, 15000);
+        }, 800);
 
         return () => {
-            clearInterval(orderSyncInterval);
             clearInterval(dashboardSyncInterval);
         };
     }, []);
@@ -139,6 +124,23 @@ export default function AdminPage({ onDataChange }) {
             } catch (err) {
                 setError(err.response?.data?.msg || 'Failed to delete product.');
             }
+        }
+    };
+
+    const handleToggleProductStock = async (productId, nextStockValue) => {
+        setProducts(prevProducts => prevProducts.map(product =>
+            product.id === productId ? { ...product, in_stock: nextStockValue } : product
+        ));
+
+        try {
+            const token = getAuthToken();
+            await axios.patch(`${import.meta.env.VITE_API_URL}/api/admin/products/${productId}/stock`,
+                { in_stock: nextStockValue },
+                { headers: { 'x-admin-token': token } }
+            );
+        } catch (err) {
+            setError(err.response?.data?.msg || 'Failed to update product stock.');
+            fetchData({ silent: true });
         }
     };
 
@@ -214,7 +216,7 @@ export default function AdminPage({ onDataChange }) {
                         <motion.div key={view} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
                             {isLoading ? <div className="text-center p-8">Loading Dashboard...</div> : 
                                 view === 'overview' ? <OverviewCharts orders={orders} products={products} /> :
-                                view === 'products' ? <ProductTable products={products} onEdit={handleEditProduct} onDelete={handleDeleteProduct} /> :
+                                view === 'products' ? <ProductManagement products={products} selectedCategory={productCategoryFilter} onCategoryChange={setProductCategoryFilter} onEdit={handleEditProduct} onDelete={handleDeleteProduct} onToggleStock={handleToggleProductStock} /> :
                                 view === 'users' ? <UserTable users={users} /> :
                                 view === 'orders' ? <OrdersTable orders={orders} onAssign={handleAssignClick} onDelete={handleDeleteOrder} /> :
                                 <CouponTable coupons={coupons} onDelete={handleDeleteCoupon} />
@@ -266,6 +268,101 @@ const TabButton = ({ name, icon, activeView, setView, viewId }) => (
         {React.cloneElement(icon, { className: "inline-block mr-2 h-4 w-4" })} {name}
     </button>
 );
+
+const formatCategoryName = (category) => {
+    if (!category) return 'Uncategorized';
+    const normalized = category.toLowerCase().replace(/\s+/g, '');
+    if (normalized === 'meatpoultry' || normalized === 'livebirds') return 'Meat & Poultry';
+    if (normalized === 'dryfruits') return 'Dry Fruits';
+    return category.charAt(0).toUpperCase() + category.slice(1);
+};
+
+const normalizeCategory = (category) => (category || 'uncategorized').toLowerCase().replace(/\s+/g, '');
+
+const ProductManagement = ({ products, selectedCategory, onCategoryChange, onEdit, onDelete, onToggleStock }) => {
+    const categories = useMemo(() => {
+        const categoryMap = new Map();
+        products.forEach(product => {
+            const normalized = normalizeCategory(product.category);
+            if (!categoryMap.has(normalized)) categoryMap.set(normalized, product.category || 'Uncategorized');
+        });
+        return Array.from(categoryMap.entries()).map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label));
+    }, [products]);
+
+    const filteredProducts = useMemo(() => {
+        if (selectedCategory === 'all') return products;
+        return products.filter(product => normalizeCategory(product.category) === selectedCategory);
+    }, [products, selectedCategory]);
+
+    return (
+        <div>
+            <div className="mb-4 flex flex-wrap gap-2">
+                <button onClick={() => onCategoryChange('all')} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${selectedCategory === 'all' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-slate-600 border-slate-200 hover:border-red-300'}`}>
+                    All Products ({products.length})
+                </button>
+                {categories.map(category => {
+                    const count = products.filter(product => normalizeCategory(product.category) === category.id).length;
+                    return (
+                        <button key={category.id} onClick={() => onCategoryChange(category.id)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${selectedCategory === category.id ? 'bg-red-600 text-white border-red-600' : 'bg-white text-slate-600 border-slate-200 hover:border-red-300'}`}>
+                            {formatCategoryName(category.label)} ({count})
+                        </button>
+                    );
+                })}
+            </div>
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 hidden md:table-header-group">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variants</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {filteredProducts.map(product => (
+                            <tr key={product.id} className="block md:table-row border-b md:border-none mb-4 md:mb-0">
+                                <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
+                                    <div className="flex items-center">
+                                        <div className="flex-shrink-0 h-12 w-12"><img className="h-12 w-12 rounded-md object-cover" src={product.image_url || 'https://placehold.co/100'} alt={product.name} /></div>
+                                        <div className="ml-4">
+                                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                                            <div className="text-xs text-gray-500 max-w-xs truncate">{product.description}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
+                                    <span className="md:hidden font-bold text-xs uppercase text-gray-500">Category: </span>
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{formatCategoryName(product.category)}</span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
+                                    <span className="md:hidden font-bold text-xs uppercase text-gray-500">Stock: </span>
+                                    <button onClick={() => onToggleStock(product.id, product.in_stock === false)} className={`relative inline-flex h-7 w-24 items-center rounded-full px-1 transition-colors ${product.in_stock === false ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                        <span className={`absolute h-5 w-5 rounded-full bg-white shadow transition-transform ${product.in_stock === false ? 'translate-x-0.5' : 'translate-x-[66px]'}`} />
+                                        <span className="w-full text-center text-[11px] font-bold">{product.in_stock === false ? 'Out' : 'In Stock'}</span>
+                                    </button>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 block md:table-cell">
+                                    {product.variants && product.variants.length > 0 ? (
+                                        <ul className="space-y-1">{product.variants.map(v => (
+                                            <li key={v.id} className="text-xs"><span className="font-semibold">{v.label}</span> - ₹{v.price}</li>
+                                        ))}</ul>
+                                    ) : (<span className="text-xs text-red-500">No variants</span>)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap block md:table-cell text-right">
+                                    <button onClick={() => onEdit(product)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
+                                    <button onClick={() => onDelete(product.id, product.name)} className="text-red-600 hover:text-red-900 ml-4">Delete</button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                {filteredProducts.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No products found in this category.</div>}
+            </div>
+        </div>
+    );
+};
 
 const OverviewCharts = ({ orders, products }) => {
     const salesData = useMemo(() => {

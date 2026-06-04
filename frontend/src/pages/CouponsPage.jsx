@@ -92,17 +92,36 @@ export default function CouponsPage({ isFirstOrder }) {
     const [error, setError] =  useState('');
 
     useEffect(() => {
-        const fetchCoupons = async () => {
+        let isCancelled = false;
+        let isSyncing = false;
+
+        const fetchCoupons = async ({ silent = false } = {}) => {
+            if (isSyncing) return;
+            isSyncing = true;
             try {
+                if (!silent) setLoading(true);
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/coupons/public`);
-                setCoupons(res.data);
+                if (!isCancelled) {
+                    setCoupons(res.data);
+                    setError('');
+                }
             } catch (err) {
-                setError('Could not load coupons at this time.');
+                if (!isCancelled && !silent) setError('Could not load coupons at this time.');
             } finally {
-                setLoading(false);
+                if (!isCancelled) setLoading(false);
+                isSyncing = false;
             }
         };
+
         fetchCoupons();
+        const couponSyncInterval = setInterval(() => {
+            fetchCoupons({ silent: true });
+        }, 800);
+
+        return () => {
+            isCancelled = true;
+            clearInterval(couponSyncInterval);
+        };
     }, []);
 
     return (

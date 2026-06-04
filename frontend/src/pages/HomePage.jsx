@@ -159,24 +159,13 @@ const itemVariants = {
     }
 };
 
-const isForcedOutOfStockProduct = (product) => {
-    const normalizedCategory = (product?.category || '').toLowerCase().replace(/\s+/g, '');
-    const normalizedName = (product?.name || '').toLowerCase();
-    const isMilletProduct = normalizedCategory === 'millets';
-    const isBlockedDairyMilk =
-        normalizedCategory === 'dairy' &&
-        (normalizedName.includes('cow milk') || normalizedName.includes('buffalo milk'));
-
-    return isMilletProduct || isBlockedDairyMilk;
-};
-
 const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAddToCart, productDetailsData }) => {
     const hasVariants = product.variants && product.variants.length > 0;
     const selectedVariantId = selectedVariants[product.id] || (hasVariants ? product.variants[0].id : null);
     const currentVariant = hasVariants ? product.variants.find(v => v.id === selectedVariantId) : null;
     const currentPrice = currentVariant ? currentVariant.price : 'N/A';
-    const isForcedOutOfStock = isForcedOutOfStockProduct(product);
-    const canAddToCart = Boolean(currentVariant) && !isForcedOutOfStock;
+    const isOutOfStock = product.in_stock === false;
+    const canAddToCart = Boolean(currentVariant) && !isOutOfStock;
     
     const handleAddToCartClick = (e) => {
         if (!canAddToCart) return;
@@ -218,7 +207,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                 <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-300/70">
                     {hasVariants ? (
                         <>
-                            {isForcedOutOfStock ? (
+                            {isOutOfStock ? (
                                 <span className="text-xs sm:text-sm font-semibold text-red-700 bg-red-100 px-2.5 py-1 rounded-full">
                                     Out of Stock
                                 </span>
@@ -231,7 +220,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
                                 className="flex items-center gap-1.5 text-white px-3 py-1.5 text-xs font-semibold rounded-full bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 disabled:bg-gray-400 transition-all shadow-md hover:shadow-lg"
                                 disabled={!canAddToCart}
                             >
-                                <ShoppingCart size={14} /> {isForcedOutOfStock ? 'Out of Stock' : 'Add'}
+                                <ShoppingCart size={14} /> {isOutOfStock ? 'Out of Stock' : 'Add'}
                             </motion.button>
                         </>
                     ) : (
@@ -341,17 +330,23 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
     // This means it will automatically run again (and fetch new data) 
     // whenever `dataVersion` is changed by the Admin Page.
     useEffect(() => {
+        let isCancelled = false;
+        let isSyncing = false;
+
         if (!selectedCategory) {
             setProducts([]);
             setProductsLoading(false);
             return;
         };
-        const fetchProducts = async () => {
-            setProductsLoading(true);
+        const fetchProducts = async ({ silent = false } = {}) => {
+            if (isSyncing) return;
+            isSyncing = true;
+            if (!silent) setProductsLoading(true);
             setError('');
             try {
                 const apiCategory = selectedCategory === 'meatpoultry' ? 'livebirds' : selectedCategory;
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products?page=${currentPage}&limit=12&category=${apiCategory}`);
+                if (isCancelled) return;
                 
                 if (res.data && Array.isArray(res.data.products)) {
                     let fetchedProducts = res.data.products.map(p => ({ ...p, category: p.category.toLowerCase().replace(/\s+/g, '') }));
@@ -390,14 +385,22 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
                     setError('Failed to load products. Unexpected data format received.');
                 }
             } catch (err) {
-                setError('Failed to load products. ' + (err.message || ''));
+                if (!isCancelled) setError('Failed to load products. ' + (err.message || ''));
             } finally {
-                setProductsLoading(false);
+                if (!isCancelled) setProductsLoading(false);
+                isSyncing = false;
             }
         };
         
         fetchProducts();
+        const productSyncInterval = setInterval(() => {
+            fetchProducts({ silent: true });
+        }, 800);
         
+        return () => {
+            isCancelled = true;
+            clearInterval(productSyncInterval);
+        };
     }, [selectedCategory, currentPage, dataVersion]); // `dataVersion` is the key
 
     // All other functions are just for the UI
