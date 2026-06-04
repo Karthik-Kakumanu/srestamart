@@ -28,7 +28,8 @@ export default function AdminPage({ onDataChange }) {
     const [assigningOrder, setAssigningOrder] = useState(null);
 
     const fetchData = async () => {
-        setIsLoading(true);
+        const shouldShowLoader = products.length === 0 && users.length === 0 && orders.length === 0;
+        if (shouldShowLoader) setIsLoading(true);
         setError('');
         const token = getAuthToken();
         if (!token) {
@@ -40,19 +41,14 @@ export default function AdminPage({ onDataChange }) {
         const config = { headers: { 'x-admin-token': token } };
 
         try {
-            const [productsRes, usersRes, ordersRes, partnersRes, couponsRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/products`, config),
-                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/users`, config),
-                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/orders`, config),
-                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/delivery-partners`, config),
-                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/coupons`, config) 
-            ]);
+            const dashboardRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard`, config);
+            const { products, users, orders, deliveryPartners, coupons } = dashboardRes.data;
             
-            setProducts(productsRes.data);
-            setUsers(usersRes.data);
-            setOrders(ordersRes.data);
-            setDeliveryPartners(partnersRes.data);
-            setCoupons(couponsRes.data);
+            setProducts(products);
+            setUsers(users);
+            setOrders(orders);
+            setDeliveryPartners(deliveryPartners);
+            setCoupons(coupons);
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to fetch admin data.');
         } finally {

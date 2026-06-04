@@ -163,6 +163,30 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
+const mapProductsWithVariants = (rows) => {
+    const productsMap = new Map();
+    rows.forEach(row => {
+        if (!productsMap.has(row.id)) {
+            productsMap.set(row.id, {
+                id: row.id,
+                name: row.name,
+                description: row.description,
+                category: row.category,
+                image_url: row.image_url,
+                variants: []
+            });
+        }
+        if (row.variant_id) {
+            productsMap.get(row.id).variants.push({
+                id: row.variant_id,
+                label: row.label,
+                price: parseFloat(row.price)
+            });
+        }
+    });
+    return Array.from(productsMap.values());
+};
+
 // --- TWILIO CLIENT ---
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
@@ -236,27 +260,7 @@ app.get('/api/admin/products', checkAdminToken, async (req, res) => {
         `;
         const { rows } = await pool.query(query);
 
-        const productsMap = new Map();
-        rows.forEach(row => {
-            if (!productsMap.has(row.id)) {
-                productsMap.set(row.id, {
-                    id: row.id,
-                    name: row.name,
-                    description: row.description,
-                    category: row.category,
-                    image_url: row.image_url,
-                    variants: []
-                });
-            }
-            if (row.variant_id) {
-                productsMap.get(row.id).variants.push({
-                    id: row.variant_id,
-                    label: row.label,
-                    price: parseFloat(row.price)
-                });
-            }
-        });
-        res.json(Array.from(productsMap.values()));
+        res.json(mapProductsWithVariants(rows));
     } catch (err) {
         console.error('Error fetching all products for admin:', err.message);
         res.status(500).send('Server Error');
@@ -397,7 +401,8 @@ app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
     const query = `
       SELECT
         o.id, o.total_amount, o.status, o.created_at, o.items,
-        o.shipping_address, o.delivery_status, o.assigned_to_id,
+        o.shipping_address, o.delivery_status, o.delivery_type,
+        o.expected_delivery_date, o.assigned_to_id,
         u.name as customer_name,
         dp.name as partner_name
       FROM orders o
@@ -410,6 +415,51 @@ app.get('/api/admin/orders', checkAdminToken, async (req, res) => {
   } catch (err) {
     console.error('Error fetching orders:', err.message);
     res.status(500).send('Server Error fetching all orders');
+  }
+});
+
+app.get('/api/admin/dashboard', checkAdminToken, async (req, res) => {
+  try {
+    const productsQuery = `
+      SELECT 
+        p.id, p.name, p.description, p.category, p.image_url,
+        v.id as variant_id, v.label, v.price
+      FROM products p
+      LEFT JOIN product_variants v ON p.id = v.product_id
+      ORDER BY p.name ASC, v.price ASC;
+    `;
+
+    const ordersQuery = `
+      SELECT
+        o.id, o.total_amount, o.status, o.created_at, o.items,
+        o.shipping_address, o.delivery_status, o.delivery_type,
+        o.expected_delivery_date, o.assigned_to_id,
+        u.name as customer_name,
+        dp.name as partner_name
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      LEFT JOIN delivery_partners dp ON o.assigned_to_id = dp.id
+      ORDER BY o.created_at DESC;
+    `;
+
+    const [productsRes, usersRes, ordersRes, partnersRes, couponsRes] = await Promise.all([
+      pool.query(productsQuery),
+      pool.query('SELECT id, name, phone, created_at, is_admin, addresses FROM users ORDER BY id ASC'),
+      pool.query(ordersQuery),
+      pool.query('SELECT id, name FROM delivery_partners ORDER BY name ASC'),
+      pool.query('SELECT * FROM coupons ORDER BY created_at DESC')
+    ]);
+
+    res.json({
+      products: mapProductsWithVariants(productsRes.rows),
+      users: usersRes.rows,
+      orders: ordersRes.rows,
+      deliveryPartners: partnersRes.rows,
+      coupons: couponsRes.rows
+    });
+  } catch (err) {
+    console.error('Error fetching admin dashboard:', err.message);
+    res.status(500).json({ msg: 'Server Error fetching admin dashboard' });
   }
 });
 

@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import logoUrl from "../../images/icon.png";
-import { Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, User } from 'lucide-react';
 
 // A high-quality, relevant background image for the branding panel
 const brandingImageUrl = "https://i.pinimg.com/736x/8b/16/7a/8b167af653c2399dd93b952a48740620.jpg";
@@ -11,6 +11,7 @@ const brandingImageUrl = "https://i.pinimg.com/736x/8b/16/7a/8b167af653c2399dd93
 export default function AdminLoginPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
@@ -98,8 +99,16 @@ export default function AdminLoginPage() {
                             <motion.div variants={formItemVariants} className="relative">
                                 <label className="text-sm font-medium text-gray-700">Admin Password</label>
                                 <Lock className="absolute left-3.5 top-11 text-gray-400" size={18} />
-                                <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
-                                    className="mt-1 block w-full pl-10 pr-4 py-3 rounded-lg bg-slate-100 border-2 border-transparent focus:border-red-500 focus:ring-0 outline-none transition" />
+                                <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required
+                                    className="mt-1 block w-full pl-10 pr-10 py-3 rounded-lg bg-slate-100 border-2 border-transparent focus:border-red-500 focus:ring-0 outline-none transition" />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3.5 top-11 text-gray-400 hover:text-gray-600"
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </motion.div>
                             
                             {error && 

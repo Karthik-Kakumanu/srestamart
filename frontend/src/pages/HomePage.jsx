@@ -143,7 +143,7 @@ const CategoryFeatureSection = ({ title, subtitle, description, imageUrl, featur
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className="relative h-80 md:h-96 rounded-2xl shadow-lg overflow-hidden"
             >
-                <img src={imageUrl} alt={title} className="absolute w-full h-full object-cover rounded-2xl filter brightness-90" />
+                <img src={imageUrl} alt={title} loading="lazy" decoding="async" className="absolute w-full h-full object-cover rounded-2xl filter brightness-90" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
             </motion.div>
         </div>
@@ -191,7 +191,7 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
             whileHover={{ y: -8 }}
         >
             <div className="w-full aspect-[4/3] overflow-hidden relative">
-                <img src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src={product.image_url || 'https://placehold.co/400x300?text=Sresta+Mart'} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm">New</div>
             </div>
             <div className="p-4 flex flex-col flex-grow">
@@ -459,6 +459,7 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
                         loop
                         muted
                         playsInline
+                        preload="metadata"
                         className="fixed inset-0 w-full h-full object-cover -z-20"
                     />
                 )}
