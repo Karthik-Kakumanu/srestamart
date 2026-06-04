@@ -56,13 +56,31 @@ export default function AdminPage({ onDataChange }) {
         }
     };
 
+    const syncOrders = async () => {
+        const token = getAuthToken();
+        if (!token) return;
+
+        try {
+            const ordersRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/orders`, {
+                headers: { 'x-admin-token': token }
+            });
+            setOrders(ordersRes.data);
+        } catch (err) {
+            console.error('Fast order sync failed:', err);
+        }
+    };
+
     useEffect(() => {
         fetchData();
-        const syncInterval = setInterval(() => {
+        const orderSyncInterval = setInterval(syncOrders, 800);
+        const dashboardSyncInterval = setInterval(() => {
             fetchData({ silent: true });
-        }, 3000);
+        }, 15000);
 
-        return () => clearInterval(syncInterval);
+        return () => {
+            clearInterval(orderSyncInterval);
+            clearInterval(dashboardSyncInterval);
+        };
     }, []);
     
     const handleAssignClick = (order) => {

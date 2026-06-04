@@ -62,15 +62,21 @@ const sendMailtrapApiEmail = async ({ from, to, subject, text, html }) => {
   if (!apiToken) return false;
 
   const fromAddress = parseEmailAddress(from);
+  const recipients = String(to)
+    .split(',')
+    .map((email) => email.trim())
+    .filter(Boolean)
+    .map((email) => ({ email }));
+
   const response = await fetch('https://send.api.mailtrap.io/api/send', {
     method: 'POST',
     headers: {
-      'Api-Token': apiToken,
+      'Authorization': `Bearer ${apiToken}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
       from: fromAddress,
-      to: [{ email: to }],
+      to: recipients,
       subject,
       text,
       html
