@@ -215,7 +215,7 @@ export default function AdminPage({ onDataChange }) {
                     <AnimatePresence mode="wait">
                         <motion.div key={view} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
                             {isLoading ? <div className="text-center p-8">Loading Dashboard...</div> : 
-                                view === 'overview' ? <OverviewCharts orders={orders} products={products} /> :
+                                view === 'overview' ? <AnalyticsOverview orders={orders} products={products} /> :
                                 view === 'products' ? <ProductManagement products={products} selectedCategory={productCategoryFilter} onCategoryChange={setProductCategoryFilter} onEdit={handleEditProduct} onDelete={handleDeleteProduct} onToggleStock={handleToggleProductStock} /> :
                                 view === 'users' ? <UserTable users={users} /> :
                                 view === 'orders' ? <OrdersTable orders={orders} onAssign={handleAssignClick} onDelete={handleDeleteOrder} /> :
@@ -338,9 +338,19 @@ const ProductManagement = ({ products, selectedCategory, onCategoryChange, onEdi
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
                                     <span className="md:hidden font-bold text-xs uppercase text-gray-500">Stock: </span>
-                                    <button onClick={() => onToggleStock(product.id, product.in_stock === false)} className={`relative inline-flex h-7 w-24 items-center rounded-full px-1 transition-colors ${product.in_stock === false ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                        <span className={`absolute h-5 w-5 rounded-full bg-white shadow transition-transform ${product.in_stock === false ? 'translate-x-0.5' : 'translate-x-[66px]'}`} />
-                                        <span className="w-full text-center text-[11px] font-bold">{product.in_stock === false ? 'Out' : 'In Stock'}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => onToggleStock(product.id, product.in_stock === false)}
+                                        className={`inline-flex w-32 items-center rounded-full border p-1 text-[11px] font-bold transition-colors ${product.in_stock === false ? 'border-red-200 bg-red-50 text-red-700' : 'border-green-200 bg-green-50 text-green-700'}`}
+                                        aria-pressed={product.in_stock !== false}
+                                        title={product.in_stock === false ? 'Click to mark In Stock' : 'Click to mark Out of Stock'}
+                                    >
+                                        <span className={`w-1/2 rounded-full px-2 py-1 text-center transition-colors ${product.in_stock !== false ? 'bg-green-600 text-white shadow-sm' : 'text-red-700'}`}>
+                                            In
+                                        </span>
+                                        <span className={`w-1/2 rounded-full px-2 py-1 text-center transition-colors ${product.in_stock === false ? 'bg-red-600 text-white shadow-sm' : 'text-green-700'}`}>
+                                            Out
+                                        </span>
                                     </button>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 block md:table-cell">
@@ -360,6 +370,167 @@ const ProductManagement = ({ products, selectedCategory, onCategoryChange, onEdi
                 </table>
                 {filteredProducts.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No products found in this category.</div>}
             </div>
+        </div>
+    );
+};
+
+const AnalyticsOverview = ({ orders, products }) => {
+    const salesData = useMemo(() => {
+        const salesByDay = orders.reduce((acc, order) => {
+            const date = new Date(order.created_at).toLocaleDateString('en-CA');
+            if (!acc[date]) acc[date] = { orders: 0, revenue: 0 };
+            acc[date].orders += 1;
+            acc[date].revenue += Number(order.total_amount || 0);
+            return acc;
+        }, {});
+        return Object.keys(salesByDay).map(date => ({ date, orders: salesByDay[date].orders, revenue: salesByDay[date].revenue })).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-14);
+    }, [orders]);
+
+    const categoryData = useMemo(() => {
+        const categoryCount = products.reduce((acc, product) => {
+            const category = formatCategoryName(product.category);
+            acc[category] = (acc[category] || 0) + 1;
+            return acc;
+        }, {});
+        return Object.keys(categoryCount).map(name => ({ name, value: categoryCount[name] }));
+    }, [products]);
+
+    const insights = useMemo(() => {
+        const now = new Date();
+        const todayKey = now.toLocaleDateString('en-CA');
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - 6);
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const todayOrders = orders.filter(order => new Date(order.created_at).toLocaleDateString('en-CA') === todayKey);
+        const weekOrders = orders.filter(order => new Date(order.created_at) >= weekStart);
+        const monthOrders = orders.filter(order => new Date(order.created_at) >= monthStart);
+        const pendingOrders = orders.filter(order => !['Delivered', 'Completed', 'Cancelled'].includes(order.delivery_status) && !['Completed', 'Cancelled'].includes(order.status));
+        const outstationOrders = orders.filter(order => order.shipping_address?.value && !order.shipping_address.value.toLowerCase().includes('hyderabad'));
+        const outOfStockProducts = products.filter(product => product.in_stock === false);
+        const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
+        return {
+            todayOrders: todayOrders.length,
+            todayRevenue: todayOrders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0),
+            weekOrders: weekOrders.length,
+            weekRevenue: weekOrders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0),
+            monthOrders: monthOrders.length,
+            monthRevenue: monthOrders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0),
+            pendingOrders: pendingOrders.length,
+            outstationOrders: outstationOrders.length,
+            outOfStockProducts: outOfStockProducts.length,
+            stockPercent: products.length ? Math.round(((products.length - outOfStockProducts.length) / products.length) * 100) : 0,
+            avgOrderValue: orders.length ? totalRevenue / orders.length : 0,
+            recentOrders: orders.slice(0, 5)
+        };
+    }, [orders, products]);
+
+    const colors = ['#ef4444', '#2563eb', '#16a34a', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316'];
+
+    return (
+        <div className="space-y-6 p-2 sm:p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <AnalyticsCard label="Today" value={`${insights.todayOrders} orders`} sub={`₹${insights.todayRevenue.toFixed(0)} revenue`} tone="red" />
+                <AnalyticsCard label="Last 7 Days" value={`${insights.weekOrders} orders`} sub={`₹${insights.weekRevenue.toFixed(0)} revenue`} tone="blue" />
+                <AnalyticsCard label="This Month" value={`${insights.monthOrders} orders`} sub={`₹${insights.monthRevenue.toFixed(0)} revenue`} tone="green" />
+                <AnalyticsCard label="Avg Order Value" value={`₹${insights.avgOrderValue.toFixed(0)}`} sub={`${orders.length} total orders`} tone="amber" />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
+                    <h3 className="font-bold text-gray-800">Orders & Revenue Trend</h3>
+                    <p className="text-xs text-slate-500 mb-4">Last 14 active sales days</p>
+                    <ResponsiveContainer width="100%" height={320}>
+                        <LineChart data={salesData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                            <XAxis dataKey="date" fontSize={12} />
+                            <YAxis yAxisId="left" fontSize={12} />
+                            <YAxis yAxisId="right" orientation="right" fontSize={12} />
+                            <Tooltip wrapperClassName="!bg-white !border-slate-200 !rounded-lg !shadow-lg" />
+                            <Legend />
+                            <Line yAxisId="left" type="monotone" dataKey="orders" stroke="#ef4444" strokeWidth={3} name="Orders" />
+                            <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={3} name="Revenue (₹)" />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+
+                <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
+                    <h3 className="font-bold text-gray-800 mb-1">Product & Delivery Health</h3>
+                    <p className="text-xs text-slate-500 mb-4">{insights.stockPercent}% products in stock</p>
+                    <div className="h-3 rounded-full bg-slate-100 overflow-hidden mb-4">
+                        <div className="h-full bg-green-500" style={{ width: `${insights.stockPercent}%` }} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                        <MiniMetric label="In Stock" value={products.length - insights.outOfStockProducts} tone="green" />
+                        <MiniMetric label="Out" value={insights.outOfStockProducts} tone="red" />
+                        <MiniMetric label="Pending" value={insights.pendingOrders} tone="amber" />
+                        <MiniMetric label="Outstation" value={insights.outstationOrders} tone="blue" />
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
+                    <h3 className="font-bold text-gray-800 mb-4">Category Mix</h3>
+                    <ResponsiveContainer width="100%" height={280}>
+                        <PieChart>
+                            <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={95} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                                {categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />)}
+                            </Pie>
+                            <Tooltip wrapperClassName="!bg-white !border-slate-200 !rounded-lg !shadow-lg" />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+
+                <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
+                    <h3 className="font-bold text-gray-800 mb-4">Latest Orders</h3>
+                    <div className="space-y-3">
+                        {insights.recentOrders.map(order => (
+                            <div key={order.id} className="flex items-center justify-between rounded-lg border border-slate-100 p-3">
+                                <div>
+                                    <p className="font-semibold text-slate-800">Order #{order.id}</p>
+                                    <p className="text-xs text-slate-500">{order.customer_name || 'Customer'} • {order.delivery_status}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-bold text-slate-900">₹{Number(order.total_amount || 0).toFixed(0)}</p>
+                                    <p className="text-xs text-slate-500">{new Date(order.created_at).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                        ))}
+                        {insights.recentOrders.length === 0 && <p className="text-sm text-slate-500 text-center py-8">No orders yet.</p>}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const AnalyticsCard = ({ label, value, sub, tone }) => {
+    const tones = {
+        red: 'bg-red-50 text-red-700 border-red-100',
+        blue: 'bg-blue-50 text-blue-700 border-blue-100',
+        green: 'bg-green-50 text-green-700 border-green-100',
+        amber: 'bg-amber-50 text-amber-700 border-amber-100'
+    };
+    return (
+        <div className={`rounded-xl border p-4 shadow-sm ${tones[tone]}`}>
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-75">{label}</p>
+            <p className="mt-2 text-2xl font-bold">{value}</p>
+            <p className="mt-1 text-xs opacity-75">{sub}</p>
+        </div>
+    );
+};
+
+const MiniMetric = ({ label, value, tone }) => {
+    const tones = {
+        red: 'bg-red-50 text-red-700',
+        blue: 'bg-blue-50 text-blue-700',
+        green: 'bg-green-50 text-green-700',
+        amber: 'bg-amber-50 text-amber-700'
+    };
+    return (
+        <div className={`rounded-lg p-3 ${tones[tone]}`}>
+            <p className="text-xs opacity-75">{label}</p>
+            <p className="text-xl font-bold">{value}</p>
         </div>
     );
 };
@@ -662,6 +833,18 @@ const AssignOrderModal = ({ order, partners, onClose, onAssign }) => {
 };
 
 
+const getCouponStatus = (coupon) => {
+    const expiryDate = new Date(coupon.expiry_date);
+    expiryDate.setHours(23, 59, 59, 999);
+    if (expiryDate < new Date()) {
+        return { label: 'Expired', className: 'bg-amber-100 text-amber-800' };
+    }
+    if (!coupon.is_active) {
+        return { label: 'Inactive', className: 'bg-red-100 text-red-800' };
+    }
+    return { label: 'Active', className: 'bg-green-100 text-green-800' };
+};
+
 // --- MODIFIED: Coupon Table is now responsive and shows a poster thumbnail ---
 const CouponTable = ({ coupons, onDelete }) => (
     <div className="overflow-x-auto">
@@ -715,9 +898,14 @@ const CouponTable = ({ coupons, onDelete }) => (
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap block md:table-cell">
                              <span className="md:hidden font-bold text-xs uppercase text-gray-500">Status: </span>
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${coupon.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {coupon.is_active ? 'Active' : 'Inactive'}
-                            </span>
+                            {(() => {
+                                const status = getCouponStatus(coupon);
+                                return (
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${status.className}`}>
+                                        {status.label}
+                                    </span>
+                                );
+                            })()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right block md:table-cell">
                             <button onClick={() => onDelete(coupon.id, coupon.code)} className="text-red-600 hover:text-red-900">Delete</button>
