@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { Users, Package, RefreshCw, PlusCircle, ShoppingCart, ChevronDown, DollarSign, BarChart2, UserCheck, Tag, Bot, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,6 +8,16 @@ import AddProductModal from '../components/admin/AddProductModal.jsx';
 import AddCouponModal from '../components/admin/AddCouponModal.jsx';
 
 const getAuthToken = () => localStorage.getItem('adminToken'); 
+const OVERVIEW_REFRESH_MS = 15000;
+const ACTIVE_ADMIN_REFRESH_MS = 800;
+
+const syncCollectionState = (setState, signatureRef, nextValue = []) => {
+    const nextSignature = JSON.stringify(nextValue);
+    if (signatureRef.current !== nextSignature) {
+        signatureRef.current = nextSignature;
+        setState(nextValue);
+    }
+};
 
 // --- MODIFIED: Accepts `onDataChange` prop from App.jsx ---
 export default function AdminPage({ onDataChange }) {
@@ -27,15 +37,25 @@ export default function AdminPage({ onDataChange }) {
     const [isAddCouponModalOpen, setIsAddCouponModalOpen] = useState(false);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [assigningOrder, setAssigningOrder] = useState(null);
+    const hasLoadedDashboardRef = useRef(false);
+    const fetchInProgressRef = useRef(false);
+    const productsSignatureRef = useRef('');
+    const usersSignatureRef = useRef('');
+    const ordersSignatureRef = useRef('');
+    const deliveryPartnersSignatureRef = useRef('');
+    const couponsSignatureRef = useRef('');
 
     const fetchData = async ({ silent = false } = {}) => {
-        const shouldShowLoader = products.length === 0 && users.length === 0 && orders.length === 0;
+        if (fetchInProgressRef.current) return;
+        fetchInProgressRef.current = true;
+        const shouldShowLoader = !hasLoadedDashboardRef.current;
         if (!silent && shouldShowLoader) setIsLoading(true);
         if (!silent) setError('');
         const token = getAuthToken();
         if (!token) {
             setError("Admin authorization token not found.");
             setIsLoading(false);
+            fetchInProgressRef.current = false;
             return;
         }
         
@@ -45,28 +65,31 @@ export default function AdminPage({ onDataChange }) {
             const dashboardRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/dashboard`, config);
             const { products, users, orders, deliveryPartners, coupons } = dashboardRes.data;
             
-            setProducts(products);
-            setUsers(users);
-            setOrders(orders);
-            setDeliveryPartners(deliveryPartners);
-            setCoupons(coupons);
+            syncCollectionState(setProducts, productsSignatureRef, products);
+            syncCollectionState(setUsers, usersSignatureRef, users);
+            syncCollectionState(setOrders, ordersSignatureRef, orders);
+            syncCollectionState(setDeliveryPartners, deliveryPartnersSignatureRef, deliveryPartners);
+            syncCollectionState(setCoupons, couponsSignatureRef, coupons);
+            hasLoadedDashboardRef.current = true;
         } catch (err) {
             setError(err.response?.data?.msg || 'Failed to fetch admin data.');
         } finally {
             setIsLoading(false);
+            fetchInProgressRef.current = false;
         }
     };
 
     useEffect(() => {
         fetchData();
+        const refreshDelay = view === 'overview' ? OVERVIEW_REFRESH_MS : ACTIVE_ADMIN_REFRESH_MS;
         const dashboardSyncInterval = setInterval(() => {
             fetchData({ silent: true });
-        }, 800);
+        }, refreshDelay);
 
         return () => {
             clearInterval(dashboardSyncInterval);
         };
-    }, []);
+    }, [view]);
     
     const handleAssignClick = (order) => {
         setAssigningOrder(order);
@@ -447,8 +470,8 @@ const AnalyticsOverview = ({ orders, products }) => {
                             <YAxis yAxisId="right" orientation="right" fontSize={12} />
                             <Tooltip wrapperClassName="!bg-white !border-slate-200 !rounded-lg !shadow-lg" />
                             <Legend />
-                            <Line yAxisId="left" type="monotone" dataKey="orders" stroke="#ef4444" strokeWidth={3} name="Orders" />
-                            <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={3} name="Revenue (₹)" />
+                            <Line yAxisId="left" type="monotone" dataKey="orders" stroke="#ef4444" strokeWidth={3} name="Orders" dot={false} activeDot={{ r: 5 }} isAnimationActive={false} />
+                            <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={3} name="Revenue (₹)" dot={false} activeDot={{ r: 5 }} isAnimationActive={false} />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
@@ -471,14 +494,19 @@ const AnalyticsOverview = ({ orders, products }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
                     <h3 className="font-bold text-gray-800 mb-4">Category Mix</h3>
-                    <ResponsiveContainer width="100%" height={280}>
-                        <PieChart>
-                            <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={95} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                                {categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />)}
-                            </Pie>
-                            <Tooltip wrapperClassName="!bg-white !border-slate-200 !rounded-lg !shadow-lg" />
-                        </PieChart>
-                    </ResponsiveContainer>
+                    {categoryData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={280}>
+                            <PieChart>
+                                <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={95} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} isAnimationActive={false}>
+                                    {categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />)}
+                                </Pie>
+                                <Tooltip wrapperClassName="!bg-white !border-slate-200 !rounded-lg !shadow-lg" />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex h-[280px] items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-500">No products to chart yet.</div>
+                    )}
                 </div>
 
                 <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm">
@@ -571,8 +599,8 @@ const OverviewCharts = ({ orders, products }) => {
                         <YAxis yAxisId="right" orientation="right" fontSize={12} />
                         <Tooltip wrapperClassName="!bg-white !border-slate-200 !rounded-lg !shadow-lg" />
                         <Legend />
-                        <Line yAxisId="left" type="monotone" dataKey="orders" stroke="#ef4444" name="Orders" />
-                        <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#3b82f6" name="Revenue (₹)" />
+                        <Line yAxisId="left" type="monotone" dataKey="orders" stroke="#ef4444" name="Orders" dot={false} activeDot={{ r: 5 }} isAnimationActive={false} />
+                        <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#3b82f6" name="Revenue (₹)" dot={false} activeDot={{ r: 5 }} isAnimationActive={false} />
                     </LineChart>
                 </ResponsiveContainer>
             </div>
@@ -580,7 +608,7 @@ const OverviewCharts = ({ orders, products }) => {
                  <h3 className="font-bold text-gray-700 mb-4">Product Categories Distribution</h3>
                 <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
-                        <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                        <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} isAnimationActive={false}>
                             {categoryData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                         </Pie>
                         <Tooltip wrapperClassName="!bg-white !border-slate-200 !rounded-lg !shadow-lg" />
