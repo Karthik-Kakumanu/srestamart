@@ -24,6 +24,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
 // Initialize Resend with your API Key
 const resend = new Resend(process.env.RESEND_API_KEY);
 const ORDER_NOTIFICATION_EMAIL = process.env.ORDER_NOTIFICATION_EMAIL || 'srestamart@gmail.com';
+const DEFAULT_ADMIN_WHATSAPP_NUMBER = '8897925715';
+const DEFAULT_FAST2SMS_ORDER_ALERT_MESSAGE_ID = '22470';
 
 const createMailTransporter = () => {
   const { MAILTRAP_HOST, MAILTRAP_PORT, MAILTRAP_USER, MAILTRAP_PASS } = process.env;
@@ -123,6 +125,93 @@ const escapeHtml = (value) => String(value ?? '')
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#39;');
 
+const sanitizeFast2SmsValue = (value, maxLength = 900) => {
+  const normalized = String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/\|/g, '/')
+    .trim();
+
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 3)}...`;
+};
+
+const formatWhatsAppItems = (items) => {
+  if (!Array.isArray(items) || items.length === 0) return 'No item details';
+
+  return sanitizeFast2SmsValue(
+    items.map((item) => {
+      const name = item.name || 'Item';
+      const variant = item.variantLabel ? ` ${item.variantLabel}` : '';
+      const quantity = item.quantity || 1;
+      return `${name}${variant} x${quantity}`;
+    }).join(', ')
+  );
+};
+
+const normalizeWhatsAppNumber = (number) => String(number || '').replace(/[^\d]/g, '');
+
+const sendFast2SmsAdminOrderWhatsApp = async (order) => {
+  const {
+    FAST2SMS_WHATSAPP_API_KEY,
+    FAST2SMS_WHATSAPP_PHONE_NUMBER_ID,
+    FAST2SMS_WHATSAPP_MESSAGE_ID = DEFAULT_FAST2SMS_ORDER_ALERT_MESSAGE_ID,
+    ADMIN_WHATSAPP_NUMBER,
+    FAST2SMS_WHATSAPP_ENABLED
+  } = process.env;
+
+  if (FAST2SMS_WHATSAPP_ENABLED !== 'true') {
+    return;
+  }
+
+  if (!FAST2SMS_WHATSAPP_API_KEY || !FAST2SMS_WHATSAPP_PHONE_NUMBER_ID) {
+    console.warn('Fast2SMS WhatsApp is enabled but missing API key or phone number ID.');
+    return;
+  }
+
+  const adminNumber = normalizeWhatsAppNumber(ADMIN_WHATSAPP_NUMBER || DEFAULT_ADMIN_WHATSAPP_NUMBER);
+  if (!adminNumber) {
+    console.warn('Fast2SMS WhatsApp admin number is invalid.');
+    return;
+  }
+
+  const templateValues = [
+    order.id,
+    order.customer_name || 'Customer',
+    order.customer_phone || 'Not available',
+    Number(order.total_amount || 0).toFixed(2),
+    formatWhatsAppItems(order.items),
+    `${order.shipping_address?.label ? `${order.shipping_address.label}: ` : ''}${order.shipping_address?.value || 'Address not available'}`
+  ].map((value) => sanitizeFast2SmsValue(value));
+
+  const requestUrl = new URL('https://www.fast2sms.com/dev/whatsapp');
+  requestUrl.searchParams.set('authorization', FAST2SMS_WHATSAPP_API_KEY);
+  requestUrl.searchParams.set('message_id', FAST2SMS_WHATSAPP_MESSAGE_ID);
+  requestUrl.searchParams.set('phone_number_id', FAST2SMS_WHATSAPP_PHONE_NUMBER_ID);
+  requestUrl.searchParams.set('numbers', adminNumber);
+  requestUrl.searchParams.set('variables_values', templateValues.join('|'));
+
+  const response = await fetch(requestUrl, {
+    method: 'GET',
+    headers: {
+      accept: 'application/json'
+    }
+  });
+
+  const responseText = await response.text();
+  let responseBody;
+  try {
+    responseBody = JSON.parse(responseText);
+  } catch {
+    responseBody = responseText;
+  }
+
+  if (!response.ok) {
+    throw new Error(`Fast2SMS WhatsApp failed (${response.status}): ${responseText}`);
+  }
+
+  console.log(`Fast2SMS WhatsApp admin order alert sent for order ${order.id}.`, responseBody);
+};
+
 const sendNewOrderNotification = async (orderId) => {
   const orderResult = await pool.query(
     `SELECT
@@ -142,6 +231,7 @@ const sendNewOrderNotification = async (orderId) => {
 
   const order = orderResult.rows[0];
   const items = Array.isArray(order.items) ? order.items : [];
+  order.items = items;
   const itemRows = items.map((item) => `
     <tr>
       <td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(item.name)} ${item.variantLabel ? `(${escapeHtml(item.variantLabel)})` : ''}</td>
@@ -184,6 +274,12 @@ const sendNewOrderNotification = async (orderId) => {
     text: `New Sresta Mart order #${order.id}\nCustomer: ${order.customer_name} (${order.customer_phone})\nTotal: Rs.${Number(order.total_amount || 0).toFixed(2)}\nAddress: ${order.shipping_address?.label}: ${order.shipping_address?.value}\n\nItems:\n${textItems || 'No item details available.'}`,
     html,
   };
+
+  try {
+    await sendFast2SmsAdminOrderWhatsApp(order);
+  } catch (whatsAppError) {
+    console.error('Fast2SMS WhatsApp order notification failed:', whatsAppError.message);
+  }
 
   try {
     const sentByApi = await sendMailtrapApiEmail(emailPayload);
