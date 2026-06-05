@@ -31,8 +31,20 @@ const PageLoader = () => (
     </div>
 );
 
+const USER_DATA_REFRESH_MS = 5 * 60 * 1000;
+
+const getStoredUser = () => {
+    try {
+        return JSON.parse(localStorage.getItem('user')) || null;
+    } catch {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        return null;
+    }
+};
+
 export default function App() {
-    const [loggedInUser, setLoggedInUser] = useState(() => JSON.parse(localStorage.getItem('user')) || null);
+    const [loggedInUser, setLoggedInUser] = useState(getStoredUser);
     const [cartItems, setCartItems] = useState([]);
     const [orders, setOrders] = useState([]);
     const [addresses, setAddresses] = useState([]);
@@ -83,7 +95,7 @@ export default function App() {
         };
 
         fetchUserData();
-        const userSyncInterval = setInterval(fetchUserData, 800);
+        const userSyncInterval = setInterval(fetchUserData, USER_DATA_REFRESH_MS);
 
         return () => clearInterval(userSyncInterval);
     }, [loggedInUser, orders.length]);
@@ -131,7 +143,8 @@ export default function App() {
     const handleClearCart = () => setCartItems([]);
 
     const handleLogout = () => {
-        localStorage.clear();
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
         setLoggedInUser(null);
         setCartItems([]);
         setOrders([]);

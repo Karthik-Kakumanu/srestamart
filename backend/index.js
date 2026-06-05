@@ -20,6 +20,7 @@ const Razorpay = require('razorpay');
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'srestamart_super_secret_key';
+const CUSTOMER_TOKEN_EXPIRES_IN = process.env.CUSTOMER_TOKEN_EXPIRES_IN || '365d';
 
 // Initialize Resend with your API Key
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -894,7 +895,11 @@ app.post('/api/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
     
-    const token = jwt.sign({ id: user.id, name: user.name, role: user.is_admin ? 'admin' : 'user' }, JWT_SECRET, { expiresIn: '3h' });
+    const token = jwt.sign(
+      { id: user.id, name: user.name, role: user.is_admin ? 'admin' : 'user' },
+      JWT_SECRET,
+      { expiresIn: CUSTOMER_TOKEN_EXPIRES_IN }
+    );
     res.json({ msg: `Welcome back, ${user.name}!`, token, user: { id: user.id, name: user.name, phone: user.phone } });
   } catch (err) {
     console.error('Error logging in:', err.message); res.status(500).send('Server error');
