@@ -277,7 +277,7 @@ const Footer = () => (
                         <Link to="/about-us" className="hover:text-red-400 transition-colors">About Us</Link>
                         <Link to="/privacy" className="hover:text-red-400 transition-colors">Privacy Policy</Link>
                         <Link to="/help" className="hover:text-red-400 transition-colors col-span-2">Help & Support</Link>
-                        <a href="tel:+919949529575" className="col-span-2 flex items-center gap-2 pt-2 hover:text-red-400 transition-colors"><Phone size={14} />+91 94949 529575</a>
+                        <a href="tel:+919949529575" className="col-span-2 flex items-center gap-2 pt-2 hover:text-red-400 transition-colors"><Phone size={14} />+91 99495 29575</a>
                         <a href="mailto:srestamart@gmail.com" className="col-span-2 flex items-center gap-2 hover:text-red-400 transition-colors"><Mail size={14} />srestamart@gmail.com</a>
                     </div>
                 </div>

@@ -150,10 +150,60 @@ const formatWhatsAppItems = (items) => {
 
 const normalizeWhatsAppNumber = (number) => String(number || '').replace(/[^\d]/g, '');
 
+const looksLikeWhatsAppDisplayNumber = (value) => {
+  const rawValue = String(value || '').trim();
+  const digits = normalizeWhatsAppNumber(rawValue);
+  return /[+\-\s()]/.test(rawValue) || (digits.length >= 10 && digits.length <= 13);
+};
+
+const resolveFast2SmsPhoneNumberId = async (apiKey, configuredPhoneNumberId, senderNumber) => {
+  if (configuredPhoneNumberId && !looksLikeWhatsAppDisplayNumber(configuredPhoneNumberId)) {
+    return String(configuredPhoneNumberId).trim();
+  }
+
+  const expectedSenderNumber = normalizeWhatsAppNumber(senderNumber || configuredPhoneNumberId);
+  const detailsUrl = new URL('https://www.fast2sms.com/dev/dlt_manager/whatsapp');
+  detailsUrl.searchParams.set('authorization', apiKey);
+  detailsUrl.searchParams.set('type', 'number');
+
+  const response = await fetch(detailsUrl, {
+    method: 'GET',
+    headers: {
+      accept: 'application/json'
+    }
+  });
+
+  const responseText = await response.text();
+  let responseBody;
+  try {
+    responseBody = JSON.parse(responseText);
+  } catch {
+    throw new Error(`Fast2SMS phone number lookup returned invalid JSON: ${responseText}`);
+  }
+
+  if (!response.ok || responseBody?.success === false) {
+    throw new Error(`Fast2SMS phone number lookup failed (${response.status}): ${responseText}`);
+  }
+
+  const phoneNumbers = Array.isArray(responseBody?.data) ? responseBody.data : [];
+  const matchedNumber = phoneNumbers.find((phoneNumber) => {
+    if (!expectedSenderNumber) return false;
+    return normalizeWhatsAppNumber(phoneNumber?.number) === expectedSenderNumber;
+  }) || phoneNumbers.find((phoneNumber) => phoneNumber?.connection_status === 'CONNECTED') || phoneNumbers[0];
+
+  if (!matchedNumber?.phone_number_id) {
+    throw new Error('Fast2SMS phone number lookup did not return a WABA phone_number_id.');
+  }
+
+  console.log(`Fast2SMS WhatsApp using WABA phone_number_id ${matchedNumber.phone_number_id} for sender ${matchedNumber.number || 'default'}.`);
+  return String(matchedNumber.phone_number_id);
+};
+
 const sendFast2SmsAdminOrderWhatsApp = async (order) => {
   const {
     FAST2SMS_WHATSAPP_API_KEY,
     FAST2SMS_WHATSAPP_PHONE_NUMBER_ID,
+    FAST2SMS_WHATSAPP_SENDER_NUMBER,
     FAST2SMS_WHATSAPP_MESSAGE_ID = DEFAULT_FAST2SMS_ORDER_ALERT_MESSAGE_ID,
     ADMIN_WHATSAPP_NUMBER,
     FAST2SMS_WHATSAPP_ENABLED
@@ -163,8 +213,8 @@ const sendFast2SmsAdminOrderWhatsApp = async (order) => {
     return;
   }
 
-  if (!FAST2SMS_WHATSAPP_API_KEY || !FAST2SMS_WHATSAPP_PHONE_NUMBER_ID) {
-    console.warn('Fast2SMS WhatsApp is enabled but missing API key or phone number ID.');
+  if (!FAST2SMS_WHATSAPP_API_KEY) {
+    console.warn('Fast2SMS WhatsApp is enabled but missing API key.');
     return;
   }
 
@@ -183,10 +233,16 @@ const sendFast2SmsAdminOrderWhatsApp = async (order) => {
     `${order.shipping_address?.label ? `${order.shipping_address.label}: ` : ''}${order.shipping_address?.value || 'Address not available'}`
   ].map((value) => sanitizeFast2SmsValue(value));
 
+  const phoneNumberId = await resolveFast2SmsPhoneNumberId(
+    FAST2SMS_WHATSAPP_API_KEY,
+    FAST2SMS_WHATSAPP_PHONE_NUMBER_ID,
+    FAST2SMS_WHATSAPP_SENDER_NUMBER
+  );
+
   const requestUrl = new URL('https://www.fast2sms.com/dev/whatsapp');
   requestUrl.searchParams.set('authorization', FAST2SMS_WHATSAPP_API_KEY);
   requestUrl.searchParams.set('message_id', FAST2SMS_WHATSAPP_MESSAGE_ID);
-  requestUrl.searchParams.set('phone_number_id', FAST2SMS_WHATSAPP_PHONE_NUMBER_ID);
+  requestUrl.searchParams.set('phone_number_id', phoneNumberId);
   requestUrl.searchParams.set('numbers', adminNumber);
   requestUrl.searchParams.set('variables_values', templateValues.join('|'));
 
