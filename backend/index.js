@@ -150,6 +150,12 @@ const formatWhatsAppItems = (items) => {
 
 const normalizeWhatsAppNumber = (number) => String(number || '').replace(/[^\d]/g, '');
 
+const normalizeWhatsAppRecipients = (numbers) => String(numbers || '')
+  .split(',')
+  .map((number) => normalizeWhatsAppNumber(number))
+  .filter(Boolean)
+  .join(',');
+
 const looksLikeWhatsAppDisplayNumber = (value) => {
   const rawValue = String(value || '').trim();
   const digits = normalizeWhatsAppNumber(rawValue);
@@ -218,9 +224,9 @@ const sendFast2SmsAdminOrderWhatsApp = async (order) => {
     return;
   }
 
-  const adminNumber = normalizeWhatsAppNumber(ADMIN_WHATSAPP_NUMBER || DEFAULT_ADMIN_WHATSAPP_NUMBER);
-  if (!adminNumber) {
-    console.warn('Fast2SMS WhatsApp admin number is invalid.');
+  const adminNumbers = normalizeWhatsAppRecipients(ADMIN_WHATSAPP_NUMBER || DEFAULT_ADMIN_WHATSAPP_NUMBER);
+  if (!adminNumbers) {
+    console.warn('Fast2SMS WhatsApp admin number list is invalid.');
     return;
   }
 
@@ -243,7 +249,7 @@ const sendFast2SmsAdminOrderWhatsApp = async (order) => {
   requestUrl.searchParams.set('authorization', FAST2SMS_WHATSAPP_API_KEY);
   requestUrl.searchParams.set('message_id', FAST2SMS_WHATSAPP_MESSAGE_ID);
   requestUrl.searchParams.set('phone_number_id', phoneNumberId);
-  requestUrl.searchParams.set('numbers', adminNumber);
+  requestUrl.searchParams.set('numbers', adminNumbers);
   requestUrl.searchParams.set('variables_values', templateValues.join('|'));
 
   const response = await fetch(requestUrl, {
