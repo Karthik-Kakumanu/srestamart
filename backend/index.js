@@ -405,7 +405,121 @@ const ensureProductStockColumn = async () => {
   }
 };
 
-ensureProductStockColumn();
+const ensureProductChickNoteColumn = async () => {
+  try {
+    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS chick_note TEXT');
+    console.log('Product chick note column is ready.');
+  } catch (err) {
+    console.error('Error ensuring product chick note column:', err.message);
+  }
+};
+
+const chickSeedProducts = [
+  {
+    name: 'Sonali Day Old Mix Chick (50-50) Male & Female',
+    description: 'Healthy Sonali day old mixed chicks with an even male and female selection, sold by piece.',
+    image_url: 'https://source.unsplash.com/800x600/?day-old-chicks,poultry-farm',
+    price: 25
+  },
+  {
+    name: 'Sonali Day Old Male Chick',
+    description: 'Healthy Sonali day old male chick, selected for farm rearing and sold by piece.',
+    image_url: 'https://source.unsplash.com/800x600/?male-chick,poultry',
+    price: 35
+  },
+  {
+    name: 'Sonali Day Old Female Chick',
+    description: 'Healthy Sonali day old female chick, selected for farm rearing and sold by piece.',
+    image_url: 'https://source.unsplash.com/800x600/?female-chick,poultry',
+    price: 15
+  },
+  {
+    name: 'Rabbit Bunnies',
+    description: 'Healthy young rabbit bunnies for farm or home rearing, sold by piece.',
+    image_url: 'https://source.unsplash.com/800x600/?rabbit,bunny,farm',
+    price: 350
+  },
+  {
+    name: 'Quail Day Old Chick',
+    description: 'Healthy quail day old chick, carefully handled and sold by piece.',
+    image_url: 'https://source.unsplash.com/800x600/?quail-chick',
+    price: 11
+  },
+  {
+    name: 'White Pekin Duck Day Old Chick',
+    description: 'Healthy White Pekin duck day old chick for farm rearing, sold by piece.',
+    image_url: 'https://source.unsplash.com/800x600/?pekin-duckling',
+    price: 110
+  },
+  {
+    name: 'Turkey Chick (Day Old)',
+    description: 'Healthy day old turkey chick for farm rearing, sold by piece.',
+    image_url: 'https://source.unsplash.com/800x600/?turkey-poult',
+    price: 105
+  },
+  {
+    name: 'Guinea Fowl Day Old Chick',
+    description: 'Healthy guinea fowl day old chick for farm rearing, sold by piece.',
+    image_url: 'https://source.unsplash.com/800x600/?guinea-fowl-chick',
+    price: 95
+  }
+];
+
+const ensureChicksSeedProducts = async () => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    for (const product of chickSeedProducts) {
+      const existingProduct = await client.query(
+        "SELECT id FROM products WHERE LOWER(name) = LOWER($1) AND LOWER(REPLACE(category, ' ', '')) = 'chicks' LIMIT 1",
+        [product.name]
+      );
+
+      const productId = existingProduct.rows[0]?.id || (await client.query(
+        `INSERT INTO products (name, description, category, image_url, in_stock)
+         VALUES ($1, $2, 'chicks', $3, TRUE)
+         RETURNING id`,
+        [product.name, product.description, product.image_url]
+      )).rows[0]?.id;
+
+      if (!productId) continue;
+
+      const existingPieceVariant = await client.query(
+        "SELECT id FROM product_variants WHERE product_id = $1 AND LOWER(label) = 'piece' LIMIT 1",
+        [productId]
+      );
+
+      if (existingPieceVariant.rowCount === 0) {
+        await client.query(
+          'INSERT INTO product_variants (product_id, label, price) VALUES ($1, $2, $3)',
+          [productId, 'Piece', product.price]
+        );
+      } else {
+        await client.query(
+          'UPDATE product_variants SET price = $1 WHERE id = $2',
+          [product.price, existingPieceVariant.rows[0].id]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+    console.log('Chicks seed products are ready.');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error ensuring chicks seed products:', err.message);
+  } finally {
+    client.release();
+  }
+};
+
+const initializeProductData = async () => {
+  await ensureProductStockColumn();
+  await ensureProductChickNoteColumn();
+  await ensureChicksSeedProducts();
+};
+
+initializeProductData();
 
 // --- CORE MIDDLEWARE ---
 app.use(cors());
@@ -441,6 +555,7 @@ const mapProductsWithVariants = (rows) => {
                 category: row.category,
                 image_url: row.image_url,
                 in_stock: row.in_stock !== false,
+                chick_note: row.chick_note || '',
                 variants: []
             });
         }
@@ -520,7 +635,7 @@ app.get('/api/admin/products', checkAdminToken, async (req, res) => {
     try {
         const query = `
             SELECT 
-                p.id, p.name, p.description, p.category, p.image_url, p.in_stock,
+                p.id, p.name, p.description, p.category, p.image_url, p.in_stock, p.chick_note,
                 v.id as variant_id, v.label, v.price
             FROM products p
             LEFT JOIN product_variants v ON p.id = v.product_id
@@ -540,11 +655,13 @@ app.post('/api/admin/products', checkAdminToken, async (req, res) => {
   if (!product || !product.name || !product.category) {
     return res.status(400).json({ msg: 'Product Name and Category are required.' });
   }
+  const normalizedCategory = String(product.category || '').toLowerCase().replace(/\s+/g, '');
+  const chickNote = normalizedCategory === 'chicks' ? (product.chick_note || '').trim() : '';
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const newProductQuery = `INSERT INTO products (name, description, category, image_url, in_stock) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
-    const newProduct = await client.query(newProductQuery, [product.name, product.description || '', product.category, product.image_url || null, product.in_stock !== false]);
+    const newProductQuery = `INSERT INTO products (name, description, category, image_url, in_stock, chick_note) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`;
+    const newProduct = await client.query(newProductQuery, [product.name, product.description || '', product.category, product.image_url || null, product.in_stock !== false, chickNote]);
     const createdProduct = newProduct.rows[0];
     if (variant && variant.label && variant.price) {
       const newVariantQuery = `INSERT INTO product_variants (product_id, label, price) VALUES ($1, $2, $3)`;
@@ -562,11 +679,13 @@ app.post('/api/admin/products', checkAdminToken, async (req, res) => {
 });
 
 app.put('/api/admin/products/:id', checkAdminToken, async (req, res) => {
-  const { name, description, category, image_url, in_stock } = req.body;
+  const { name, description, category, image_url, in_stock, chick_note } = req.body;
+  const normalizedCategory = String(category || '').toLowerCase().replace(/\s+/g, '');
+  const chickNote = normalizedCategory === 'chicks' ? (chick_note || '').trim() : '';
   try {
     const updatedProduct = await pool.query(
-      'UPDATE products SET name = $1, description = $2, category = $3, image_url = $4, in_stock = COALESCE($5, in_stock) WHERE id = $6 RETURNING *',
-      [name, description, category, image_url, in_stock, req.params.id]
+      'UPDATE products SET name = $1, description = $2, category = $3, image_url = $4, in_stock = COALESCE($5, in_stock), chick_note = $6 WHERE id = $7 RETURNING *',
+      [name, description, category, image_url, in_stock, chickNote, req.params.id]
     );
     if (updatedProduct.rows.length === 0) {
         return res.status(404).json({ msg: 'Product not found.' });
@@ -991,7 +1110,7 @@ app.get('/api/products', async (req, res) => {
     }
 
     const productsAndVariantsQuery = `
-      SELECT p.id, p.name, p.description, p.category, p.image_url, p.in_stock, v.id as variant_id, v.label, v.price
+      SELECT p.id, p.name, p.description, p.category, p.image_url, p.in_stock, p.chick_note, v.id as variant_id, v.label, v.price
       FROM products p
       LEFT JOIN product_variants v ON p.id = v.product_id
       WHERE p.id = ANY($1::int[])
@@ -1005,7 +1124,7 @@ app.get('/api/products', async (req, res) => {
         productsMap.set(row.id, {
           id: row.id, name: row.name, description: row.description, category: row.category,
           in_stock: row.in_stock !== false,
-          image_url: row.image_url, variants: []
+          image_url: row.image_url, chick_note: row.chick_note || '', variants: []
         });
       }
       if (row.variant_id) {

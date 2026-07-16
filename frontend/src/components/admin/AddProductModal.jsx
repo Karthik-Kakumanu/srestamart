@@ -12,6 +12,7 @@ export default function AddProductModal({ onClose, onSave }) {
         name: '',
         description: '',
         category: 'livebirds', // Set a default category to prevent errors
+        chick_note: '',
     });
     const [variant, setVariant] = useState({
         label: '',
@@ -135,6 +136,7 @@ export default function AddProductModal({ onClose, onSave }) {
                                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                              >
                                 <option value="livebirds">Live Birds</option>
+                                <option value="chicks">Chicks</option>
                                 <option value="pickles">Pickles</option>
                                 <option value="dairy">Dairy</option>
                                 <option value="dryfruits">Dry Fruits</option>
@@ -143,6 +145,21 @@ export default function AddProductModal({ onClose, onSave }) {
                                 <option value="meat">Meat</option>
                              </select>
                          </div>
+                         {product.category === 'chicks' && (
+                            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+                                <label htmlFor="chick_note" className="block text-sm font-medium text-yellow-900">Small chick note (Optional)</label>
+                                <textarea
+                                    id="chick_note" name="chick_note"
+                                    value={product.chick_note}
+                                    onChange={handleProductChange}
+                                    rows="2"
+                                    maxLength="140"
+                                    placeholder="Example: Book early. Delivery depends on chick availability."
+                                    className="mt-1 block w-full border border-yellow-200 rounded-md shadow-sm p-2 text-sm"
+                                ></textarea>
+                                <p className="mt-1 text-xs text-yellow-800">Shown as a small note on chick product cards.</p>
+                            </div>
+                         )}
                         
                         <div>
                             <label htmlFor="image_file" className="block text-sm font-medium text-gray-700">Product Image*</label>

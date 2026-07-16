@@ -6,6 +6,7 @@ const getAuthToken = () => localStorage.getItem('adminToken');
 
 const CATEGORIES = [
     { value: 'livebirds', label: 'Live Birds' },
+    { value: 'chicks', label: 'Chicks' },
     { value: 'meat', label: 'Meat' },
     { value: 'eggs', label: 'Eggs' },
     { value: 'pickles', label: 'Pickles' },

@@ -3,16 +3,17 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    Heart, BrainCircuit, Bone, Egg, Leaf, Milk, Wheat, CookingPot, Beef,
+    Heart, BrainCircuit, Bone, Egg, Leaf, Milk, Wheat, CookingPot, Beef, Bird,
     Microscope, Shield, Sun, Droplets, BatteryCharging, Sparkles, TestTube, FilterX, Vegan, Activity,
     Menu, X, ChevronRight, User, Truck, Search, ShoppingCart, Store, Info, Phone, Mail, Globe, Instagram
 } from 'lucide-react';
 import logoIcon from '../../images/icon.png';
 
-const CATEGORY_ORDER = ['meatpoultry', 'eggs', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets'];
+const CATEGORY_ORDER = ['meatpoultry', 'chicks', 'eggs', 'pickles', 'dairy', 'dryfruits', 'oils', 'millets'];
 
 const categoryIcons = {
     meatpoultry: <Beef size={18} className="text-red-600" />,
+    chicks: <Bird size={18} className="text-yellow-500" />,
     eggs: <Egg size={18} className="text-yellow-400" />,
     pickles: <CookingPot size={18} className="text-orange-500" />,
     dairy: <Milk size={18} className="text-blue-300" />,
@@ -58,6 +59,13 @@ const categoryFeatures = {
         description: "Our meats are from sustainable farms, providing high-protein options with rich taste for gourmet cooking.",
         imageUrl: "https://t4.ftcdn.net/jpg/12/57/80/51/240_F_1257805117_aFXp6VSt1JSL9tfAh9FwfPkIR73SPBdM.jpg",
         features: [ { icon: <Beef className="text-red-500"/>, title: "Protein Powerhouse", text: "Essential for muscle repair and growth." }, { icon: <Shield className="text-red-500"/>, title: "Ethical Sourcing", text: "From farms prioritizing animal welfare." }, { icon: <Sparkles className="text-red-500"/>, title: "Flavorful Variety", text: "Cuts perfect for diverse cuisines." } ]
+    },
+    chicks: {
+        title: "Healthy Day Old Chicks",
+        subtitle: `"Farm-ready birds and bunnies, selected with care."`,
+        description: "Choose from Sonali, quail, duck, turkey, guinea fowl, and rabbit bunnies sourced for healthy farm starts.",
+        imageUrl: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=1260&q=80",
+        features: [ { icon: <Bird className="text-red-500"/>, title: "Day Old Selection", text: "Healthy young birds available by piece for easy farm planning." }, { icon: <Shield className="text-red-500"/>, title: "Careful Handling", text: "Handled with attention from sourcing through delivery." }, { icon: <Sparkles className="text-red-500"/>, title: "Farm Diversity", text: "Multiple poultry options plus rabbit bunnies in one category." } ]
     },
     pickles: {
         title: "Exquisite Homemade Flavor Symphony",
@@ -166,6 +174,8 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
     const currentPrice = currentVariant ? currentVariant.price : 'N/A';
     const isOutOfStock = product.in_stock === false;
     const canAddToCart = Boolean(currentVariant) && !isOutOfStock;
+    const isChickProduct = (product.category || '').toLowerCase().replace(/\s+/g, '') === 'chicks';
+    const chickNote = isChickProduct ? (product.chick_note || '').trim() : '';
     
     const handleAddToCartClick = (e) => {
         if (!canAddToCart) return;
@@ -186,6 +196,14 @@ const ProductCard = ({ product, selectedVariants, handleVariantChange, handleAdd
             <div className="p-4 flex flex-col flex-grow">
                 <h3 className="font-semibold text-base sm:text-lg text-gray-900 mb-2">{product.name}</h3>
                 <p className="text-xs text-gray-700 mb-3 flex-grow line-clamp-3">{product.description}</p>
+                {chickNote && (
+                    <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50/95 px-3 py-2 text-[11px] leading-snug text-amber-900 shadow-sm">
+                        <div className="flex items-start gap-1.5">
+                            <Info size={13} className="mt-0.5 flex-shrink-0 text-amber-600" />
+                            <span>{chickNote}</span>
+                        </div>
+                    </div>
+                )}
                 <div className="mb-3 min-h-[32px]">
                     {hasVariants && (
                         <div className="flex items-center gap-2 flex-wrap">
@@ -318,6 +336,7 @@ export default function HomePage({ handleAddToCart, dataVersion }) {
     const categoryVideos = {
         eggs: "/videos/eggs.mp4",
         meatpoultry: "/videos/meatpoultry.mp4",
+        chicks: "/videos/chicks.mp4",
         dryfruits: "/videos/dryfruits.mp4",
         dairy: "/videos/dairy.mp4",
         oils: "/videos/oils.mp4",

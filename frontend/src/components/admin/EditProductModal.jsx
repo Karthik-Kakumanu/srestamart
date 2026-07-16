@@ -4,6 +4,18 @@ import { X, Plus, Trash2 } from 'lucide-react';
 
 const getAuthToken = () => localStorage.getItem('adminToken');
 
+const PRODUCT_CATEGORIES = [
+    { value: 'livebirds', label: 'Live Birds' },
+    { value: 'chicks', label: 'Chicks' },
+    { value: 'meat', label: 'Meat' },
+    { value: 'eggs', label: 'Eggs' },
+    { value: 'pickles', label: 'Pickles' },
+    { value: 'dairy', label: 'Dairy' },
+    { value: 'dryfruits', label: 'Dry Fruits' },
+    { value: 'oils', label: 'Oils' },
+    { value: 'millets', label: 'Millets' },
+];
+
 export default function EditProductModal({ product, onClose, onSave }) {
     const [productData, setProductData] = useState({ ...product });
     const [variants, setVariants] = useState(product.variants ? [...product.variants.filter(v => v.id != null)] : []);
@@ -109,8 +121,27 @@ export default function EditProductModal({ product, onClose, onSave }) {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Category</label>
-                            <input type="text" name="category" value={productData.category} onChange={handleProductChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+                            <select name="category" value={productData.category} onChange={handleProductChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                                {PRODUCT_CATEGORIES.map(category => (
+                                    <option key={category.value} value={category.value}>{category.label}</option>
+                                ))}
+                            </select>
                         </div>
+                        {productData.category === 'chicks' && (
+                            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+                                <label className="block text-sm font-medium text-yellow-900">Small chick note (Optional)</label>
+                                <textarea
+                                    name="chick_note"
+                                    value={productData.chick_note || ''}
+                                    onChange={handleProductChange}
+                                    rows="2"
+                                    maxLength="140"
+                                    placeholder="Example: Book early. Delivery depends on chick availability."
+                                    className="mt-1 block w-full border border-yellow-200 rounded-md shadow-sm p-2 text-sm"
+                                ></textarea>
+                                <p className="mt-1 text-xs text-yellow-800">Shown as a small note on chick product cards.</p>
+                            </div>
+                        )}
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Current Image</label>
                             <img src={productData.image_url} alt="Current product" className="mt-1 h-20 w-20 object-cover rounded-md" />
