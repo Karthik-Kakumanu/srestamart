@@ -31,7 +31,7 @@ const useLocationTracker = () => {
             if (!token) return;
 
             axios.put(
-                `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/location`,
+                `${import.meta.env.VITE_API_URL || 'https://srestamart-77vb.onrender.com'}/api/delivery/location`,
                 { latitude, longitude },
                 { headers: { 'x-partner-token': token } }
             ).catch(err => console.error("Failed to send location:", err));
@@ -91,9 +91,9 @@ export default function DeliveryDashboardPage() {
             const headerKey = userRole === 'admin' ? 'x-admin-token' : 'x-partner-token';
             const config = { headers: { [headerKey]: token } };
 
-            let url = `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders`;
+            let url = `${import.meta.env.VITE_API_URL || 'https://srestamart-77vb.onrender.com'}/api/delivery/orders`;
             if (userRole === 'admin') {
-                url = `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/admin/orders`;
+                url = `${import.meta.env.VITE_API_URL || 'https://srestamart-77vb.onrender.com'}/api/admin/orders`;
             }
 
             const res = await axios.get(url, config);
@@ -111,7 +111,7 @@ export default function DeliveryDashboardPage() {
         try {
             const config = { headers: { 'x-partner-token': token } };
             await axios.put(
-                `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/accept`,
+                `${import.meta.env.VITE_API_URL || 'https://srestamart-77vb.onrender.com'}/api/delivery/orders/${orderId}/accept`,
                 {},
                 config
             );
@@ -125,7 +125,7 @@ export default function DeliveryDashboardPage() {
         try {
             const config = { headers: { 'x-partner-token': token } };
             await axios.put(
-                `${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/orders/${orderId}/complete`,
+                `${import.meta.env.VITE_API_URL || 'https://srestamart-77vb.onrender.com'}/api/delivery/orders/${orderId}/complete`,
                 {},
                 config
             );

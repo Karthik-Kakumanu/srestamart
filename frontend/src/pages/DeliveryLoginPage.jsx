@@ -22,7 +22,7 @@ export default function DeliveryLoginPage() {
         setIsLoading(true);
         setError('');
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_URL || 'https://srestamart.onrender.com'}/api/delivery/login`, { phone, password });
+            const res = await axios.post(`${import.meta.env.VITE_API_URL || 'https://srestamart-77vb.onrender.com'}/api/delivery/login`, { phone, password });
             if (res.data.success) {
                 localStorage.setItem('deliveryPartnerToken', res.data.token);
                 localStorage.setItem('deliveryPartner', JSON.stringify(res.data.partner));
