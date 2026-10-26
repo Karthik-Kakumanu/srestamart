@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, PackageCheck, Info, Phone } from 'lucide-react';
+import { MapPin, Shield, HelpCircle, LogOut, ChevronDown, ShoppingBag, Truck, CheckCircle2, PackageCheck, Info, Phone, UserRoundX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AccountPage({ loggedInUser, orders, ordersLoading, handleLogout }) {
@@ -99,6 +99,7 @@ const SettingsView = ({ handleLogout }) => (
             <SettingsLink to="/about-us" icon={<Info size={20} />} text="About Us" />
             <SettingsLink to="/account/addresses" icon={<MapPin size={20} />} text="Manage Addresses" />
             <SettingsLink to="/privacy" icon={<Shield size={20} />} text="Privacy Policy" />
+            <SettingsLink to="/delete-account" icon={<UserRoundX size={20} />} text="Delete Account" />
             <SettingsLink to="/help" icon={<HelpCircle size={20} />} text="Help Center" />
             <div onClick={handleLogout} className="flex items-center p-4 rounded-lg text-red-600 font-bold cursor-pointer hover:bg-red-50 transition-colors">
                 <LogOut size={20} className="mr-4" /> Log Out

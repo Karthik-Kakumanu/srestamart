@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, User, Phone, Lock, KeyRound } from "lucide-react";
@@ -227,6 +228,12 @@ export default function AuthPage({ setLoggedInUser }) {
                                  : "Back to Sign In"}
                             </button>
                         </div>
+                        <p className="mt-4 text-center text-sm text-gray-500">
+                            Need to close your account?{' '}
+                            <Link to="/delete-account" className="font-medium text-red-600 hover:text-red-700">
+                                 Submit a deletion request
+                            </Link>
+                        </p>
                     </motion.div>
                 </div>
             </div>

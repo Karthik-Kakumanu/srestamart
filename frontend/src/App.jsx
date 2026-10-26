@@ -14,6 +14,7 @@ const AccountPage = lazy(() => import('./pages/AccountPage.jsx'));
 const ManageAddressPage = lazy(() => import('./pages/ManageAddressPage.jsx'));
 const HelpCenterPage = lazy(() => import('./pages/HelpCenterPage.jsx'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage.jsx'));
+const DeleteAccountPage = lazy(() => import('./pages/DeleteAccountPage.jsx'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage.jsx'));
 const PaymentPage = lazy(() => import('./pages/PaymentPage.jsx'));
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage.jsx'));
@@ -180,6 +181,7 @@ export default function App() {
                         <Route path="about-us" element={<AboutUsPage />} />
                         <Route path="help" element={<HelpCenterPage />} />
                         <Route path="privacy" element={<PrivacyPolicyPage />} />
+                        <Route path="delete-account" element={<DeleteAccountPage />} />
 
                         <Route path="cart" element={loggedInUser ? <CartPage cartItems={cartItems} handleQuantityChange={handleQuantityChange} handleRemoveFromCart={handleRemoveFromCart} setCheckoutDetails={setCheckoutDetails} /> : <Navigate to="/auth" replace />} />
                         <Route path="account" element={loggedInUser ? <AccountPage loggedInUser={loggedInUser} orders={orders} ordersLoading={ordersLoading} handleLogout={handleLogout} /> : <Navigate to="/auth" replace />} />

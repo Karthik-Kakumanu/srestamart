@@ -1589,23 +1589,50 @@ app.get('/api/orders/:orderId/location', checkUserToken, async (req, res) => {
 app.post('/api/inquiry', async (req, res) => {
     const { inquiryType, formData } = req.body;
 
-    if (!inquiryType || !formData) {
+    if (!inquiryType || !formData || typeof formData !== 'object' || Array.isArray(formData)) {
         return res.status(400).json({ msg: 'Missing inquiry data.' });
     }
 
-    const subject = inquiryType === 'Vendor' 
-        ? 'New Vendor Partnership Inquiry from Sresta Mart' 
-        : 'New Franchise Inquiry from Sresta Mart';
+    if (inquiryType === 'Delete Account') {
+        const { full_name, registered_email, registered_mobile_number, reason_for_deletion } = formData;
+        const isValidEmail = typeof registered_email === 'string'
+            && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registered_email.trim());
+
+        if (
+            typeof full_name !== 'string' || !full_name.trim() || full_name.trim().length > 120
+            || !isValidEmail || registered_email.trim().length > 254
+            || typeof registered_mobile_number !== 'string' || !registered_mobile_number.trim()
+            || registered_mobile_number.trim().length > 30
+            || (reason_for_deletion != null && (
+                typeof reason_for_deletion !== 'string' || reason_for_deletion.length > 1000
+            ))
+        ) {
+            return res.status(400).json({ msg: 'Please provide valid name, email, and mobile number.' });
+        }
+    }
+
+    const subject = inquiryType === 'Vendor'
+        ? 'New Vendor Partnership Inquiry from Sresta Mart'
+        : inquiryType === 'Delete Account'
+            ? 'Account Deletion Request from Sresta Mart'
+            : 'New Franchise Inquiry from Sresta Mart';
+
+    const escapeHtml = (value) => String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 
     const emailBody = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <h2 style="color: #c0392b;">New ${inquiryType} Inquiry Received</h2>
+            <h2 style="color: #c0392b;">New ${escapeHtml(inquiryType)} Inquiry Received</h2>
             <p>You have received a new inquiry from the Sresta Mart website. Details are below:</p>
             <table style="width: 100%; border-collapse: collapse;">
                 ${Object.entries(formData).map(([key, value]) => `
                     <tr style="border-bottom: 1px solid #ddd;">
-                        <td style="padding: 8px; font-weight: bold; text-transform: capitalize; color: #333;">${key.replace(/_/g, ' ')}</td>
-                        <td style="padding: 8px; color: #555;">${value || 'N/A'}</td>
+                        <td style="padding: 8px; font-weight: bold; text-transform: capitalize; color: #333;">${escapeHtml(key.replace(/_/g, ' '))}</td>
+                        <td style="padding: 8px; color: #555;">${escapeHtml(value || 'N/A')}</td>
                     </tr>
                 `).join('')}
             </table>
