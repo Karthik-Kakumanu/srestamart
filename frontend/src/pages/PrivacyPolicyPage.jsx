@@ -436,8 +436,18 @@ const policySections = [
                             https://www.srestamart.com/privacy
                         </a>
                     </li>
-                    <li><strong>Email:</strong> [INSERT OFFICIAL SRESTA MART SUPPORT EMAIL]</li>
-                    <li><strong>Phone:</strong> [INSERT OFFICIAL SUPPORT PHONE NUMBER, IF APPLICABLE]</li>
+                    <li>
+                        <strong>Email:</strong>{' '}
+                        <a className="text-blue-700 underline" href="mailto:srestamart@gmail.com">
+                            srestamart@gmail.com
+                        </a>
+                    </li>
+                    <li>
+                        <strong>Phone:</strong>{' '}
+                        <a className="text-blue-700 underline" href="tel:+919949529575">
+                            +91 99495 29575
+                        </a>
+                    </li>
                 </ul>
             </>
         ),
